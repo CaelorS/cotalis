@@ -1,0 +1,7 @@
+<svg style="color:#2457A6;--paper:#FFFFFF" viewBox="0 0 100 100" width="400" height="400" xmlns="http://www.w3.org/2000/svg" aria-label="Monogramme C T, ligne de cote">
+  <path d="M65,32.7 A30,30 0 1 0 65,71.3" fill="none" stroke="currentColor" stroke-width="18"/>
+  <line x1="6" y1="18" x2="94" y2="18" stroke="currentColor" stroke-width="5"/>
+  <line x1="2" y1="23" x2="10" y2="13" stroke="#E4B33B" stroke-width="4"/>
+  <line x1="90" y1="23" x2="98" y2="13" stroke="#E4B33B" stroke-width="4"/>
+  <rect x="78" y="18" width="8" height="70" fill="currentColor"/>
+</svg>

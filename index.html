@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cotalis · Votre estimation travaux en 3 minutes</title>
+  <meta name="description" content="Cotalis chiffre vos travaux de rénovation locative en 3 minutes : estimation transparente par lot, fourchette de prix, rentabilité et dossier de financement.">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+  <main class="hero">
+    <svg class="logo-big" viewBox="0 0 100 100" aria-hidden="true">
+      <path d="M65,32.7 A30,30 0 1 0 65,71.3" fill="none" stroke="currentColor" stroke-width="18"/>
+      <line x1="6" y1="18" x2="94" y2="18" stroke="currentColor" stroke-width="5"/>
+      <line x1="2" y1="23" x2="10" y2="13" stroke="#E4B33B" stroke-width="4"/>
+      <line x1="90" y1="23" x2="98" y2="13" stroke="#E4B33B" stroke-width="4"/>
+      <rect x="78" y="18" width="8" height="70" fill="currentColor"/>
+    </svg>
+    <div class="wordmark">Cotalis</div>
+    <h2>Votre estimation travaux <em>en 3 minutes</em>, pour faire décoller la renta de vos projets immo.</h2>
+    <p>Décrivez le bien, choisissez vos finitions, ajustez les travaux ligne à ligne : le montant se calcule sous vos yeux, sans engagement.</p>
+    <a class="btn primary big" href="estimation.html">Obtenir mon devis maintenant</a>
+    <div class="note">Estimation indicative, gratuite et transparente. Elle devient un devis ferme après visite technique.</div>
+  </main>
+
+  <section class="strip">
+    <div><div class="display">3 minutes chrono</div><p>Un parcours guidé, pré-rempli à partir de vos réponses. Pas de compte à créer.</p></div>
+    <div><div class="display">Transparent, ligne à ligne</div><p>Chaque montant vient d'une quantité, d'un prix de référence et de coefficients visibles. Vous modifiez ce que vous voulez.</p></div>
+    <div><div class="display">Jusqu'au financement</div><p>Rentabilité, mensualité, cash-flow et une synthèse prête pour la banque. On vous accompagne si vous le souhaitez.</p></div>
+  </section>
+
+  <footer class="foot">
+    <span>© Cotalis · rénovation, financement et chasse immobilière pour investisseurs</span>
+    <span id="foot-contact"></span>
+  </footer>
+  <script src="config.js"></script>
+  <script>
+    (function () {
+      var c = window.COTALIS_CONFIG || {};
+      if (c.contactEmail) document.getElementById('foot-contact').innerHTML = '<a href="mailto:' + c.contactEmail + '">' + c.contactEmail + '</a>';
+    })();
+  </script>
+</body>
+</html>

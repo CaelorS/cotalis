@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cotalis · Mon estimation travaux</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="index.html">
+      <svg class="logo" viewBox="0 0 100 100" width="32" height="32" aria-hidden="true">
+        <path d="M65,32.7 A30,30 0 1 0 65,71.3" fill="none" stroke="currentColor" stroke-width="18"/>
+        <line x1="6" y1="18" x2="94" y2="18" stroke="currentColor" stroke-width="5"/>
+        <line x1="2" y1="23" x2="10" y2="13" stroke="var(--mark)" stroke-width="4"/>
+        <line x1="90" y1="23" x2="98" y2="13" stroke="var(--mark)" stroke-width="4"/>
+        <rect x="78" y="18" width="8" height="70" fill="currentColor"/>
+      </svg>
+      <h1>Cotalis</h1>
+      <span class="sub">Estimation travaux</span>
+    </a>
+    <span class="spacer"></span>
+    <span class="tag mark">Estimation indicative · sans engagement</span>
+  </header>
+
+  <div class="progress">
+    <ol id="progress"></ol>
+    <div class="pct" id="pct"></div>
+  </div>
+
+  <main class="wb">
+    <div class="tunnel" id="tunnel">
+
+      <section class="step panel" data-step="kind">
+        <header><h2>Sur quel type de bien travaillons-nous ?</h2><span class="hint">Trois minutes suffisent. On commence par le plus simple.</span></header>
+        <div class="body">
+          <div class="choices">
+            <button type="button" class="choice" data-choice="kind" data-value="appart">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="3" width="16" height="18"/><path d="M8 7h3M13 7h3M8 11h3M13 11h3M8 15h3M13 15h3M10 21v-3h4v3"/></svg>
+              <span class="display">Appartement</span><small>Un lot dans un immeuble, en copropriété ou non.</small>
+            </button>
+            <button type="button" class="choice" data-choice="kind" data-value="maison">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>
+              <span class="display">Maison</span><small>Individuelle ou mitoyenne, avec ou sans combles.</small>
+            </button>
+            <button type="button" class="choice" data-choice="kind" data-value="immeuble">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="10" height="18"/><rect x="13" y="8" width="8" height="13"/><path d="M6 7h2M6 11h2M6 15h2M16 12h2M16 16h2"/></svg>
+              <span class="display">Immeuble</span><small>Plusieurs appartements, rénovés en une seule opération.</small>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="step panel" data-step="bien">
+        <header><h2>Parlez-nous du bien</h2><span class="hint">Chaque réponse resserre la fourchette. Ce que vous ne savez pas encore, laissez-le vide.</span></header>
+        <div class="body">
+          <div class="grid">
+            <div class="field wide addr">
+              <label for="adresse">Adresse du bien</label>
+              <input id="adresse" data-k="adresse" autocomplete="off" placeholder="12 rue des Remparts, 69005 Lyon">
+              <ul class="suggest hidden" id="suggest" role="listbox"></ul>
+            </div>
+          </div>
+          <div class="zone" id="zone-row">
+            <span>Zone de prix retenue :</span>
+            <select id="zone" data-k="zone" aria-label="Zone de prix"></select>
+            <span id="zone-hint" class="eyebrow"></span>
+          </div>
+          <div class="grid" style="margin-top:18px">
+            <div class="field" data-only="appart maison"><label for="type">Typologie</label>
+              <select id="type" data-k="type"><option value="t1">Studio / T1</option><option value="t2">T2</option><option value="t3">T3</option><option value="t4">T4</option><option value="t5">T5</option><option value="t6">T6 et plus</option></select></div>
+            <div class="field" data-only="immeuble"><label for="nbapts">Nombre d'appartements</label><input id="nbapts" data-k="nbapts" type="number" min="2" max="40" step="1"></div>
+            <div class="field"><label for="surface" id="surface-label">Surface habitable</label><div class="unit"><input id="surface" data-k="surface" type="number" min="9" max="5000" step="1" inputmode="numeric"><span>m²</span></div></div>
+            <div class="field"><label for="eau">Pièces d'eau (SDB + WC)</label><input id="eau" data-k="eau" type="number" min="0" max="60" step="1" inputmode="numeric"></div>
+            <div class="field" data-only="appart"><label for="etage">Étage</label><input id="etage" data-k="etage" type="number" min="0" max="40" step="1" inputmode="numeric"></div>
+            <div class="field" data-only="immeuble"><label for="niveaux">Nombre de niveaux</label><input id="niveaux" data-k="niveaux" type="number" min="1" max="15" step="1" inputmode="numeric"></div>
+            <div class="field"><label for="annee">Année de construction</label><input id="annee" data-k="annee" type="number" min="1600" max="2026" step="1" placeholder="inconnue" inputmode="numeric"></div>
+            <div class="field"><label for="dpe">DPE actuel</label>
+              <select id="dpe" data-k="dpe"><option value="">Inconnu</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option></select></div>
+            <div class="field"><label for="etat">État général</label>
+              <select id="etat" data-k="etat"><option value="">Non renseigné</option><option value="bon">Bon, rafraîchissement</option><option value="correct">Correct, à moderniser</option><option value="degrade">Dégradé</option><option value="total">À rénover entièrement</option></select></div>
+          </div>
+          <div class="apts" id="apts" data-only="immeuble"></div>
+          <div class="checks">
+            <label class="check" data-only="appart immeuble"><input type="checkbox" data-k="ascenseur"> Ascenseur</label>
+            <label class="check" data-only="appart"><input type="checkbox" data-k="copro"> Copropriété</label>
+            <label class="check"><input type="checkbox" data-k="occupe"> Occupé pendant les travaux</label>
+            <label class="check"><input type="checkbox" data-k="acces"> Accès difficile (centre historique, rue piétonne)</label>
+            <label class="check"><input type="checkbox" data-k="plans"> J'ai des plans ou des photos</label>
+            <label class="check"><input type="checkbox" data-k="visite"> Une visite technique a déjà été faite</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="step panel" data-step="finition">
+        <header><h2>Ça reste entre nous : quel niveau de finition visez-vous ?</h2><span class="hint">Il n'y a pas de mauvaise réponse. Le standard locatif est le choix de la plupart des investisseurs, et il se loue bien.</span></header>
+        <div class="body">
+          <div class="choices">
+            <button type="button" class="choice" data-choice="gamme" data-value="eco"><span class="display">Économique</span><small>Matériaux d'entrée de gamme, solides et sobres. Pour maximiser la rentabilité immédiate.</small></button>
+            <button type="button" class="choice" data-choice="gamme" data-value="std"><span class="display">Standard locatif</span><small>Le bon équilibre : durable, agréable à vivre, facile à louer et à entretenir.</small></button>
+            <button type="button" class="choice" data-choice="gamme" data-value="prem"><span class="display">Premium</span><small>Matériaux et équipements haut de gamme, pour une revente ou une cible exigeante.</small></button>
+          </div>
+          <div class="grid" style="margin-top:22px">
+            <div class="field"><label for="stade">Où en est votre projet ?</label>
+              <select id="stade" data-k="stade"><option value="etude">En étude, je compare</option><option value="compromis">Sous compromis</option><option value="acte">Acte authentique signé</option></select></div>
+            <div class="field"><label for="demarrage">Démarrage souhaité des travaux</label>
+              <select id="demarrage" data-k="demarrage"><option value="1">Dès que possible (moins d'un mois)</option><option value="3">Sous 3 mois</option><option value="6">Sous 6 mois</option></select></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="step panel" data-step="travaux">
+        <header><h2>Voici notre meilleure estimation</h2><span class="hint">Sur la base de vos réponses, nous avons pré-rempli les travaux. La transparence est notre credo : cochez, décochez, corrigez les quantités, tout se recalcule à côté.</span></header>
+        <div class="cols"><span></span><span>Ouvrage</span><span class="r">Quantité</span><span>Unité</span><span class="r">Prix réf. HT</span><span class="r">Montant HT</span></div>
+        <div id="lots"></div>
+      </section>
+
+      <section class="step panel" data-step="financeQ">
+        <header><h2>On vous accompagne aussi pour le financement ?</h2><span class="hint">Nos courtiers montent le dossier avec vous et le présentent aux banques. Sinon, on passe directement à votre estimation.</span></header>
+        <div class="body">
+          <div class="choices">
+            <button type="button" class="choice" data-choice="finance" data-value="oui"><span class="display">Oui, accompagnez-moi</span><small>On calcule la rentabilité complète et on prépare la synthèse pour la banque.</small></button>
+            <button type="button" class="choice" data-choice="finance" data-value="non"><span class="display">J'ai déjà mon financement</span><small>Direction l'estimation, sans question supplémentaire.</small></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="step panel" data-step="acquisition">
+        <header><h2>Le projet dans son ensemble</h2><span class="hint">Pour calculer la rentabilité et préparer la synthèse bancaire. Des ordres de grandeur suffisent.</span></header>
+        <div class="body">
+          <div class="grid">
+            <div class="field"><label for="prix">Prix d'acquisition</label><div class="unit"><input id="prix" data-k="prix" type="number" min="0" step="1000" inputmode="numeric"><span>€</span></div></div>
+            <div class="field"><label for="strat">Stratégie</label>
+              <select id="strat" data-k="strat"><option value="nue">Location nue</option><option value="meuble">Meublé (LMNP)</option><option value="coloc">Colocation meublée</option><option value="revente">Revente après travaux</option></select></div>
+            <div class="field"><label for="loyer">Loyer mensuel visé (hors charges)</label><div class="unit"><input id="loyer" data-k="loyer" type="number" min="0" step="10" inputmode="numeric"><span>€</span></div></div>
+            <div class="field"><label for="charges">Charges non récupérables + taxe foncière</label><div class="unit"><input id="charges" data-k="charges" type="number" min="0" step="50" inputmode="numeric"><span>€/an</span></div></div>
+            <div class="field"><label for="apport">Apport</label><div class="unit"><input id="apport" data-k="apport" type="number" min="0" max="100" step="1" inputmode="numeric"><span>%</span></div></div>
+            <div class="field"><label for="taux">Taux du prêt</label><div class="unit"><input id="taux" data-k="taux" type="number" min="0" max="12" step="0.05" inputmode="decimal"><span>%</span></div></div>
+            <div class="field"><label for="duree">Durée du prêt</label><div class="unit"><input id="duree" data-k="duree" type="number" min="5" max="30" step="1" inputmode="numeric"><span>ans</span></div></div>
+            <div class="field"><label for="vacance">Vacance locative</label><div class="unit"><input id="vacance" data-k="vacance" type="number" min="0" max="30" step="1" inputmode="numeric"><span>%</span></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="step panel" data-step="situation">
+        <header><h2>Et vous, où en êtes-vous ?</h2><span class="hint">Ça reste entre nous : c'est juste pour commencer à construire votre dossier auprès de nos financeurs. Tout est facultatif.</span></header>
+        <div class="body">
+          <div class="grid">
+            <div class="field"><label for="statut">Situation professionnelle</label>
+              <select id="statut" data-k="situation.statut"><option value="">Choisir</option><option value="cdi">Salarié en CDI</option><option value="cdd">CDD, intérim</option><option value="fonction">Fonctionnaire</option><option value="indep">Indépendant, chef d'entreprise</option><option value="prof">Profession libérale</option><option value="retraite">Retraité</option><option value="autre">Autre</option></select></div>
+            <div class="field"><label for="revenus">Revenus nets mensuels du foyer</label><div class="unit"><input id="revenus" data-k="situation.revenus" type="number" min="0" step="100" inputmode="numeric"><span>€</span></div></div>
+            <div class="field"><label for="credits">Mensualités de crédits en cours</label><div class="unit"><input id="credits" data-k="situation.credits" type="number" min="0" step="50" inputmode="numeric"><span>€/mois</span></div></div>
+            <div class="field"><label for="apportDispo">Apport disponible</label><div class="unit"><input id="apportDispo" data-k="situation.apportDispo" type="number" min="0" step="1000" inputmode="numeric"><span>€</span></div></div>
+            <div class="field"><label for="proprietaire">Votre situation immobilière</label>
+              <select id="proprietaire" data-k="situation.proprietaire"><option value="">Choisir</option><option value="loc">Locataire</option><option value="rp">Propriétaire de ma résidence</option><option value="inv">Déjà investisseur (1 bien ou plus)</option></select></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="step panel" data-step="contact">
+        <header><h2>Où vous envoyer l'estimation ?</h2><span class="hint">Vos coordonnées pour recevoir l'estimation en PDF et par e-mail. Rien d'autre, promis.</span></header>
+        <div class="body">
+          <div class="grid">
+            <div class="field"><label for="prenom">Prénom</label><input id="prenom" data-k="contact.prenom" autocomplete="given-name"></div>
+            <div class="field"><label for="nom">Nom</label><input id="nom" data-k="contact.nom" autocomplete="family-name"></div>
+            <div class="field"><label for="tel">Téléphone</label><input id="tel" data-k="contact.tel" type="tel" autocomplete="tel" inputmode="tel"></div>
+            <div class="field"><label for="email">E-mail</label><input id="email" data-k="contact.email" type="email" autocomplete="email" inputmode="email"></div>
+          </div>
+          <div class="checks">
+            <label class="check"><input type="checkbox" data-k="contact.consent"> J'accepte que Cotalis me contacte au sujet de ce projet. Mes données ne sont jamais revendues.</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="step" data-step="resultat"><div class="report" id="report"></div></section>
+
+      <nav class="stepnav" id="stepnav">
+        <div class="right"><button type="button" class="btn" id="btn-prev">Retour</button><button type="button" class="btn" id="btn-restart" style="border:0;background:none;color:var(--ink-3)">Recommencer</button></div>
+        <div class="right"><p class="err hidden" id="err"></p><button type="button" class="btn primary" id="btn-next">Continuer</button></div>
+      </nav>
+    </div>
+
+    <aside class="result" id="panel">
+      <div class="empty" id="p-empty">Votre estimation apparaît ici au fil de vos réponses, et se précise à chaque étape.</div>
+      <div class="head hidden" id="p-head">
+        <div class="eyebrow" id="p-eyebrow">Estimation centrale · travaux TTC</div>
+        <div class="big num" id="p-central">—</div>
+        <div class="range">
+          <div class="track"><div class="band" id="p-band"></div><div class="pin mark" id="p-pin-low"></div><div class="pin" id="p-pin-mid"></div><div class="pin mark" id="p-pin-high"></div></div>
+          <div class="range-lbl"><span>Basse <b class="num" id="p-low">—</b></span><span>Haute <b class="num" id="p-high">—</b></span></div>
+        </div>
+      </div>
+      <button type="button" class="panel-toggle hidden" id="panel-toggle">Voir le détail</button>
+      <div id="p-body" class="hidden">
+        <div class="meta">
+          <div><div class="eyebrow">Coût au m²</div><div class="v num" id="p-m2">—</div></div>
+          <div><div class="eyebrow">Durée</div><div class="v num" id="p-duree">—</div></div>
+          <div><div class="eyebrow">Confiance</div><div class="v num" id="p-conf">—</div><div class="conf" id="p-conf-bar"><i></i></div></div>
+        </div>
+        <div class="ladder">
+          <table>
+            <tr><td>Coûts directs</td><td class="num" id="p-l-direct"></td></tr>
+            <tr class="sub"><td>Frais généraux et pilotage</td><td class="num" id="p-l-fg"></td></tr>
+            <tr class="sub"><td>Marge</td><td class="num" id="p-l-marge"></td></tr>
+            <tr class="sub"><td>Aléas <span id="p-l-alea-t"></span></td><td class="num" id="p-l-alea"></td></tr>
+            <tr class="total"><td>Total HT</td><td class="num" id="p-l-ht"></td></tr>
+            <tr class="sub"><td id="p-l-tva-t">TVA</td><td class="num" id="p-l-tva"></td></tr>
+            <tr class="ttc"><td>Total TTC</td><td class="num" id="p-l-ttc"></td></tr>
+          </table>
+        </div>
+        <div class="bylot"><div class="eyebrow" style="margin-bottom:8px">Par lot · HT hors aléas</div><div id="p-lots"></div></div>
+        <div class="tiles hidden" id="p-tiles"></div>
+        <div class="foot-note">Indicatif, hors visite technique. Le devis ferme est établi après validation par un chiffreur Cotalis.</div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="assets/js/catalog.js"></script>
+  <script src="assets/js/engine.js"></script>
+  <script src="assets/js/tunnel.js"></script>
+</body>
+</html>
