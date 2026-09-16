@@ -1,4 +1,4 @@
-/* Cotalis - référentiel travaux et paramètres du moteur.
+/* Cotalia - référentiel travaux et paramètres du moteur.
    Prix de référence HT, septembre 2026. Administrable : modifier ici, rien d'autre à toucher. */
 (function (root) {
   'use strict';
@@ -101,7 +101,7 @@
   const PIECES = { t1: 1, t2: 2, t3: 3, t4: 4, t5: 5, t6: 6 };
   const EAU_DEFAULT = { t1: 1, t2: 1, t3: 1, t4: 2, t5: 2, t6: 2 };
 
-  root.COTALIS = Object.assign(root.COTALIS || {}, {
+  root.COTALIA = Object.assign(root.COTALIA || {}, {
     CATALOG, ITEMS, PRESET, REGION, GAMME, PIECES, EAU_DEFAULT, zoneFromAddress,
     MARGE: 0.18,      // marge brute sur le prix HT hors aléas
     PILOTAGE: 0.03,   // pilotage de chantier, sur les coûts directs

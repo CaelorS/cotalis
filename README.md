@@ -1,4 +1,4 @@
-# Cotalis - site et estimateur travaux
+# Cotalia - site et estimateur travaux
 
 Site statique, sans outil de build : une page d'accueil (`index.html`) et un tunnel
 d'estimation en sept étapes (`estimation.html`). Tout se calcule dans le navigateur.
@@ -30,10 +30,10 @@ Trois options gratuites, toutes compatibles avec un site statique :
 1. **GitHub Pages** (le plus simple, aucune inscription supplémentaire)
    - Créer le dépôt et pousser :
      ```bash
-     gh repo create cotalis-site --private --source=. --push
+     gh repo create cotalia-site --private --source=. --push
      ```
    - Sur GitHub : Settings → Pages → Source « Deploy from a branch », branche `main`,
-     dossier `/ (root)`. Le site est en ligne sous `https://<compte>.github.io/cotalis-site/`
+     dossier `/ (root)`. Le site est en ligne sous `https://<compte>.github.io/cotalia-site/`
      au bout d'une minute. Un nom de domaine se branche dans la même page (champ « Custom domain »).
 2. **Netlify** : « Add new site → Import from Git », choisir le dépôt, aucune commande de build,
    dossier de publication `/`. Chaque `git push` redéploie.
@@ -68,7 +68,7 @@ d'estimation (ci-dessous).
    seconde avec `kind = 'rappel'`.
 
 Tant que `config.js` est vide, les demandes restent dans le navigateur du prospect
-(`localStorage`, clé `cotalis-leads`) et rien n'est envoyé.
+(`localStorage`, clé `cotalia-leads`) et rien n'est envoyé.
 
 ## Envoi de l'estimation par e-mail (à faire)
 

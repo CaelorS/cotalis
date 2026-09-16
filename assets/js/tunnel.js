@@ -1,9 +1,9 @@
-/* Cotalis - tunnel d'estimation : étapes, saisie, encadré d'estimation, rapport final, envoi de la demande. */
+/* Cotalia - tunnel d'estimation : étapes, saisie, encadré d'estimation, rapport final, envoi de la demande. */
 (function () {
   'use strict';
-  const C = window.COTALIS;
-  const CFG = window.COTALIS_CONFIG || {};
-  const STORE = 'cotalis-tunnel-v1';
+  const C = window.COTALIA;
+  const CFG = window.COTALIA_CONFIG || {};
+  const STORE = 'cotalia-tunnel-v1';
 
   const $ = id => document.getElementById(id);
   const eurF = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
@@ -334,7 +334,7 @@
       `Provision pour aléas de ${pct(R.alea, 0)} et fourchette de ±${pct(R.spread, 0)}, liées au score de confiance de ${R.score} / 100.`,
     ];
     $('report').innerHTML = `
-      <div class="print-brand"><svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><path d="M65,32.7 A30,30 0 1 0 65,71.3" fill="none" stroke="#2457A6" stroke-width="18"/><line x1="6" y1="18" x2="94" y2="18" stroke="#2457A6" stroke-width="5"/><line x1="2" y1="23" x2="10" y2="13" stroke="#E4B33B" stroke-width="4"/><line x1="90" y1="23" x2="98" y2="13" stroke="#E4B33B" stroke-width="4"/><rect x="78" y="18" width="8" height="70" fill="#2457A6"/></svg><b style="font-family:'Barlow Condensed',sans-serif;font-size:22px;letter-spacing:.12em">COTALIS</b><span style="color:#666;font-size:12px">Estimation indicative · n'est pas un devis</span></div>
+      <div class="print-brand"><svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><path d="M65,32.7 A30,30 0 1 0 65,71.3" fill="none" stroke="#2457A6" stroke-width="18"/><line x1="6" y1="18" x2="94" y2="18" stroke="#2457A6" stroke-width="5"/><line x1="2" y1="23" x2="10" y2="13" stroke="#E4B33B" stroke-width="4"/><line x1="90" y1="23" x2="98" y2="13" stroke="#E4B33B" stroke-width="4"/><rect x="78" y="18" width="8" height="70" fill="#2457A6"/></svg><b style="font-family:'Barlow Condensed',sans-serif;font-size:22px;letter-spacing:.12em">COTALIA</b><span style="color:#666;font-size:12px">Estimation indicative · n'est pas un devis</span></div>
       <div class="ok-note no-print">Merci ${esc(c.prenom)}, votre estimation est prête. Téléchargez-la en PDF ci-dessous ; une copie vous sera envoyée à ${esc(c.email)}.</div>
       <div class="rhead">
         <div><h2>Estimation travaux</h2><div class="who">Préparée pour ${esc(c.prenom)} ${esc(c.nom)} · ${date} · réf. <span class="num">${esc(S.ref)}</span></div></div>
@@ -364,7 +364,7 @@
       </div>
       <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Qté</th><th>Unité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody></table></div></div>
       ${fin ? `<div><div class="eyebrow" style="margin-bottom:8px">Analyse investisseur · projet complet</div><div class="tiles">${tilesHtml(R, false)}</div></div>
-      <div class="box"><h3>Synthèse pour la banque</h3><table class="kv">${bank.map(b => `<tr${b[2] ? ' class="total"' : ''}><td>${esc(b[0])}</td><td class="num">${esc(b[1])}</td></tr>`).join('')}</table><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Estimation indicative à distinguer du devis contractuel. Un courtier Cotalis reprend contact pour instruire le dossier.</p></div>` : ''}
+      <div class="box"><h3>Synthèse pour la banque</h3><table class="kv">${bank.map(b => `<tr${b[2] ? ' class="total"' : ''}><td>${esc(b[0])}</td><td class="num">${esc(b[1])}</td></tr>`).join('')}</table><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Estimation indicative à distinguer du devis contractuel. Un courtier Cotalia reprend contact pour instruire le dossier.</p></div>` : ''}
       <div class="two">
         <div class="box"><h3>Points de vigilance</h3><div class="alerts">${A.length ? A.map(a => `<div class="alert ${a[0]}"><i></i><div><b><span class="k">${{ crit: 'Bloquant', warn: 'À vérifier', info: 'Information', good: 'Avantage' }[a[0]]}</span>${esc(a[1])}</b>${esc(a[2])}</div></div>`).join('') : '<p style="color:var(--ink-3);margin:0">Aucune incohérence détectée.</p>'}</div></div>
         <div class="box"><h3>Hypothèses retenues</h3><ul class="plain">${hyp.map(h => `<li>${esc(h)}</li>`).join('')}</ul>
@@ -390,7 +390,7 @@
         <div class="stepc"><div class="display">Devis contractuel</div>Prix et délais fermes, écarts avec l'estimation expliqués ligne à ligne, signature et acompte.</div>
         <div class="stepc"><div class="display">Chantier suivi</div>Planning, jalons, appels de fonds, réception.</div>
       </div></div>
-      <p style="font-size:12.5px;color:var(--ink-3);margin:0;max-width:80ch">Prix de référence relevés en septembre 2026 sur des chantiers de rénovation locative. Les montants restent indicatifs tant qu'un devis signé ne les remplace pas. Document généré par Cotalis pour ${esc(c.prenom)} ${esc(c.nom)}, réf. ${esc(S.ref)}.</p>`;
+      <p style="font-size:12.5px;color:var(--ink-3);margin:0;max-width:80ch">Prix de référence relevés en septembre 2026 sur des chantiers de rénovation locative. Les montants restent indicatifs tant qu'un devis signé ne les remplace pas. Document généré par Cotalia pour ${esc(c.prenom)} ${esc(c.nom)}, réf. ${esc(S.ref)}.</p>`;
     $('btn-pdf').addEventListener('click', () => window.print());
     $('btn-edit').addEventListener('click', () => { S.step = 'travaux'; save(); showStep(); });
     $('btn-rappel').addEventListener('click', () => { S.rappel = true; save(); submitLead('rappel'); $('btn-rappel').textContent = 'Rappel demandé ✓'; });
@@ -410,7 +410,7 @@
   }
   async function submitLead(kind) {
     const lead = leadPayload(kind);
-    try { const all = JSON.parse(localStorage.getItem('cotalis-leads') || '[]'); all.push(Object.assign({ at: new Date().toISOString() }, lead)); localStorage.setItem('cotalis-leads', JSON.stringify(all.slice(-20))); } catch (e) {}
+    try { const all = JSON.parse(localStorage.getItem('cotalia-leads') || '[]'); all.push(Object.assign({ at: new Date().toISOString() }, lead)); localStorage.setItem('cotalia-leads', JSON.stringify(all.slice(-20))); } catch (e) {}
     if (!CFG.supabaseUrl || !CFG.supabaseAnonKey) return;
     try {
       const r = await fetch(CFG.supabaseUrl.replace(/\/$/, '') + '/rest/v1/leads', {
@@ -418,8 +418,8 @@
         headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseAnonKey, Authorization: 'Bearer ' + CFG.supabaseAnonKey, Prefer: 'return=minimal' },
         body: JSON.stringify(lead),
       });
-      if (r.ok) { S.leadSent = true; save(); } else console.warn('Cotalis : envoi refusé', r.status);
-    } catch (e) { console.warn('Cotalis : envoi impossible', e); }
+      if (r.ok) { S.leadSent = true; save(); } else console.warn('Cotalia : envoi refusé', r.status);
+    } catch (e) { console.warn('Cotalia : envoi impossible', e); }
   }
 
   /* ---------- démarrage ---------- */

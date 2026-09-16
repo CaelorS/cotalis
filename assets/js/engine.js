@@ -1,8 +1,8 @@
-/* Cotalis - moteur de chiffrage déterministe.
+/* Cotalia - moteur de chiffrage déterministe.
    Montant ouvrage HT = quantité × prix de référence × (part MO × coef. région × coef. complexité + part matériaux × coef. gamme). */
 (function (root) {
   'use strict';
-  const C = root.COTALIS;
+  const C = root.COTALIA;
 
   function ctxOf(S) {
     const units = S.kind === 'immeuble' ? Math.max(1, S.apts.length) : 1;
@@ -148,5 +148,5 @@
     return A;
   }
 
-  root.COTALIS = Object.assign(root.COTALIS, { compute, preselect, alerts, ctxOf, isAncien });
+  root.COTALIA = Object.assign(root.COTALIA, { compute, preselect, alerts, ctxOf, isAncien });
 })(window);
