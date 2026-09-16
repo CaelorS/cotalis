@@ -19,11 +19,11 @@
 
   function complexity(S) {
     const parts = []; let c = 1;
-    if (S.kind === 'appart' && !S.ascenseur && +S.etage >= 2) { const p = Math.min(0.10, 0.02 * (+S.etage - 1)); c += p; parts.push('étage sans ascenseur +' + Math.round(p * 100) + ' %'); }
-    if (S.kind === 'immeuble' && !S.ascenseur && +S.niveaux >= 3) { c += 0.04; parts.push('niveaux sans ascenseur +4 %'); }
+    if (S.kind === 'appart' && S.ascenseur === 'non' && +S.etage >= 2) { const p = Math.min(0.10, 0.02 * (+S.etage - 1)); c += p; parts.push('étage sans ascenseur +' + Math.round(p * 100) + ' %'); }
+    if (S.kind === 'immeuble' && S.ascenseur === 'non' && +S.niveaux >= 3) { c += 0.04; parts.push('niveaux sans ascenseur +4 %'); }
     if (S.annee && +S.annee < 1949) { c += 0.06; parts.push('bâti ancien +6 %'); }
-    if (S.occupe) { c += 0.05; parts.push('logement occupé +5 %'); }
-    if (S.acces) { c += 0.04; parts.push('accès difficile +4 %'); }
+    if (S.occupe === 'oui') { c += 0.05; parts.push('logement occupé +5 %'); }
+    if (S.acces === 'oui') { c += 0.04; parts.push('accès difficile +4 %'); }
     return { c, parts };
   }
 
@@ -55,8 +55,8 @@
     if (S.annee) score += 10;
     if (S.dpe) score += 10;
     if (S.etat) score += 10;
-    if (S.plans) score += 10;
-    if (S.visite) score += 20;
+    if (S.files && S.files.length) score += 10;
+    if (S.visite === 'oui') score += 20;
     score = Math.min(100, score);
 
     const alea = 0.05 + (100 - score) / 100 * 0.10 + (S.etat === 'degrade' || S.etat === 'total' ? 0.02 : 0);
@@ -84,12 +84,12 @@
       const notaire = prix * C.NOTAIRE;
       const meubles = (C.AMEUBLEMENT[S.strat] || 0) * ctx.surface;
       const total = prix + notaire + ttc + meubles;
-      const apport = total * (+S.apport || 0) / 100;
+      const apport = Math.min(total, +S.apport || 0);
       const emprunt = total - apport;
       const r = (+S.taux || 0) / 100 / 12, n = (+S.duree || 20) * 12;
       const mens = r ? emprunt * r / (1 - Math.pow(1 + r, -n)) : emprunt / n;
       const loyer = +S.loyer || 0;
-      const loyerNet = loyer * (1 - (+S.vacance || 0) / 100);
+      const loyerNet = loyer;
       const charges = +S.charges || 0;
       Object.assign(R, {
         prix, notaire, meubles, total, apport, emprunt, mens, loyer, loyerNet, charges,
@@ -130,16 +130,16 @@
     if (w.sdb && !w.plomb) A.push(['warn', 'Salle de bain sans reprise du réseau', 'Dans l\'ancien, les évacuations en plomb ou en fonte sont souvent à remplacer. Ajoutez « Réseau eau et évacuations à neuf » si leur état est inconnu.']);
     if (w.cuis && !w.elec && !w.tableau) A.push(['warn', 'Cuisine neuve sans électricité', 'Four, plaques et lave-vaisselle exigent des circuits spécialisés : une mise en sécurité ou en conformité est presque toujours nécessaire.']);
     if (w.mur_p) A.push(['warn', 'Mur porteur', 'Étude structure, accord de la copropriété et bureau de contrôle : 4 à 8 semaines de délai supplémentaire, déjà ajoutées à la durée.']);
-    if (S.copro && w.fen) A.push(['info', 'Fenêtres en copropriété', 'Le remplacement doit respecter le cahier des charges des façades ou obtenir un vote en assemblée générale.']);
-    if (S.kind === 'appart' && !S.ascenseur && +S.etage >= 2) A.push(['info', 'Logistique sans ascenseur', fmt(+S.etage) + 'ᵉ étage sans ascenseur : monte-matériaux ou portage manuel, majoration incluse dans le coefficient de complexité.']);
+    if (S.copro === 'oui' && w.fen) A.push(['info', 'Fenêtres en copropriété', 'Le remplacement doit respecter le cahier des charges des façades ou obtenir un vote en assemblée générale.']);
+    if (S.kind === 'appart' && S.ascenseur === 'non' && +S.etage >= 2) A.push(['info', 'Logistique sans ascenseur', fmt(+S.etage) + 'ᵉ étage sans ascenseur : monte-matériaux ou portage manuel, majoration incluse dans le coefficient de complexité.']);
     if (w.parq && w.strat) A.push(['warn', 'Deux revêtements sur la même surface', 'Parquet et stratifié sont tous deux retenus : corrigez les quantités pour éviter un double compte.']);
     if (w.ballon && w.thermo) A.push(['warn', 'Deux chauffe-eau', 'Chauffe-eau électrique et thermodynamique sont retenus ensemble. Un seul est nécessaire.']);
     if (w.elec && w.tableau) A.push(['warn', 'Électricité comptée deux fois', 'La mise en conformité complète comprend déjà le tableau. Retirez « Mise en sécurité seule ».']);
     if (R.share55 > 0 && R.ancien) A.push(['good', 'TVA réduite appliquée', Math.round(R.share55 * 100) + ' % des coûts directs relèvent de l\'amélioration énergétique à 5,5 %. Une attestation simplifiée signée sera demandée avec le devis.']);
-    if (!S.visite) A.push(['info', 'Score de confiance plafonné', 'Sans visite technique, la fourchette reste large. La visite fait passer le score au maximum et ouvre la voie au devis contractuel.']);
+    if (S.visite !== 'oui') A.push(['info', 'Score de confiance plafonné', 'Sans visite technique, la fourchette reste large. La visite fait passer le score au maximum et ouvre la voie au devis contractuel.']);
     if (S.finance === 'oui' && S.strat !== 'revente') {
       if (['paris', 'lyon', 'pc'].includes(S.zone) && R.ctx.surface && R.loyer / R.ctx.surface > 22) A.push(['warn', 'Encadrement des loyers', 'Loyer visé de ' + (R.loyer / R.ctx.surface).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' €/m² : Paris, Lyon, Villeurbanne et plusieurs communes de petite couronne encadrent les loyers. Vérifiez le plafond du secteur.']);
-      if (R.cf < 0) A.push(['info', 'Effort d\'épargne', 'Cash-flow négatif de ' + fmt(Math.abs(R.cf)) + ' € par mois avec ' + fmt(+S.apport) + ' % d\'apport. Un apport plus élevé, une durée plus longue ou une autre stratégie locative changent la donne.']);
+      if (R.cf < 0) A.push(['info', 'Effort d\'épargne', 'Cash-flow négatif de ' + fmt(Math.abs(R.cf)) + ' € par mois avec ' + fmt(+S.apport) + ' € d\'apport. Un apport plus élevé, une durée plus longue ou une autre stratégie locative changent la donne.']);
       if (R.endettement != null && R.endettement > 0.35) A.push(['warn', 'Endettement au-dessus de 35 %', 'Taux d\'endettement indicatif de ' + Math.round(R.endettement * 100) + ' % après projet, loyers retenus à 70 %. Nos financeurs regarderont l\'apport, le reste à vivre et le différé.']);
       if (S.strat === 'coloc' && R.ctx.pieces < 3) A.push(['warn', 'Colocation sur une petite typologie', 'Moins de trois pièces principales : le loyer de colocation visé est peut-être optimiste.']);
     }

@@ -1,9 +1,14 @@
-/* Cotalia - tunnel d'estimation : étapes, saisie, encadré d'estimation, rapport final, envoi de la demande. */
+/* Cotalia - tunnel d'estimation : étapes, saisie, encadré d'estimation, rapport final, partage, envoi des demandes. */
 (function () {
   'use strict';
   const C = window.COTALIA;
   const CFG = window.COTALIA_CONFIG || {};
-  const STORE = 'cotalia-tunnel-v1';
+  const STORE = 'cotalia-tunnel-v2';
+  const INDEX = 'cotalia-projects';
+  const BASE = (CFG.supabaseUrl || '').replace(/\/$/, '');
+  const KEY = CFG.supabaseAnonKey || '';
+  const hasDb = () => !!(BASE && KEY);
+  const hdr = () => ({ 'Content-Type': 'application/json', apikey: KEY, Authorization: 'Bearer ' + KEY });
 
   const $ = id => document.getElementById(id);
   const eurF = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
@@ -12,29 +17,49 @@
   const fmt = (v, d) => (+v || 0).toLocaleString('fr-FR', { maximumFractionDigits: d == null ? 0 : d });
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const clone = o => JSON.parse(JSON.stringify(o));
+  const rid = () => { const a = new Uint8Array(16); crypto.getRandomValues(a); return btoa(String.fromCharCode.apply(null, a)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
 
   const DEFAULT = {
-    kind: null, adresse: '', cp: '', ville: '', zone: 'moy', zoneAuto: true,
+    pid: '', token: '', kind: null, adresse: '', cp: '', ville: '', zone: 'moy', zoneAuto: true,
     type: 't3', nbapts: 3, apts: [], surface: '', eau: 1, etage: '', niveaux: '', annee: '', dpe: '', etat: '',
-    ascenseur: false, copro: false, occupe: false, acces: false, plans: false, visite: false,
-    gamme: 'std', stade: 'etude', demarrage: '3',
+    ascenseur: '', copro: '', occupe: '', acces: '', visite: '', files: [],
+    gamme: 'std', stade: '', demarrage: '',
     works: {}, qty: {}, worksTouched: false,
-    finance: null, prix: '', strat: 'meuble', loyer: '', loyerAuto: true, charges: '', apport: 15, taux: 3.35, duree: 25, vacance: 5,
+    finance: null, prix: '', strat: 'meuble', loyer: '', loyerAuto: true, charges: '', apport: '', apportAuto: true, taux: 3.35, duree: 25,
     situation: { statut: '', revenus: '', credits: '', apportDispo: '', proprietaire: '' },
     contact: { prenom: '', nom: '', tel: '', email: '', consent: false },
-    step: 'kind', ref: '', leadSent: false, rappel: false,
+    step: 'kind', maxIdx: 0, ref: '', leadSubmitted: false, leadSent: false, rappel: false, savedAt: '',
   };
-  let S = load() || clone(DEFAULT);
+  let S = load() || newState();
+  let viewer = false;
 
-  function load() { try { const r = localStorage.getItem(STORE); return r ? Object.assign(clone(DEFAULT), JSON.parse(r)) : null; } catch (e) { return null; } }
-  function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }
+  function newState() { const s = clone(DEFAULT); s.pid = rid(); s.token = rid(); return s; }
+  function load() { try { const r = localStorage.getItem(STORE); if (!r) return null; const s = Object.assign(clone(DEFAULT), JSON.parse(r)); if (!s.pid) { s.pid = rid(); s.token = rid(); } return s; } catch (e) { return null; } }
+  function save() { if (viewer) return; try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} updateIndex(); }
   function getPath(p) { return p.split('.').reduce((o, k) => (o == null ? undefined : o[k]), S); }
   function setPath(p, v) { const ks = p.split('.'); let o = S; for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = v; }
 
+  /* ---------- historique des projets (localStorage) ---------- */
+  function loadIndex() { try { return JSON.parse(localStorage.getItem(INDEX) || '[]'); } catch (e) { return []; } }
+  function updateIndex() {
+    if (!S.kind || !S.pid) return;
+    const idx = loadIndex();
+    const R = ready() ? C.compute(S) : null;
+    const label = KIND[S.kind] + (S.ville ? ' · ' + S.ville : (S.adresse ? ' · ' + S.adresse : '')) + (S.surface ? ' · ' + fmt(S.surface) + ' m²' : '');
+    const e = { pid: S.pid, token: S.token, at: new Date().toISOString(), label, ttc: R ? Math.round(R.ttc) : null, done: S.maxIdx >= 6 };
+    const i = idx.findIndex(x => x.pid === S.pid);
+    if (i >= 0) idx[i] = Object.assign(idx[i], e); else { e.created = e.at; idx.unshift(e); }
+    try { localStorage.setItem(INDEX, JSON.stringify(idx.slice(0, 20))); } catch (err) {}
+  }
+
   /* ---------- étapes ---------- */
-  const PROGRESS = ['Bien', 'Descriptif', 'Finition', 'Travaux', 'Financement', 'Coordonnées', 'Estimation'];
-  const LABEL = { kind: 'Bien', bien: 'Descriptif', finition: 'Finition', travaux: 'Travaux', financeQ: 'Financement', acquisition: 'Financement', situation: 'Financement', contact: 'Coordonnées', resultat: 'Estimation' };
+  const PROGRESS = [['Bien', 'kind'], ['Descriptif', 'bien'], ['Finition', 'finition'], ['Travaux', 'travaux'], ['Financement', 'financeQ'], ['Coordonnées', 'contact'], ['Estimation', 'resultat']];
+  const LABEL = { kind: 0, bien: 1, finition: 2, travaux: 3, financeQ: 4, acquisition: 4, situation: 4, contact: 5, resultat: 6 };
   const NEXT_LABEL = { kind: 'Continuer', bien: 'Continuer', finition: 'Voir mes travaux', travaux: 'Valider mes travaux', financeQ: 'Continuer', acquisition: 'Continuer', situation: 'Continuer', contact: 'Voir mon estimation' };
+  const KIND = { appart: 'Appartement', maison: 'Maison', immeuble: 'Immeuble' };
+  const STADE = { etude: 'en étude', compromis: 'sous compromis', acte: 'acte signé' };
+  const STRAT = { nue: 'location nue', meuble: 'meublé (LMNP)', coloc: 'colocation meublée', revente: 'revente après travaux' };
+  const TRI = { oui: 'oui', non: 'non', '': 'non renseigné', plan: 'à planifier' };
 
   function stepList() {
     const s = ['kind', 'bien', 'finition', 'travaux', 'financeQ'];
@@ -46,21 +71,22 @@
   function showStep() {
     const list = stepList();
     if (!list.includes(S.step)) S.step = 'kind';
+    const cur = LABEL[S.step];
+    if (!viewer) S.maxIdx = Math.max(S.maxIdx || 0, cur);
     document.querySelectorAll('.step').forEach(el => el.classList.toggle('active', el.dataset.step === S.step));
     document.querySelectorAll('[data-only]').forEach(el => el.classList.toggle('hidden', !el.dataset.only.split(' ').includes(S.kind || '')));
     $('surface-label').textContent = S.kind === 'immeuble' ? 'Surface habitable totale' : 'Surface habitable';
 
     const idx = list.indexOf(S.step);
-    const cur = PROGRESS.indexOf(LABEL[S.step]);
-    $('progress').innerHTML = PROGRESS.map((p, i) => `<li class="${i < cur ? 'done' : i === cur ? 'now' : ''}">${p}</li>`).join('');
+    $('progress').innerHTML = PROGRESS.map((p, i) => `<li class="${i < cur ? 'done' : i === cur ? 'now' : ''}"><button type="button" data-go="${p[1]}" ${i <= S.maxIdx ? '' : 'disabled'} aria-current="${i === cur ? 'step' : 'false'}">${p[0]}</button></li>`).join('');
     $('pct').textContent = S.step === 'resultat' ? 'Estimation prête' : 'Étape ' + (idx + 1) + ' sur ' + list.length + ' · ' + Math.round(idx / (list.length - 1) * 100) + ' %';
 
-    const nav = $('stepnav');
-    nav.classList.toggle('hidden', S.step === 'resultat');
+    $('stepnav').classList.toggle('hidden', S.step === 'resultat' || viewer);
+    $('progress-wrap').classList.toggle('hidden', viewer);
     $('btn-prev').classList.toggle('hidden', idx === 0);
     $('btn-next').textContent = NEXT_LABEL[S.step] || 'Continuer';
     $('err').classList.add('hidden');
-    $('panel').classList.toggle('hidden', S.step === 'resultat');
+    $('panel').classList.toggle('hidden', S.step === 'resultat' || viewer);
 
     if (S.step === 'travaux') renderLots();
     if (S.step === 'resultat') renderReport();
@@ -78,8 +104,13 @@
         if (!S.adresse.trim()) return 'Indiquez l\'adresse du bien, même approximative : elle fixe la zone de prix.';
         if (!(+S.surface > 0)) return 'La surface habitable est indispensable pour proposer des quantités.';
         if (S.kind === 'immeuble' && !(+S.nbapts >= 2)) return 'Un immeuble compte au moins deux appartements.';
+        if (S.files.some(f => f.pending)) return 'Un fichier est encore en cours d\'envoi, patientez quelques secondes.';
         return null;
-      case 'finition': return S.gamme ? null : 'Choisissez un niveau de finition.';
+      case 'finition':
+        if (!S.gamme) return 'Choisissez un niveau de finition.';
+        if (!S.stade) return 'Dites-nous où en est votre projet.';
+        if (!S.demarrage) return 'Indiquez le démarrage souhaité des travaux.';
+        return null;
       case 'travaux': return Object.keys(S.works).some(k => S.works[k]) ? null : 'Cochez au moins un ouvrage.';
       case 'financeQ': return S.finance ? null : 'Dites-nous si vous souhaitez un accompagnement pour le financement.';
       case 'acquisition':
@@ -100,7 +131,7 @@
     const err = validate();
     if (err) { $('err').textContent = err; $('err').classList.remove('hidden'); return; }
     if (S.step === 'bien' && !S.worksTouched) S.works = C.preselect(S);
-    if (S.step === 'contact') { ensureRef(); submitLead(); }
+    if (S.step === 'contact') { ensureRef(); if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); } saveProject(); }
     const list = stepList();
     S.step = list[Math.min(list.length - 1, list.indexOf(S.step) + 1)];
     save(); showStep();
@@ -110,6 +141,11 @@
     S.step = list[Math.max(0, list.indexOf(S.step) - 1)];
     save(); showStep();
   }
+  function goTo(step) {
+    if (LABEL[step] > (S.maxIdx || 0)) return;
+    if (step === 'resultat' && S.maxIdx < 6) return;
+    S.step = step; save(); showStep();
+  }
 
   /* ---------- formulaire ---------- */
   function fillForm() {
@@ -118,11 +154,12 @@
       if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : v;
     });
     document.querySelectorAll('.choice').forEach(b => b.classList.toggle('selected', getPath(b.dataset.choice) === b.dataset.value));
+    document.querySelectorAll('.seg').forEach(seg => { const v = String(S[seg.dataset.seg] == null ? '' : S[seg.dataset.seg]); seg.querySelectorAll('button').forEach(b => b.classList.toggle('selected', b.dataset.v === v)); });
     const z = $('zone');
     z.innerHTML = Object.keys(C.REGION).map(k => `<option value="${k}">${esc(C.REGION[k][1].charAt(0).toUpperCase() + C.REGION[k][1].slice(1))}</option>`).join('');
     z.value = S.zone;
     $('zone-hint').textContent = S.zoneAuto && S.ville ? 'déduite de ' + S.ville : (S.zoneAuto ? 'déduite de l\'adresse' : 'choisie manuellement');
-    renderApts();
+    renderApts(); renderFiles();
   }
 
   function syncApts() {
@@ -133,7 +170,7 @@
   function renderApts() {
     if (S.kind !== 'immeuble') return;
     syncApts();
-    $('apts').innerHTML = S.apts.map((a, i) => `<div class="field"><label for="apt-${i}">Appartement ${i + 1}</label><select id="apt-${i}" data-apt="${i}"><option value="t1"${a.type === 't1' ? ' selected' : ''}>Studio / T1</option><option value="t2"${a.type === 't2' ? ' selected' : ''}>T2</option><option value="t3"${a.type === 't3' ? ' selected' : ''}>T3</option><option value="t4"${a.type === 't4' ? ' selected' : ''}>T4</option><option value="t5"${a.type === 't5' ? ' selected' : ''}>T5 et plus</option></select></div>`).join('');
+    $('apts').innerHTML = S.apts.map((a, i) => `<div class="field"><label for="apt-${i}">Appartement ${i + 1}</label><select id="apt-${i}" data-apt="${i}">${['t1', 't2', 't3', 't4', 't5'].map(t => `<option value="${t}"${a.type === t ? ' selected' : ''}>${t === 't1' ? 'Studio / T1' : t === 't5' ? 'T5 et plus' : t.toUpperCase()}</option>`).join('')}</select></div>`).join('');
   }
   function defaultEau() {
     if (S.kind === 'immeuble') { syncApts(); return S.apts.reduce((n, a) => n + (C.EAU_DEFAULT[a.type] || 1), 0); }
@@ -154,10 +191,10 @@
       if (k === 'nbapts') { renderApts(); S.eau = defaultEau(); $('eau').value = S.eau; S.qty = {}; }
       if (k === 'surface' || k === 'eau') S.qty = {};
       if ((k === 'etat' || k === 'dpe') && !S.worksTouched) S.works = C.preselect(S);
-      if (k === 'strat' || (k === 'surface' && S.loyerAuto)) {
-        if (S.loyerAuto && +S.surface) { S.loyer = Math.round((C.LOYER_M2[S.strat] || 0) * +S.surface / 10) * 10; $('loyer').value = S.loyer || ''; }
-      }
+      if ((k === 'strat' || k === 'surface') && S.loyerAuto && +S.surface) { S.loyer = Math.round((C.LOYER_M2[S.strat] || 0) * +S.surface / 10) * 10; $('loyer').value = S.loyer || ''; }
       if (k === 'loyer') S.loyerAuto = el.value === '';
+      if (k === 'prix' && S.apportAuto) { S.apport = +S.prix ? Math.round(+S.prix * 0.1 / 1000) * 1000 : ''; $('apport').value = S.apport; }
+      if (k === 'apport') S.apportAuto = el.value === '';
     } else if (el.dataset.w) {
       S.works[el.dataset.w] = el.checked ? 1 : 0; S.worksTouched = true;
     } else if (el.dataset.q) {
@@ -169,7 +206,18 @@
     if (S.step === 'travaux') updateLots();
   }
 
-  function onChoice(e) {
+  function onClick(e) {
+    const go = e.target.closest('[data-go]');
+    if (go && !go.disabled) { goTo(go.dataset.go); return; }
+    const segBtn = e.target.closest('.seg button');
+    if (segBtn) {
+      const seg = segBtn.closest('.seg'), k = seg.dataset.seg;
+      S[k] = segBtn.dataset.v;
+      seg.querySelectorAll('button').forEach(b => b.classList.toggle('selected', b === segBtn));
+      save(); renderPanel(); return;
+    }
+    const rm = e.target.closest('[data-rm]');
+    if (rm) { S.files.splice(+rm.dataset.rm, 1); save(); renderFiles(); renderPanel(); return; }
     const b = e.target.closest('.choice'); if (!b) return;
     const k = b.dataset.choice, v = b.dataset.value;
     setPath(k, v);
@@ -207,6 +255,34 @@
     $('zone-hint').textContent = S.zoneAuto ? 'déduite de ' + S.ville : 'choisie manuellement';
     hideSuggest(); save(); renderPanel();
   }
+
+  /* ---------- plans et photos ---------- */
+  const MAX_FILES = 12, MAX_SIZE = 15 * 1024 * 1024;
+  const OK_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'];
+  function renderFiles() {
+    $('files').innerHTML = S.files.map((f, i) => `<li><span class="fname">${esc(f.name)}</span><span class="fmeta">${f.pending ? 'envoi…' : f.error ? 'échec de l\'envoi' : f.local ? 'sur cet appareil' : (f.size / 1024 / 1024).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' Mo'}</span><button type="button" data-rm="${i}" aria-label="Retirer ${esc(f.name)}">×</button></li>`).join('');
+  }
+  async function addFiles(list) {
+    const files = Array.from(list || []);
+    for (const file of files) {
+      if (S.files.length >= MAX_FILES) { flashErr('12 fichiers maximum.'); break; }
+      if (!OK_TYPES.includes(file.type) && !/\.(jpe?g|png|webp|heic|pdf)$/i.test(file.name)) { flashErr(file.name + ' : format non pris en charge (JPG, PNG, WEBP, HEIC ou PDF).'); continue; }
+      if (file.size > MAX_SIZE) { flashErr(file.name + ' dépasse 15 Mo.'); continue; }
+      const entry = { name: file.name, size: file.size, type: file.type, pending: hasDb(), local: !hasDb() };
+      S.files.push(entry); renderFiles(); save(); renderPanel();
+      if (hasDb()) {
+        try {
+          const safe = file.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-80);
+          const path = S.pid + '/' + Date.now() + '-' + safe;
+          const r = await fetch(BASE + '/storage/v1/object/plans/' + path.split('/').map(encodeURIComponent).join('/'), { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'false' }, body: file });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          entry.path = path;
+        } catch (e) { entry.error = true; console.warn('Cotalia : envoi du fichier impossible', e); }
+        delete entry.pending; renderFiles(); save();
+      }
+    }
+  }
+  function flashErr(msg) { $('err').textContent = msg; $('err').classList.remove('hidden'); }
 
   /* ---------- tableau des travaux ---------- */
   let lotsBuilt = false;
@@ -264,9 +340,6 @@
     const lab = R.score < 50 ? 'faible' : R.score < 70 ? 'moyenne' : R.score < 85 ? 'bonne' : 'élevée';
     $('p-conf').innerHTML = R.score + '<small> / 100 · ' + lab + '</small>';
     const cb = $('p-conf-bar'); cb.className = 'conf' + (R.score < 50 ? ' c' : R.score < 70 ? ' w' : ''); cb.firstElementChild.style.width = R.score + '%';
-    $('p-l-direct').textContent = eur(R.direct); $('p-l-fg').textContent = eur(R.fg); $('p-l-marge').textContent = eur(R.marge);
-    $('p-l-alea-t').textContent = '(' + pct(R.alea, 0) + ')'; $('p-l-alea').textContent = eur(R.aleaAmt);
-    $('p-l-ht').textContent = eur(R.ht); $('p-l-tva-t').textContent = tvaLabel(R); $('p-l-tva').textContent = eur(R.tva); $('p-l-ttc').textContent = eur(R.ttc);
     const arr = Object.entries(R.lots).sort((a, b) => b[1] - a[1]); const max = arr.length ? arr[0][1] : 1;
     $('p-lots').innerHTML = arr.map(([n, v]) => `<div class="row"><span class="n" title="${esc(n)}">${esc(n)}</span><span class="bar"><i style="width:${(v / max * 100).toFixed(1)}%"></i></span><span class="v num">${eur(v)}<small>${pct(v / R.direct, 0)}</small></span></div>`).join('');
     const fin = S.finance === 'oui' && R.total > 0;
@@ -275,15 +348,18 @@
   }
   function tvaLabel(R) { return 'TVA ' + (R.ancien ? (R.share55 > 0 ? '10 % et 5,5 % (moy. ' + pct(R.tvaRate) + ')' : '10 %') : '20 % (logement de moins de 2 ans)'); }
   function tilesHtml(R, compact) {
-    const t = [['Coût total du projet', eur(R.total), 'bien + notaire + travaux + ameublement']];
-    if (S.strat !== 'revente') {
+    const t = [];
+    const fin = S.finance === 'oui' && R.total > 0;
+    if (fin) t.push(['Coût total du projet', eur(R.total), 'bien + notaire + travaux + ameublement']);
+    if (!compact) { t.push(['Travaux estimés', eur(R.ttc), 'TTC, estimation centrale']); t.push(['Travaux au m²', fmt(R.ttc / R.ctx.surface) + ' €', 'TTC']); t.push(['Durée probable', R.weeks + ' sem.', 'chantier']); }
+    if (fin && S.strat !== 'revente') {
       t.push(['Rendement brut', pct(R.brut), 'loyer annuel / coût total']);
-      if (!compact) t.push(['Rendement net', pct(R.net), 'après vacance et charges']);
+      if (!compact) t.push(['Rendement net', pct(R.net), 'après charges et taxe foncière']);
       t.push(['Mensualité', eur(R.mens), fmt(S.duree) + ' ans à ' + fmt(S.taux, 2) + ' %']);
       t.push(['Cash-flow mensuel', (R.cf >= 0 ? '+' : '') + eur(R.cf), R.cf >= 0 ? 'après mensualité et charges' : 'effort d\'épargne', R.cf >= 0 ? 'pos' : 'neg']);
       if (!compact) t.push(['Taux d\'effort', pct(R.effort, 0), 'mensualité / loyer']);
       if (!compact && R.endettement != null) t.push(['Endettement après projet', pct(R.endettement, 0), 'loyers retenus à 70 %', R.endettement > 0.35 ? 'neg' : '']);
-    } else {
+    } else if (fin) {
       t.push(['Mensualité', eur(R.mens), 'pendant les travaux']);
       t.push(['Revente à l\'équilibre', eur(R.total * 1.08), 'coût total + 8 % de frais de sortie']);
     }
@@ -294,21 +370,21 @@
   function ensureRef() {
     if (S.ref) return;
     const d = new Date(), y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), j = String(d.getDate()).padStart(2, '0');
-    let h = 0; const s = S.contact.email + d.getTime(); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-    S.ref = 'COT-' + y + m + j + '-' + h.toString(36).toUpperCase().slice(0, 4).padStart(4, '0');
+    S.ref = 'COT-' + y + m + j + '-' + S.pid.replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase();
   }
-  const KIND = { appart: 'Appartement', maison: 'Maison', immeuble: 'Immeuble' };
-  const STADE = { etude: 'en étude', compromis: 'sous compromis', acte: 'acte signé' };
-  const STRAT = { nue: 'location nue', meuble: 'meublé (LMNP)', coloc: 'colocation meublée', revente: 'revente après travaux' };
 
   function renderReport() {
     const R = C.compute(S), A = C.alerts(S, R), c = S.contact;
-    const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const date = new Date(S.savedAt || Date.now()).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
     const typo = S.kind === 'immeuble' ? S.apts.length + ' appartements (' + S.apts.map(a => a.type.toUpperCase()).join(', ') + ')' : S.type.toUpperCase().replace('T1', 'Studio / T1');
+    const etatSel = $('etat').querySelector(`option[value="${S.etat}"]`);
     const bien = [
       ['Type de bien', KIND[S.kind]], ['Adresse', S.adresse], ['Zone de prix', C.REGION[S.zone][1]], ['Surface habitable', fmt(S.surface) + ' m²'], ['Typologie', typo],
-      ['Pièces d\'eau', fmt(R.ctx.eau)], S.kind === 'appart' ? ['Étage', S.etage === '' ? 'non renseigné' : (S.etage > 0 ? fmt(S.etage) + 'ᵉ' + (S.ascenseur ? ', avec ascenseur' : ', sans ascenseur') : 'rez-de-chaussée')] : null,
-      ['Année de construction', S.annee || 'inconnue'], ['DPE', S.dpe || 'inconnu'], ['État général', $('etat').selectedOptions[0] ? $('etat').selectedOptions[0].textContent : ''],
+      ['Pièces d\'eau', fmt(R.ctx.eau)],
+      S.kind === 'appart' ? ['Étage', S.etage === '' ? 'non renseigné' : (S.etage > 0 ? fmt(S.etage) + 'ᵉ' + (S.ascenseur === 'oui' ? ', avec ascenseur' : S.ascenseur === 'non' ? ', sans ascenseur' : '') : 'rez-de-chaussée')] : null,
+      ['Année de construction', S.annee || 'inconnue'], ['DPE', S.dpe || 'inconnu'], ['État général', etatSel ? etatSel.textContent : 'non renseigné'],
+      ['Occupé pendant les travaux', TRI[S.occupe]], ['Accès difficile', TRI[S.acces]], ['Visite technique', S.visite === 'oui' ? 'déjà réalisée' : S.visite === 'plan' ? 'à planifier' : 'pas encore'],
+      ['Plans et photos', S.files.length ? S.files.length + ' fichier' + (S.files.length > 1 ? 's' : '') : 'aucun'],
       ['Finition', C.GAMME[S.gamme][1]], ['Projet', STADE[S.stade] + ', démarrage souhaité sous ' + S.demarrage + ' mois'],
     ].filter(Boolean);
     const devisRows = C.CATALOG.map(l => {
@@ -320,51 +396,52 @@
     const bank = fin ? [
       ['Prix d\'acquisition', eur(R.prix)], ['Frais de notaire (' + pct(C.NOTAIRE) + ', ancien)', eur(R.notaire)], ['Travaux estimés, centrale TTC', eur(R.ttc)],
       ['Fourchette travaux', eur(R.low) + ' à ' + eur(R.high)], ['Ameublement locatif', eur(R.meubles)], ['Coût total du projet', eur(R.total), 1],
-      ['Apport (' + fmt(S.apport) + ' %)', eur(R.apport)], ['Montant à financer', eur(R.emprunt)], ['Mensualité estimée', eur(R.mens) + ' / mois'],
+      ['Apport', eur(R.apport)], ['Montant à financer', eur(R.emprunt)], ['Mensualité estimée', eur(R.mens) + ' / mois'],
       S.strat !== 'revente' ? ['Loyer prévisionnel hors charges', eur(R.loyer) + ' / mois'] : null,
       ['Stratégie', STRAT[S.strat]], ['Durée prévisionnelle des travaux', R.weeks + ' semaines'],
     ].filter(Boolean) : [];
     const hyp = [
       `${KIND[S.kind]} de ${fmt(S.surface)} m², ${typo}, ${fmt(R.ctx.eau)} pièce${R.ctx.eau > 1 ? 's' : ''} d'eau.`,
-      `Prix de référence ${C.REGION[S.zone][1]}, finition ${C.GAMME[S.gamme][1]}, coefficient de complexité ${R.cCx.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}${R.cxParts.length ? ' (' + R.cxParts.join(', ') + ')' : ''}.`,
-      S.occupe ? 'Logement occupé : interventions par phases, protection des lieux, majoration incluse.' : 'Logement vide pendant toute la durée du chantier.',
+      `Prix de référence ${C.REGION[S.zone][1]}, finition ${C.GAMME[S.gamme][1]}${R.cxParts.length ? ', majorations : ' + R.cxParts.join(', ') : ''}.`,
+      S.occupe === 'oui' ? 'Logement occupé : interventions par phases, protection des lieux, majoration incluse.' : 'Logement supposé vide pendant toute la durée du chantier.',
       R.ancien ? 'Logement achevé depuis plus de deux ans : TVA à 10 %, à 5,5 % pour les travaux d\'amélioration énergétique sur attestation.' : 'Logement de moins de deux ans : TVA à 20 % sur l\'ensemble.',
       'Réseaux existants supposés réutilisables sauf ouvrages retenus ; structure et planchers supposés sains.',
-      S.visite ? 'Visite technique réalisée : métrés et réseaux vérifiés sur place.' : 'Aucune visite technique : quantités déduites de la surface et de la typologie.',
-      `Provision pour aléas de ${pct(R.alea, 0)} et fourchette de ±${pct(R.spread, 0)}, liées au score de confiance de ${R.score} / 100.`,
+      S.visite === 'oui' ? 'Visite technique réalisée : métrés et réseaux vérifiés sur place.' : 'Aucune visite technique : quantités déduites de la surface et de la typologie.',
+      `Fourchette de ±${pct(R.spread, 0)} liée au score de confiance de ${R.score} / 100.`,
     ];
+    const who = viewer ? `Estimation partagée par ${esc(c.prenom)} ${esc(c.nom)}` : `Préparée pour ${esc(c.prenom)} ${esc(c.nom)}`;
     $('report').innerHTML = `
-      <div class="print-brand"><svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><rect x="4" y="8" width="92" height="13" fill="#7FA8E8" opacity="0.28"/><rect x="79" y="21" width="13" height="72" fill="#7FA8E8" opacity="0.28"/><rect x="4" y="8" width="92" height="13" fill="none" stroke="#7FA8E8" stroke-width="1"/><rect x="79" y="21" width="13" height="72" fill="none" stroke="#7FA8E8" stroke-width="1"/><line x1="8" y1="21" x2="8" y2="15" stroke="#7FA8E8" stroke-width="0.9"/><line x1="12" y1="21" x2="12" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="16" y1="21" x2="16" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="20" y1="21" x2="20" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="24" y1="21" x2="24" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="28" y1="21" x2="28" y2="15" stroke="#7FA8E8" stroke-width="0.9"/><line x1="32" y1="21" x2="32" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="36" y1="21" x2="36" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="40" y1="21" x2="40" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="44" y1="21" x2="44" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="48" y1="21" x2="48" y2="15" stroke="#7FA8E8" stroke-width="0.9"/><line x1="52" y1="21" x2="52" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="56" y1="21" x2="56" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="60" y1="21" x2="60" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="64" y1="21" x2="64" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="68" y1="21" x2="68" y2="15" stroke="#7FA8E8" stroke-width="0.9"/><line x1="72" y1="21" x2="72" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="76" y1="21" x2="76" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="80" y1="21" x2="80" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="84" y1="21" x2="84" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="88" y1="21" x2="88" y2="15" stroke="#7FA8E8" stroke-width="0.9"/><line x1="92" y1="21" x2="92" y2="18" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="26" x2="85" y2="26" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="30" x2="82" y2="30" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="34" x2="82" y2="34" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="38" x2="82" y2="38" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="42" x2="82" y2="42" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="46" x2="85" y2="46" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="50" x2="82" y2="50" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="54" x2="82" y2="54" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="58" x2="82" y2="58" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="62" x2="82" y2="62" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="66" x2="85" y2="66" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="70" x2="82" y2="70" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="74" x2="82" y2="74" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="78" x2="82" y2="78" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="82" x2="82" y2="82" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="86" x2="85" y2="86" stroke="#7FA8E8" stroke-width="0.9"/><line x1="79" y1="90" x2="82" y2="90" stroke="#7FA8E8" stroke-width="0.9"/><rect x="56" y="8" width="36" height="4" fill="#E4B33B"/><rect x="88" y="58" width="4" height="35" fill="#E4B33B"/><path d="M65,32.7 A30,30 0 1 0 65,71.3" fill="none" stroke="#2457A6" stroke-width="18"/></svg><b style="font-family:'Barlow Condensed',sans-serif;font-size:22px;letter-spacing:.12em">COTALIA</b><span style="color:#666;font-size:12px">Estimation indicative · n'est pas un devis</span></div>
-      <div class="ok-note no-print">Merci ${esc(c.prenom)}, votre estimation est prête. Téléchargez-la en PDF ci-dessous ; une copie vous sera envoyée à ${esc(c.email)}.</div>
+      <div class="print-brand"><svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><rect x="4" y="8" width="92" height="13" fill="#7FA8E8" opacity="0.28"/><rect x="79" y="21" width="13" height="72" fill="#7FA8E8" opacity="0.28"/><rect x="56" y="8" width="36" height="4" fill="#E4B33B"/><rect x="88" y="58" width="4" height="35" fill="#E4B33B"/><path d="M65,32.7 A30,30 0 1 0 65,71.3" fill="none" stroke="#2457A6" stroke-width="18"/></svg><b style="font-family:'Barlow Condensed',sans-serif;font-size:22px;letter-spacing:.12em">COTALIA</b><span style="color:#666;font-size:12px">Estimation indicative · n'est pas un devis</span></div>
+      ${viewer ? `<div class="ok-note no-print">Vous consultez une estimation partagée. <a href="estimation.html?new=1">Faire ma propre estimation</a></div>` : `<div class="ok-note no-print">Merci ${esc(c.prenom)}, votre estimation est prête. Téléchargez-la en PDF ci-dessous ; une copie vous sera envoyée à ${esc(c.email)}.</div>`}
       <div class="rhead">
-        <div><h2>Estimation travaux</h2><div class="who">Préparée pour ${esc(c.prenom)} ${esc(c.nom)} · ${date} · réf. <span class="num">${esc(S.ref)}</span></div></div>
-        <div class="actions"><button type="button" class="btn primary" id="btn-pdf">Télécharger le PDF</button><button type="button" class="btn" id="btn-edit">Modifier mes réponses</button><button type="button" class="btn" id="btn-rappel">${S.rappel ? 'Rappel demandé ✓' : 'Être rappelé pour une visite technique'}</button></div>
+        <div><h2>Estimation travaux</h2><div class="who">${who} · ${date} · réf. <span class="num">${esc(S.ref)}</span></div></div>
+        <div class="actions"><button type="button" class="btn primary" id="btn-pdf">Télécharger le PDF</button><button type="button" class="btn" id="btn-share">Partager mon projet</button>${viewer ? '' : `<button type="button" class="btn" id="btn-edit">Modifier mes réponses</button><button type="button" class="btn" id="btn-rappel">${S.rappel ? 'Rappel demandé ✓' : 'Être rappelé pour une visite technique'}</button>`}</div>
       </div>
       <div class="two">
         <div class="box"><h3>Le bien</h3><table class="kv">${bien.map(b => `<tr><td>${esc(b[0])}</td><td>${esc(b[1])}</td></tr>`).join('')}</table></div>
-        <div class="box">
-          <h3>Estimation</h3>
-          <div class="eyebrow">Estimation centrale · travaux TTC</div>
-          <div class="big num">${eur(R.ttc)}<small>TTC</small></div>
-          <div class="range"><div class="track"><div class="band" style="left:${(R.low / (R.high * 1.08) * 100).toFixed(1)}%;width:${((R.high - R.low) / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin mark" style="left:${(R.low / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin" style="left:${(R.ttc / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin mark" style="left:${(R.high / (R.high * 1.08) * 100).toFixed(1)}%"></div></div>
-          <div class="range-lbl"><span>Basse <b class="num">${eur(R.low)}</b></span><span>Haute <b class="num">${eur(R.high)}</b></span></div></div>
-          <table class="kv" style="margin-top:12px">
+        <div class="box"><h3>Résumé du projet</h3><div class="tiles inbox">${tilesHtml(R, false)}</div></div>
+      </div>
+      <div class="box">
+        <h3>Estimation des travaux</h3>
+        <div class="two">
+          <div>
+            <div class="eyebrow">Estimation centrale · travaux TTC</div>
+            <div class="big num">${eur(R.ttc)}<small>TTC</small></div>
+            <div class="range"><div class="track"><div class="band" style="left:${(R.low / (R.high * 1.08) * 100).toFixed(1)}%;width:${((R.high - R.low) / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin mark" style="left:${(R.low / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin" style="left:${(R.ttc / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin mark" style="left:${(R.high / (R.high * 1.08) * 100).toFixed(1)}%"></div></div>
+            <div class="range-lbl"><span>Basse <b class="num">${eur(R.low)}</b></span><span>Haute <b class="num">${eur(R.high)}</b></span></div></div>
+          </div>
+          <table class="kv">
             <tr><td>Coût au m²</td><td class="num">${fmt(R.ttc / R.ctx.surface)} €/m² TTC</td></tr>
             <tr><td>Durée probable des travaux</td><td class="num">${R.weeks} semaines</td></tr>
             <tr><td>Score de confiance</td><td class="num">${R.score} / 100</td></tr>
-            <tr><td>Coûts directs</td><td class="num">${eur(R.direct)}</td></tr>
-            <tr><td>Frais généraux et pilotage</td><td class="num">${eur(R.fg)}</td></tr>
-            <tr><td>Marge</td><td class="num">${eur(R.marge)}</td></tr>
-            <tr><td>Provision pour aléas (${pct(R.alea, 0)})</td><td class="num">${eur(R.aleaAmt)}</td></tr>
             <tr class="total"><td>Total HT</td><td class="num">${eur(R.ht)}</td></tr>
             <tr><td>${tvaLabel(R)}</td><td class="num">${eur(R.tva)}</td></tr>
             <tr class="total"><td>Total TTC</td><td class="num">${eur(R.ttc)}</td></tr>
           </table>
         </div>
       </div>
-      <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Qté</th><th>Unité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody></table></div></div>
-      ${fin ? `<div><div class="eyebrow" style="margin-bottom:8px">Analyse investisseur · projet complet</div><div class="tiles">${tilesHtml(R, false)}</div></div>
-      <div class="box"><h3>Synthèse pour la banque</h3><table class="kv">${bank.map(b => `<tr${b[2] ? ' class="total"' : ''}><td>${esc(b[0])}</td><td class="num">${esc(b[1])}</td></tr>`).join('')}</table><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Estimation indicative à distinguer du devis contractuel. Un courtier Cotalia reprend contact pour instruire le dossier.</p></div>` : ''}
+      <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Qté</th><th>Unité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody></table></div><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Montants HT hors provision pour aléas. Le total ci-dessus inclut frais généraux, pilotage, marge, aléas et TVA.</p></div>
+      ${fin ? `<div class="box"><h3>Synthèse pour la banque</h3><table class="kv">${bank.map(b => `<tr${b[2] ? ' class="total"' : ''}><td>${esc(b[0])}</td><td class="num">${esc(b[1])}</td></tr>`).join('')}</table><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Estimation indicative à distinguer du devis contractuel. Un courtier Cotalia reprend contact pour instruire le dossier.</p></div>` : ''}
       <div class="two">
         <div class="box"><h3>Points de vigilance</h3><div class="alerts">${A.length ? A.map(a => `<div class="alert ${a[0]}"><i></i><div><b><span class="k">${{ crit: 'Bloquant', warn: 'À vérifier', info: 'Information', good: 'Avantage' }[a[0]]}</span>${esc(a[1])}</b>${esc(a[2])}</div></div>`).join('') : '<p style="color:var(--ink-3);margin:0">Aucune incohérence détectée.</p>'}</div></div>
         <div class="box"><h3>Hypothèses retenues</h3><ul class="plain">${hyp.map(h => `<li>${esc(h)}</li>`).join('')}</ul>
@@ -377,47 +454,99 @@
             <li>Dépassements au-delà de la provision pour aléas : tout écart est chiffré en avenant.</li>
           </ul></div>
       </div>
-      <div class="box"><h3>Comment le montant est calculé</h3>
-        <div class="formula mono">Montant ouvrage HT = Quantité × Prix de référence × ( part main-d'œuvre × coef. région × coef. complexité + part matériaux × coef. gamme )</div>
-        <ul class="plain" style="margin-top:12px">
-          <li><b>Coefficient région</b> ${R.cReg.toLocaleString('fr-FR')} (${esc(C.REGION[S.zone][1])}), appliqué à la main-d'œuvre. <b>Coefficient gamme</b> ${R.cGamme.toLocaleString('fr-FR')} (${esc(C.GAMME[S.gamme][1])}), appliqué aux matériaux. <b>Complexité</b> ${R.cCx.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}.</li>
-          <li><b>Frais généraux et pilotage</b> ${pct(C.FG + C.PILOTAGE, 0)} des coûts directs. <b>Marge</b> ${pct(C.MARGE, 0)} du prix HT hors aléas. <b>Aléas</b> ${pct(R.alea, 0)}, dérivés du score de confiance et de l'état du bien.</li>
-          <li><b>Fourchette</b> basse = HT sans aléas − ${pct(R.spread, 0)} ; haute = HT avec aléas + ${pct(R.spread, 0)}.</li>
-        </ul></div>
       <div><div class="eyebrow" style="margin-bottom:8px">Et ensuite</div><div class="steps">
         <div class="stepc now"><div class="display">Estimation en ligne</div>Fourchette, hypothèses, rentabilité. Sans engagement.</div>
         <div class="stepc"><div class="display">Visite technique</div>Un chiffreur contrôle métrés, réseaux et structure. Le score de confiance passe au maximum.</div>
         <div class="stepc"><div class="display">Devis contractuel</div>Prix et délais fermes, écarts avec l'estimation expliqués ligne à ligne, signature et acompte.</div>
         <div class="stepc"><div class="display">Chantier suivi</div>Planning, jalons, appels de fonds, réception.</div>
       </div></div>
-      <p style="font-size:12.5px;color:var(--ink-3);margin:0;max-width:80ch">Prix de référence relevés en septembre 2026 sur des chantiers de rénovation locative. Les montants restent indicatifs tant qu'un devis signé ne les remplace pas. Document généré par Cotalia pour ${esc(c.prenom)} ${esc(c.nom)}, réf. ${esc(S.ref)}.</p>`;
+      <p style="font-size:12.5px;color:var(--ink-3);margin:0;max-width:80ch">Prix de référence relevés en septembre 2026 sur des chantiers de rénovation locative. Les montants restent indicatifs tant qu'un devis signé ne les remplace pas. Document généré par Cotalia, réf. ${esc(S.ref)}.</p>`;
     $('btn-pdf').addEventListener('click', () => window.print());
-    $('btn-edit').addEventListener('click', () => { S.step = 'travaux'; save(); showStep(); });
-    $('btn-rappel').addEventListener('click', () => { S.rappel = true; save(); submitLead('rappel'); $('btn-rappel').textContent = 'Rappel demandé ✓'; });
+    $('btn-share').addEventListener('click', share);
+    if (!viewer) {
+      $('btn-edit').addEventListener('click', () => { S.step = 'travaux'; save(); showStep(); });
+      $('btn-rappel').addEventListener('click', () => { S.rappel = true; save(); submitLead('rappel'); $('btn-rappel').textContent = 'Rappel demandé ✓'; });
+    }
+  }
+
+  /* ---------- partage ---------- */
+  function shareData() {
+    const d = clone(S);
+    delete d.token; delete d.situation; delete d.leadSent; delete d.leadSubmitted;
+    d.contact = { prenom: S.contact.prenom, nom: S.contact.nom, tel: '', email: '', consent: false };
+    d.files = S.files.filter(f => f.path).map(f => ({ name: f.name, path: f.path, size: f.size, type: f.type }));
+    d.sharedAt = new Date().toISOString();
+    return d;
+  }
+  async function saveProject() {
+    if (viewer || !hasDb() || !S.kind) return false;
+    try {
+      const r = await fetch(BASE + '/rest/v1/rpc/save_project', { method: 'POST', headers: hdr(), body: JSON.stringify({ p_id: S.pid, p_token: S.token, p_data: shareData() }) });
+      if (r.ok) { S.savedAt = new Date().toISOString(); save(); return true; }
+      console.warn('Cotalia : enregistrement du projet refusé', r.status);
+    } catch (e) { console.warn('Cotalia : enregistrement du projet impossible', e); }
+    return false;
+  }
+  async function fetchProject(id) {
+    const r = await fetch(BASE + '/rest/v1/rpc/get_project', { method: 'POST', headers: hdr(), body: JSON.stringify({ p_id: id }) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+  async function share() {
+    const url = location.origin + location.pathname + '?p=' + encodeURIComponent(S.pid);
+    const stored = viewer ? true : await saveProject();
+    $('share-url').value = url;
+    $('modal-title').textContent = 'Lien copié';
+    $('modal-text').textContent = stored
+      ? 'Le lien vers votre projet a été copié. Vous pouvez l\'envoyer à qui vous voulez : votre associé, votre banquier, votre courtier.'
+      : 'Le lien a été copié, mais le projet n\'a pas pu être enregistré en ligne : il ne s\'ouvrira que sur cet appareil pour le moment.';
+    try { await navigator.clipboard.writeText(url); } catch (e) { $('share-url').select(); $('modal-title').textContent = 'Votre lien de partage'; $('modal-text').textContent = 'Copiez ce lien pour l\'envoyer à qui vous voulez.'; }
+    $('modal').classList.remove('hidden'); $('modal-close').focus();
+  }
+  function notice(html) { viewer = true; $('progress-wrap').classList.add('hidden'); $('stepnav').classList.add('hidden'); $('panel').classList.add('hidden'); document.querySelectorAll('.step').forEach(el => el.classList.toggle('active', el.dataset.step === 'resultat')); $('report').innerHTML = `<div class="box"><h3>Projet indisponible</h3><p>${html}</p><p><a class="btn primary" href="estimation.html?new=1">Faire ma propre estimation</a></p></div>`; }
+  async function openProject(id) {
+    const mine = loadIndex().find(x => x.pid === id);
+    if (mine && S.pid === id && S.maxIdx >= 6) { S.step = 'resultat'; save(); showStep(); return; }
+    if (!hasDb()) { notice('Ce projet n\'est pas disponible sur cet appareil.'); return; }
+    try {
+      const data = await fetchProject(id);
+      if (!data) { notice('Ce lien ne correspond à aucun projet enregistré. Il a peut-être été créé sur un autre appareil sans être partagé.'); return; }
+      if (mine) {
+        S = Object.assign(newState(), data, { pid: id, token: mine.token, step: 'resultat', maxIdx: 6 });
+        const cur = load(); if (cur && cur.pid === id) { S.contact = cur.contact; S.situation = cur.situation; }
+        save(); fillForm(); showStep();
+      } else {
+        viewer = true;
+        S = Object.assign(newState(), data, { pid: id, token: '', step: 'resultat', maxIdx: 6 });
+        fillForm(); showStep();
+      }
+    } catch (e) { console.warn(e); notice('Impossible de charger ce projet pour le moment. Réessayez dans quelques instants.'); }
   }
 
   /* ---------- envoi de la demande ---------- */
   function leadPayload(kind) {
     const R = C.compute(S), c = S.contact;
     return {
-      ref: S.ref, kind: kind || 'estimation', prenom: c.prenom, nom: c.nom, email: c.email, tel: c.tel,
+      ref: S.ref, project_id: S.pid, kind: kind || 'estimation', prenom: c.prenom, nom: c.nom, email: c.email, tel: c.tel,
       type_bien: S.kind, adresse: S.adresse, ville: S.ville, cp: S.cp, surface: +S.surface || null, gamme: S.gamme, stade: S.stade, demarrage: S.demarrage,
       estimation_ttc: Math.round(R.ttc), estimation_basse: Math.round(R.low), estimation_haute: Math.round(R.high), score: R.score,
       finance: S.finance, prix: +S.prix || null, strat: S.strat, loyer: +S.loyer || null,
-      situation: S.situation, payload: { works: S.works, qty: S.qty, bien: { type: S.type, apts: S.apts, eau: S.eau, etage: S.etage, niveaux: S.niveaux, annee: S.annee, dpe: S.dpe, etat: S.etat, zone: S.zone, ascenseur: S.ascenseur, copro: S.copro, occupe: S.occupe, acces: S.acces, plans: S.plans, visite: S.visite }, acquisition: { apport: S.apport, taux: S.taux, duree: S.duree, vacance: S.vacance, charges: S.charges } },
+      situation: S.situation,
+      payload: {
+        works: S.works, qty: S.qty, files: S.files.filter(f => f.path).map(f => f.path),
+        bien: { type: S.type, apts: S.apts, eau: S.eau, etage: S.etage, niveaux: S.niveaux, annee: S.annee, dpe: S.dpe, etat: S.etat, zone: S.zone, ascenseur: S.ascenseur, copro: S.copro, occupe: S.occupe, acces: S.acces, visite: S.visite },
+        acquisition: { apport: S.apport, taux: S.taux, duree: S.duree, charges: S.charges },
+        interne: { direct: Math.round(R.direct), fg: Math.round(R.fg), marge: Math.round(R.marge), alea: R.alea, aleaAmt: Math.round(R.aleaAmt), ht: Math.round(R.ht), tva: Math.round(R.tva), ttc: Math.round(R.ttc), weeks: R.weeks, cReg: R.cReg, cGamme: R.cGamme, cCx: R.cCx },
+      },
       user_agent: navigator.userAgent, page: location.href,
     };
   }
   async function submitLead(kind) {
     const lead = leadPayload(kind);
     try { const all = JSON.parse(localStorage.getItem('cotalia-leads') || '[]'); all.push(Object.assign({ at: new Date().toISOString() }, lead)); localStorage.setItem('cotalia-leads', JSON.stringify(all.slice(-20))); } catch (e) {}
-    if (!CFG.supabaseUrl || !CFG.supabaseAnonKey) return;
+    if (!hasDb()) return;
     try {
-      const r = await fetch(CFG.supabaseUrl.replace(/\/$/, '') + '/rest/v1/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseAnonKey, Authorization: 'Bearer ' + CFG.supabaseAnonKey, Prefer: 'return=minimal' },
-        body: JSON.stringify(lead),
-      });
+      const r = await fetch(BASE + '/rest/v1/leads', { method: 'POST', headers: Object.assign(hdr(), { Prefer: 'return=minimal' }), body: JSON.stringify(lead) });
       if (r.ok) { S.leadSent = true; save(); } else console.warn('Cotalia : envoi refusé', r.status);
     } catch (e) { console.warn('Cotalia : envoi impossible', e); }
   }
@@ -426,16 +555,31 @@
   const form = $('tunnel');
   form.addEventListener('input', onInput);
   form.addEventListener('change', onInput);
-  form.addEventListener('click', onChoice);
+  form.addEventListener('click', onClick);
+  $('progress').addEventListener('click', onClick);
   $('btn-next').addEventListener('click', goNext);
   $('btn-prev').addEventListener('click', goPrev);
-  $('btn-restart').addEventListener('click', () => { if (confirm('Repartir de zéro ? Vos réponses seront effacées.')) { S = clone(DEFAULT); save(); lotsBuilt = false; fillForm(); showStep(); } });
+  $('btn-restart').addEventListener('click', () => { if (confirm('Repartir de zéro ? Vos réponses en cours seront effacées.')) { S = newState(); save(); lotsBuilt = false; fillForm(); showStep(); } });
   $('panel-toggle').addEventListener('click', () => { const p = $('panel'); p.classList.toggle('open'); $('panel-toggle').textContent = p.classList.contains('open') ? 'Réduire' : 'Voir le détail'; });
   $('adresse').addEventListener('input', e => { clearTimeout(acTimer); acTimer = setTimeout(() => fetchAddr(e.target.value), 250); });
   $('suggest').addEventListener('mousedown', e => { const li = e.target.closest('li'); if (li) { e.preventDefault(); pickAddr(li); } });
   $('adresse').addEventListener('blur', () => setTimeout(hideSuggest, 150));
-  document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox' && S.step !== 'travaux' && S.step !== 'resultat') { e.preventDefault(); goNext(); } });
+  const drop = $('drop'), fileInput = $('file-input');
+  drop.addEventListener('click', () => fileInput.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+  fileInput.addEventListener('change', () => { addFiles(fileInput.files); fileInput.value = ''; });
+  $('modal-close').addEventListener('click', () => $('modal').classList.add('hidden'));
+  $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.add('hidden'); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') $('modal').classList.add('hidden');
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox' && S.step !== 'travaux' && S.step !== 'resultat' && !viewer) { e.preventDefault(); goNext(); }
+  });
 
+  const params = new URLSearchParams(location.search);
+  if (params.has('new')) { S = newState(); save(); history.replaceState(null, '', location.pathname); }
   fillForm();
-  showStep();
+  if (params.get('p')) { openProject(params.get('p')); } else { showStep(); }
 })();

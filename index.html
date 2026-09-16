@@ -18,7 +18,7 @@
     <div class="wordmark">Cotalia</div>
     <h2>Votre estimation travaux <em>en 3 minutes</em>, pour faire décoller la renta de vos projets immo.</h2>
     <p>Décrivez le bien, choisissez vos finitions, ajustez les travaux ligne à ligne : le montant se calcule sous vos yeux, sans engagement.</p>
-    <a class="btn primary big" href="estimation.html">Obtenir mon devis maintenant</a>
+    <a class="btn primary big" href="estimation.html?new=1">Obtenir mon devis maintenant</a>
     <div class="note">Estimation indicative, gratuite et transparente. Elle devient un devis ferme après visite technique.</div>
   </main>
 
@@ -26,6 +26,11 @@
     <div><div class="display">3 minutes chrono</div><p>Un parcours guidé, pré-rempli à partir de vos réponses. Pas de compte à créer.</p></div>
     <div><div class="display">Transparent, ligne à ligne</div><p>Chaque montant vient d'une quantité, d'un prix de référence et de coefficients visibles. Vous modifiez ce que vous voulez.</p></div>
     <div><div class="display">Jusqu'au financement</div><p>Rentabilité, mensualité, cash-flow et une synthèse prête pour la banque. On vous accompagne si vous le souhaitez.</p></div>
+  </section>
+
+  <section class="mine hidden" id="mine">
+    <h3>Mes estimations</h3>
+    <ul id="mine-list"></ul>
   </section>
 
   <footer class="foot">
@@ -37,6 +42,20 @@
     (function () {
       var c = window.COTALIA_CONFIG || {};
       if (c.contactEmail) document.getElementById('foot-contact').innerHTML = '<a href="mailto:' + c.contactEmail + '">' + c.contactEmail + '</a>';
+      var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); };
+      var items = [];
+      try {
+        var cur = JSON.parse(localStorage.getItem('cotalia-tunnel-v2') || 'null');
+        if (cur && cur.kind && (cur.maxIdx || 0) < 6) items.push({ resume: true, href: 'estimation.html', label: 'Reprendre l\'estimation en cours', when: '' });
+        var idx = JSON.parse(localStorage.getItem('cotalia-projects') || '[]');
+        idx.filter(function (p) { return p.done; }).forEach(function (p) {
+          items.push({ href: 'estimation.html?p=' + encodeURIComponent(p.pid), label: p.label, when: new Date(p.at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }), amt: p.ttc ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(p.ttc) : '' });
+        });
+      } catch (e) {}
+      if (items.length) {
+        document.getElementById('mine-list').innerHTML = items.map(function (it) { return '<li' + (it.resume ? ' class="resume"' : '') + '><a href="' + it.href + '"><span class="lbl">' + esc(it.label) + '</span><span class="when">' + esc(it.when) + '</span><span class="amt">' + esc(it.amt || (it.resume ? '→' : '')) + '</span></a></li>'; }).join('');
+        document.getElementById('mine').classList.remove('hidden');
+      }
     })();
   </script>
 </body>

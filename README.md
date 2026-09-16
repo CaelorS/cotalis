@@ -10,7 +10,8 @@ config.js             URL et clé Supabase, e-mail de contact (vide par défaut)
 assets/css/site.css   styles, thème clair et sombre, impression PDF
 assets/js/catalog.js  référentiel travaux, coefficients, prix de référence : c'est ici qu'on administre les prix
 assets/js/engine.js   moteur de chiffrage déterministe, pré-sélection des ouvrages, points de vigilance
-assets/js/tunnel.js   étapes, formulaire, encadré d'estimation, rapport final, envoi des demandes
+assets/js/tunnel.js   étapes, formulaire, encadré d'estimation, rapport final, partage, envoi des demandes
+supabase/schema.sql   tables, fonctions et bucket à créer dans Supabase
 assets/img/           logo et favicon
 ```
 
@@ -44,22 +45,13 @@ d'estimation (ci-dessous).
 
 ## Enregistrer les demandes avec Supabase
 
-1. Créer un projet sur https://supabase.com, puis dans SQL Editor exécuter :
-
-   ```sql
-   create table public.leads (
-     id bigint generated always as identity primary key,
-     created_at timestamptz default now(),
-     ref text, kind text, prenom text, nom text, email text, tel text,
-     type_bien text, adresse text, ville text, cp text, surface numeric,
-     gamme text, stade text, demarrage text,
-     estimation_ttc numeric, estimation_basse numeric, estimation_haute numeric, score int,
-     finance text, prix numeric, strat text, loyer numeric,
-     situation jsonb, payload jsonb, user_agent text, page text
-   );
-   alter table public.leads enable row level security;
-   create policy "insertion publique" on public.leads for insert to anon with check (true);
-   ```
+1. Créer un projet sur https://supabase.com, puis dans SQL Editor exécuter le contenu de
+   `supabase/schema.sql`. Il crée :
+   - la table `leads` (demandes d'estimation et de rappel), en insertion seule pour le site ;
+   - la table `projects` et les fonctions `save_project` / `get_project`, qui portent le lien
+     de partage `estimation.html?p=<identifiant>` ; la table n'est jamais lisible directement,
+     seule la fonction renvoie un projet à qui connaît son identifiant ;
+   - le bucket privé `plans` où les prospects déposent plans et photos (15 Mo par fichier).
 
    Aucune politique de lecture pour `anon` : le site peut écrire, personne ne peut lire
    sans être connecté au tableau de bord Supabase.
