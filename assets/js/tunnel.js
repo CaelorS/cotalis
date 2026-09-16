@@ -415,7 +415,7 @@
       ${viewer ? `<div class="ok-note no-print">Vous consultez une estimation partagée. <a href="estimation.html?new=1">Faire ma propre estimation</a></div>` : `<div class="ok-note no-print">Merci ${esc(c.prenom)}, votre estimation est prête. Téléchargez-la en PDF ci-dessous ; une copie vous sera envoyée à ${esc(c.email)}.</div>`}
       <div class="rhead">
         <div><h2>Estimation travaux</h2><div class="who">${who} · ${date} · réf. <span class="num">${esc(S.ref)}</span></div></div>
-        <div class="actions"><button type="button" class="btn primary" id="btn-pdf">Télécharger le PDF</button><button type="button" class="btn" id="btn-share">Partager mon projet</button>${viewer ? '' : `<button type="button" class="btn" id="btn-edit">Modifier mes réponses</button><button type="button" class="btn" id="btn-rappel">${S.rappel ? 'Rappel demandé ✓' : 'Être rappelé pour une visite technique'}</button>`}</div>
+        <div class="actions"><button type="button" class="btn primary" id="btn-pdf">Télécharger le PDF</button><button type="button" class="btn" id="btn-share">Partager mon projet</button>${viewer ? '' : `<button type="button" class="btn" id="btn-edit">Modifier mes réponses</button><button type="button" class="btn" id="btn-rappel">${S.rappel ? 'Rappel demandé ✓' : 'Être rappelé pour une visite technique'}</button>`}<a class="btn" href="estimation.html?new=1">Nouvelle estimation</a></div>
       </div>
       <div class="two">
         <div class="box"><h3>Le bien</h3><table class="kv">${bien.map(b => `<tr><td>${esc(b[0])}</td><td>${esc(b[1])}</td></tr>`).join('')}</table></div>
