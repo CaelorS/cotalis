@@ -324,3 +324,10 @@ ul.plain li { margin: 4px 0; }
   .mine .when { display: none; }
 }
 @media print { .modal { display: none !important; } }
+
+/* ---------- étape finition : trois sections titrées ---------- */
+.sub { padding: 20px 22px 22px; border-top: 1px solid var(--line-2); display: flex; flex-direction: column; gap: 6px; }
+.sub:first-child { border-top: 0; }
+.sub h2 { font-size: 26px; }
+.sub .hint { margin: 0 0 12px; color: var(--ink-2); font-size: 15px; text-wrap: pretty; max-width: 62ch; }
+@media (max-width: 980px) { .sub { padding: 16px; } }
