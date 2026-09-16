@@ -8,7 +8,8 @@
   const BASE = (CFG.supabaseUrl || '').replace(/\/$/, '');
   const KEY = CFG.supabaseAnonKey || '';
   const hasDb = () => !!(BASE && KEY);
-  const hdr = () => ({ 'Content-Type': 'application/json', apikey: KEY, Authorization: 'Bearer ' + KEY });
+  const auth = () => (C.auth && C.auth.token()) || KEY;
+  const hdr = () => ({ 'Content-Type': 'application/json', apikey: KEY, Authorization: 'Bearer ' + auth() });
 
   const $ = id => document.getElementById(id);
   const eurF = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
@@ -27,7 +28,7 @@
     works: {}, qty: {}, worksTouched: false,
     finance: null, prix: '', strat: 'meuble', loyer: '', loyerAuto: true, charges: '', apport: '', apportAuto: true, taux: 3.35, duree: 25,
     situation: { statut: '', revenus: '', credits: '', apportDispo: '', proprietaire: '' },
-    contact: { prenom: '', nom: '', tel: '', email: '', consent: false },
+    contact: { prenom: '', nom: '', tel: '', email: '', consent: false, password: '' },
     step: 'kind', maxIdx: 0, ref: '', leadSubmitted: false, leadSent: false, rappel: false, savedAt: '',
   };
   let S = load() || newState();
@@ -119,6 +120,7 @@
         return null;
       case 'contact':
         if (!c.prenom.trim() || !c.nom.trim()) return 'Prénom et nom, pour personnaliser votre estimation.';
+        if (!(C.auth && C.auth.user) && C.auth && C.auth.sb && String(c.password || '').length < 8) return 'Choisissez un mot de passe d\'au moins 8 caractères : il vous permettra de retrouver vos estimations.';
         if (String(c.tel).replace(/\D/g, '').length < 9) return 'Un numéro de téléphone valide, pour vous rappeler si besoin.';
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c.email)) return 'Une adresse e-mail valide, pour vous envoyer le PDF.';
         if (!c.consent) return 'Cochez la case pour que nous puissions vous recontacter.';
@@ -127,11 +129,14 @@
     return null;
   }
 
-  function goNext() {
+  async function goNext() {
     const err = validate();
     if (err) { $('err').textContent = err; $('err').classList.remove('hidden'); return; }
     if (S.step === 'bien' && !S.worksTouched) S.works = C.preselect(S);
-    if (S.step === 'contact') { ensureRef(); if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); } saveProject(); }
+    if (S.step === 'contact') {
+      if (!(await ensureAccount())) return;
+      ensureRef(); if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); } saveProject();
+    }
     const list = stepList();
     S.step = list[Math.min(list.length - 1, list.indexOf(S.step) + 1)];
     save(); showStep();
@@ -291,7 +296,7 @@
       $('lots').innerHTML = C.CATALOG.map(l => `
         <div class="lot">
           <div class="lot-head"><h3>${esc(l.lot)}</h3><span class="sum">sous-total <b class="num" data-lotsum="${esc(l.lot)}"></b></span></div>
-          ${l.items.map(it => `
+          ${l.items.filter(it => !it.inactive).map(it => `
             <div class="item" data-item="${it.id}">
               <input type="checkbox" id="w-${it.id}" data-w="${it.id}">
               <label class="lbl" for="w-${it.id}">${esc(it.label)}${it.tva === 5.5 ? '<span class="tva55">TVA 5,5 %</span>' : ''}${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</label>
@@ -412,7 +417,7 @@
     const who = viewer ? `Estimation partagée par ${esc(c.prenom)} ${esc(c.nom)}` : `Préparée pour ${esc(c.prenom)} ${esc(c.nom)}`;
     $('report').innerHTML = `
       <div class="print-brand"><svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><rect x="4" y="8" width="92" height="13" fill="#7FA8E8" opacity="0.28"/><rect x="79" y="21" width="13" height="72" fill="#7FA8E8" opacity="0.28"/><rect x="56" y="8" width="36" height="4" fill="#E4B33B"/><rect x="88" y="58" width="4" height="35" fill="#E4B33B"/><path d="M65,32.7 A30,30 0 1 0 65,71.3" fill="none" stroke="#2457A6" stroke-width="18"/></svg><b style="font-family:'Barlow Condensed',sans-serif;font-size:22px;letter-spacing:.12em">COTALIA</b><span style="color:#666;font-size:12px">Estimation indicative · n'est pas un devis</span></div>
-      ${viewer ? `<div class="ok-note no-print">Vous consultez une estimation partagée. <a href="estimation.html?new=1">Faire ma propre estimation</a></div>` : `<div class="ok-note no-print">Merci ${esc(c.prenom)}, votre estimation est prête. Téléchargez-la en PDF ci-dessous ; une copie vous sera envoyée à ${esc(c.email)}.</div>`}
+      ${viewer ? `<div class="ok-note no-print">Vous consultez une estimation partagée. <a href="estimation.html?new=1">Faire ma propre estimation</a></div>` : `<div class="ok-note no-print">Merci ${esc(c.prenom)}, votre estimation est prête. Téléchargez-la en PDF ci-dessous ; une copie vous sera envoyée à ${esc(c.email)}.${S.accountPending ? ' Votre compte est créé : confirmez votre e-mail pour retrouver cette estimation sur tous vos appareils.' : ''}</div>`}
       <div class="rhead">
         <div><h2>Estimation travaux</h2><div class="who">${who} · ${date} · réf. <span class="num">${esc(S.ref)}</span></div></div>
         <div class="actions"><button type="button" class="btn primary" id="btn-pdf">Télécharger le PDF</button><button type="button" class="btn" id="btn-share">Partager mon projet</button>${viewer ? '' : `<button type="button" class="btn" id="btn-edit">Modifier mes réponses</button><button type="button" class="btn" id="btn-rappel">${S.rappel ? 'Rappel demandé ✓' : 'Être rappelé pour une visite technique'}</button>`}<a class="btn" href="estimation.html?new=1">Nouvelle estimation</a></div>
@@ -523,6 +528,34 @@
     } catch (e) { console.warn(e); notice('Impossible de charger ce projet pour le moment. Réessayez dans quelques instants.'); }
   }
 
+  /* ---------- compte utilisateur ---------- */
+  async function ensureAccount() {
+    const A = C.auth;
+    if (!A || !A.sb || A.user) return true;
+    const c = S.contact, btn = $('btn-next');
+    btn.disabled = true;
+    try {
+      const d = await A.signUp(c.email.trim(), c.password, { prenom: c.prenom.trim(), nom: c.nom.trim(), tel: c.tel });
+      S.contact.password = '';
+      S.accountPending = !d.session;
+      return true;
+    } catch (ex) {
+      const msg = A.message(ex);
+      if (/existe déjà/.test(msg)) { $('err').innerHTML = 'Un compte existe déjà avec cet e-mail. <button type="button" class="linkbtn" id="err-login">Connectez-vous</button> pour continuer.'; $('err').classList.remove('hidden'); $('err-login').addEventListener('click', () => A.open('login')); }
+      else { $('err').textContent = msg; $('err').classList.remove('hidden'); }
+      return false;
+    } finally { btn.disabled = false; }
+  }
+  function applyProfile(A) {
+    const p = A.profile, u = A.user;
+    if (!u) { $('pw-field').classList.remove('hidden'); $('contact-logged').classList.add('hidden'); return; }
+    if (!S.contact.email) S.contact.email = u.email || '';
+    if (p) { if (!S.contact.prenom) S.contact.prenom = p.prenom || ''; if (!S.contact.nom) S.contact.nom = p.nom || ''; if (!S.contact.tel) S.contact.tel = p.tel || ''; }
+    $('pw-field').classList.add('hidden'); $('contact-logged').classList.remove('hidden');
+    $('contact-logged').textContent = 'Connecté en tant que ' + (u.email || '') + '. Vos coordonnées sont pré-remplies.';
+    fillForm(); save();
+  }
+
   /* ---------- envoi de la demande ---------- */
   function leadPayload(kind) {
     const R = C.compute(S), c = S.contact;
@@ -538,7 +571,7 @@
         acquisition: { apport: S.apport, taux: S.taux, duree: S.duree, charges: S.charges },
         interne: { direct: Math.round(R.direct), fg: Math.round(R.fg), marge: Math.round(R.marge), alea: R.alea, aleaAmt: Math.round(R.aleaAmt), ht: Math.round(R.ht), tva: Math.round(R.tva), ttc: Math.round(R.ttc), weeks: R.weeks, cReg: R.cReg, cGamme: R.cGamme, cCx: R.cCx },
       },
-      user_agent: navigator.userAgent, page: location.href,
+      user_agent: navigator.userAgent, page: location.href, user_id: (C.auth && C.auth.user) ? C.auth.user.id : null,
     };
   }
   async function submitLead(kind) {
@@ -572,6 +605,7 @@
   drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
   fileInput.addEventListener('change', () => { addFiles(fileInput.files); fileInput.value = ''; });
   $('modal-close').addEventListener('click', () => $('modal').classList.add('hidden'));
+  $('btn-login').addEventListener('click', () => { if (C.auth) C.auth.open('login'); });
   $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.add('hidden'); });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') $('modal').classList.add('hidden');
@@ -582,4 +616,6 @@
   if (params.has('new')) { S = newState(); save(); history.replaceState(null, '', location.pathname); }
   fillForm();
   if (params.get('p')) { openProject(params.get('p')); } else { showStep(); }
+  if (C.loadPricing) C.loadPricing().then(ok => { if (!ok) return; renderPanel(); if (S.step === 'travaux') updateLots(); if (S.step === 'resultat' && !viewer) renderReport(); });
+  if (C.auth) C.auth.onChange(A => { if (!viewer) applyProfile(A); });
 })();

@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/site.css?v=202609161738">
+  <link rel="stylesheet" href="assets/css/site.css?v=202609161753">
 </head>
 <body>
   <header class="top">
@@ -19,6 +19,7 @@
     </a>
     <span class="spacer"></span>
     <span class="tag mark">Estimation indicative · sans engagement</span>
+    <div id="auth-slot" class="auth-slot"></div>
   </header>
 
   <div class="progress" id="progress-wrap">
@@ -199,7 +200,10 @@
             <div class="field"><label for="nom">Nom</label><input id="nom" data-k="contact.nom" autocomplete="family-name"></div>
             <div class="field"><label for="tel">Téléphone</label><input id="tel" data-k="contact.tel" type="tel" autocomplete="tel" inputmode="tel"></div>
             <div class="field"><label for="email">E-mail</label><input id="email" data-k="contact.email" type="email" autocomplete="email" inputmode="email"></div>
+            <div class="field" id="pw-field"><label for="password">Mot de passe <span class="optsub">pour retrouver vos estimations</span></label><input id="password" data-k="contact.password" type="password" autocomplete="new-password" minlength="8"></div>
           </div>
+          <p class="hint hidden" id="contact-logged" style="margin:12px 0 0"></p>
+          <p class="hint" id="contact-login" style="margin:12px 0 0">Vous avez déjà un compte Cotalia ? <button type="button" class="linkbtn" id="btn-login">Connectez-vous</button> et vos coordonnées se remplissent toutes seules.</p>
           <div class="checks">
             <label class="check"><input type="checkbox" data-k="contact.consent"> J'accepte que Cotalia me contacte au sujet de ce projet. Mes données ne sont jamais revendues.</label>
           </div>
@@ -247,9 +251,12 @@
     </div>
   </div>
 
-  <script src="config.js?v=202609161738"></script>
-  <script src="assets/js/catalog.js?v=202609161738"></script>
-  <script src="assets/js/engine.js?v=202609161738"></script>
-  <script src="assets/js/tunnel.js?v=202609161738"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="config.js?v=202609161753"></script>
+  <script src="assets/js/catalog.js?v=202609161753"></script>
+  <script src="assets/js/engine.js?v=202609161753"></script>
+  <script src="assets/js/pricing.js?v=202609161753"></script>
+  <script src="assets/js/auth.js?v=202609161753"></script>
+  <script src="assets/js/tunnel.js?v=202609161753"></script>
 </body>
 </html>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cotalia · Back-office</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="../assets/css/site.css?v=202609161753">
+</head>
+<body class="admin">
+  <header class="top">
+    <a class="brand" href="../index.html">
+      <svg class="logo" viewBox="0 0 100 100" width="32" height="32" aria-hidden="true"><rect x="4" y="8" width="92" height="13" fill="#7FA8E8" opacity="0.28"/><rect x="79" y="21" width="13" height="72" fill="#7FA8E8" opacity="0.28"/><rect x="56" y="8" width="36" height="4" fill="var(--mark)"/><rect x="88" y="58" width="4" height="35" fill="var(--mark)"/><path d="M65,32.7 A30,30 0 1 0 65,71.3" fill="none" stroke="currentColor" stroke-width="18"/></svg>
+      <h1>Cotalia</h1>
+      <span class="sub">Back-office</span>
+    </a>
+    <nav class="tabs" id="tabs">
+      <button type="button" class="tab selected" data-tab="dossiers">Dossiers</button>
+      <button type="button" class="tab" data-tab="prix">Prix</button>
+      <button type="button" class="tab" data-tab="admins">Administrateurs</button>
+    </nav>
+    <span class="spacer"></span>
+    <div id="auth-slot" class="auth-slot"></div>
+  </header>
+
+  <main class="admin-main">
+    <section id="gate" class="panel gate">
+      <header><h2>Accès réservé</h2><span class="hint">Cet espace est réservé à l'équipe Cotalia.</span></header>
+      <div class="body"><p id="gate-text">Connectez-vous avec votre compte administrateur.</p><button type="button" class="btn primary" id="gate-login">Se connecter</button></div>
+    </section>
+
+    <section id="tab-dossiers" class="tabpane hidden">
+      <div class="toolbar">
+        <input id="q" placeholder="Rechercher : nom, e-mail, ville, référence" aria-label="Rechercher">
+        <select id="f-status" aria-label="Filtrer par statut"><option value="">Tous les statuts</option></select>
+        <select id="f-assign" aria-label="Filtrer par responsable"><option value="">Toute l'équipe</option><option value="none">Non attribués</option></select>
+        <select id="f-sort" aria-label="Trier"><option value="date">Plus récents d'abord</option><option value="ttc">Montant travaux décroissant</option><option value="marge">Marge estimée décroissante</option><option value="next">Prochaine action</option></select>
+        <span class="count" id="count"></span>
+      </div>
+      <div class="tablewrap"><table class="grid-table" id="leads"><thead><tr><th>Date</th><th>Contact</th><th>Bien</th><th class="r">Travaux TTC</th><th class="r">Marge est.</th><th>Financement</th><th>Statut</th><th>Responsable</th><th>Prochaine action</th><th></th></tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section id="tab-prix" class="tabpane hidden">
+      <div class="panel">
+        <header><h2>Réglages généraux</h2><span class="hint">Appliqués à toutes les estimations dès l'enregistrement. Les valeurs par défaut sont rappelées en gris.</span></header>
+        <div class="body"><div class="grid" id="settings"></div></div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <header><h2>Prix de référence par ouvrage</h2><span class="hint">Prix HT par unité, part de main-d'œuvre, TVA, marge spécifique (vide = marge par défaut). Décochez « actif » pour retirer un ouvrage du tunnel.</span></header>
+        <div class="tablewrap"><table class="grid-table" id="items"><thead><tr><th>Actif</th><th>Ouvrage</th><th>Unité</th><th class="r">Prix HT</th><th class="r">Défaut</th><th class="r">Part MO %</th><th>TVA</th><th class="r">Marge %</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="savebar"><span id="prix-msg" class="hint"></span><button type="button" class="btn" id="prix-reset">Revenir aux prix par défaut</button><button type="button" class="btn primary" id="prix-save">Enregistrer les modifications</button></div>
+    </section>
+
+    <section id="tab-admins" class="tabpane hidden">
+      <div class="panel">
+        <header><h2>Administrateurs</h2><span class="hint">Un administrateur accède aux dossiers, aux prix et à cette liste. Le compte propriétaire ne peut pas être retiré.</span></header>
+        <div class="body">
+          <form class="addrow" id="admin-add"><input id="admin-email" type="email" placeholder="prenom@cotalia.fr" aria-label="E-mail du nouvel administrateur"><button type="submit" class="btn primary">Ajouter</button></form>
+          <p class="hint" id="admin-msg"></p>
+          <table class="grid-table" id="admins"><thead><tr><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Depuis</th><th></th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../config.js?v=202609161753"></script>
+  <script src="../assets/js/catalog.js?v=202609161753"></script>
+  <script src="../assets/js/engine.js?v=202609161753"></script>
+  <script src="../assets/js/pricing.js?v=202609161753"></script>
+  <script src="../assets/js/auth.js?v=202609161753"></script>
+  <script src="../assets/js/admin.js?v=202609161753"></script>
+</body>
+</html>

@@ -11,7 +11,13 @@ assets/css/site.css   styles, thème clair et sombre, impression PDF
 assets/js/catalog.js  référentiel travaux, coefficients, prix de référence : c'est ici qu'on administre les prix
 assets/js/engine.js   moteur de chiffrage déterministe, pré-sélection des ouvrages, points de vigilance
 assets/js/tunnel.js   étapes, formulaire, encadré d'estimation, rapport final, partage, envoi des demandes
+assets/js/auth.js     comptes utilisateurs (Supabase Auth), bouton de connexion, fenêtre de connexion
+assets/js/pricing.js  applique les prix administrés par-dessus le catalogue
+assets/js/home.js     accueil : liste des estimations
+assets/js/admin.js    back-office
+admin/index.html      back-office (non référencé)
 supabase/schema.sql   tables, fonctions et bucket à créer dans Supabase
+supabase/schema-v2.sql comptes, rôles, CRM, prix administrables
 assets/img/           logo et favicon
 ```
 
@@ -61,6 +67,22 @@ d'estimation (ci-dessous).
 
 Tant que `config.js` est vide, les demandes restent dans le navigateur du prospect
 (`localStorage`, clé `cotalia-leads`) et rien n'est envoyé.
+
+## Comptes, back-office et prix administrables
+
+Exécuter ensuite `supabase/schema-v2.sql` dans SQL Editor. Il ajoute les profils et rôles,
+le suivi des dossiers, les prix administrables et le rattachement des projets aux comptes.
+
+Dans Authentication → Providers → Email, laisser « Enable email provider » activé. Pour un
+parcours sans friction, désactiver « Confirm email » ; sinon le prospect doit cliquer sur un
+lien avant de pouvoir se connecter. Dans Authentication → URL Configuration, mettre
+`https://cotalia.fr` en Site URL et ajouter `https://cotalia.fr/*` aux Redirect URLs.
+
+- Le compte créé avec l'e-mail `wauquier.jeremy@gmail.com` devient propriétaire, non modifiable.
+- Le back-office est sur `/admin/` (aucun lien depuis le site). Onglets : Dossiers (CRM),
+  Prix (réglages généraux, prix par ouvrage, marge par défaut ou par ouvrage), Administrateurs.
+- Un administrateur ajoute un autre administrateur par e-mail : compte existant promu,
+  sinon invitation appliquée à la création du compte.
 
 ## Envoi de l'estimation par e-mail (à faire)
 

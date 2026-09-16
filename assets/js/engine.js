@@ -36,8 +36,9 @@
     const cx = complexity(S);
 
     const lines = [], lots = {};
-    let direct = 0, direct55 = 0, labor = 0;
+    let direct = 0, direct55 = 0, labor = 0, sell = 0;
     C.CATALOG.forEach(l => l.items.forEach(it => {
+      if (it.inactive) return;
       const on = !!S.works[it.id];
       const q = S.qty[it.id] != null ? +S.qty[it.id] : it.qty(ctx);
       const unitPrice = it.pu * (it.lab * cReg * cx.c + (1 - it.lab) * cGamme);
@@ -47,6 +48,8 @@
         direct += amount; labor += amount * it.lab;
         if (it.tva === 5.5) direct55 += amount;
         lots[it.lotName] = (lots[it.lotName] || 0) + amount;
+        const m = (it.marge == null || it.marge === '') ? C.MARGE : +it.marge;   // marge par prestation, sinon marge par défaut
+        sell += amount * (1 + C.FG + C.PILOTAGE) / (1 - Math.min(0.95, Math.max(0, m)));
       }
     }));
 
@@ -62,9 +65,8 @@
     const alea = 0.05 + (100 - score) / 100 * 0.10 + (S.etat === 'degrade' || S.etat === 'total' ? 0.02 : 0);
     const spread = 0.03 + (100 - score) / 100 * 0.15;
     const fg = direct * (C.FG + C.PILOTAGE);
-    const base = direct + fg;
-    const htSans = base / (1 - C.MARGE);
-    const marge = htSans - base;
+    const htSans = sell;
+    const marge = htSans - direct - fg;
     const aleaAmt = htSans * alea;
     const ht = htSans + aleaAmt;
     const share55 = direct ? direct55 / direct : 0;
