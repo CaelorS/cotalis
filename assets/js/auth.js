@@ -46,8 +46,38 @@
     A.listeners.forEach(fn => fn(A));
   }
 
+  /* ---------- menu burger (mobile) ---------- */
+  function renderBurger() {
+    const top = document.querySelector('.top'); if (!top) return;
+    let btn = document.getElementById('burger'), menu = document.getElementById('mmenu');
+    if (!btn) {
+      btn = document.createElement('button'); btn.type = 'button'; btn.id = 'burger'; btn.className = 'burger'; btn.setAttribute('aria-label', 'Menu'); btn.setAttribute('aria-expanded', 'false');
+      btn.innerHTML = '<span></span><span></span><span></span>';
+      top.appendChild(btn);
+      menu = document.createElement('nav'); menu.id = 'mmenu'; menu.className = 'mmenu'; menu.setAttribute('aria-label', 'Menu mobile');
+      top.appendChild(menu);   // dans l'en-tête, pour se positionner sous lui
+      btn.addEventListener('click', () => { const open = menu.classList.toggle('open'); btn.classList.toggle('open', open); btn.setAttribute('aria-expanded', String(open)); document.body.classList.toggle('menu-open', open); });
+      document.addEventListener('click', e => { if (menu.classList.contains('open') && !menu.contains(e.target) && !btn.contains(e.target)) { menu.classList.remove('open'); btn.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); document.body.classList.remove('menu-open'); } });
+    }
+    const here = location.pathname;
+    const links = [['/', 'Accueil'], ['/team/', 'À propos'], ['/estimation/?new=1', 'Obtenir mon estimation']];
+    let html = links.map(l => `<a href="${l[0]}"${here === l[0].split('?')[0] ? ' aria-current="page"' : ''}>${l[1]}</a>`).join('');
+    if (A.isAdmin()) html += `<a href="${ROOT}admin/" class="nav-admin">Back-office</a>`;
+    html += '<div class="sep"></div>';
+    if (sb && A.user) {
+      const name = [A.profile && A.profile.prenom, A.profile && A.profile.nom].filter(Boolean).join(' ') || 'Mon compte';
+      html += `<div class="who">${esc(name)}</div><a href="${ROOT}#mine">Mes estimations</a><a href="${ROOT}estimation/?new=1">Nouvelle estimation</a><button type="button" id="mm-out">Se déconnecter</button>`;
+    } else if (sb) {
+      html += '<button type="button" id="mm-in">Se connecter</button>';
+    }
+    menu.innerHTML = html;
+    const out = document.getElementById('mm-out'); if (out) out.addEventListener('click', async () => { await A.signOut(); location.href = ROOT; });
+    const inn = document.getElementById('mm-in'); if (inn) inn.addEventListener('click', () => { menu.classList.remove('open'); btn.classList.remove('open'); document.body.classList.remove('menu-open'); openModal('login'); });
+  }
+
   /* ---------- bouton en haut à droite ---------- */
   function renderWidget() {
+    renderBurger();
     const slot = document.getElementById('auth-slot');
     if (!slot) return;
     const adminLink = (A.isAdmin() && !location.pathname.includes('/admin/')) ? `<a href="${ROOT}admin/" class="btn nav-admin">Back-office</a>` : '';
