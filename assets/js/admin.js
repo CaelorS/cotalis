@@ -381,7 +381,7 @@
       <td class="r num">${dur(sessionDuration(x))}</td>
       <td class="r num">${x.ttc ? eur(x.ttc) : '—'}</td>
       <td>${esc(FIN[x.finance] || '—')}</td>
-      <td>${l ? `<button type="button" class="btn small" data-open="${l.id}">${esc(l.prenom)} ${esc(l.nom)}</button>` : (x.user_id ? '<small>compte connecté</small>' : '—')}</td>
+      <td>${l ? `<button type="button" class="btn small" data-open="${l.id}">${esc(l.prenom)} ${esc(l.nom)}</button>` : (x.user_id ? '<small>compte connecté</small>' : '')}${x.ip ? `<small class="num">IP ${esc(x.ip)}</small>` : (l || x.user_id ? '' : '—')}</td>
     </tr>`; }).join('') || '<tr><td colspan="9" class="empty">Aucun parcours sur la période.</td></tr>';
   }
   ['t-device', 't-state'].forEach(id => $(id).addEventListener('input', renderTunnel));

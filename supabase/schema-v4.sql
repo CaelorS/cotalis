@@ -10,22 +10,28 @@ create table if not exists public.funnel_sessions (
   steps jsonb default '{}'::jsonb,           -- { "kind": "2026-09-17T10:00:00Z", "bien": ... } première arrivée sur chaque étape
   kind text, surface numeric, finance text, ttc numeric, ref text,
   device text, ua text, referrer text, user_id uuid,
+  ip text,                                   -- adresse IP lue côté serveur (donnée personnelle : à mentionner dans la politique de confidentialité)
   data jsonb default '{}'::jsonb
 );
+alter table public.funnel_sessions add column if not exists ip text;
 alter table public.funnel_sessions enable row level security;
 revoke all on public.funnel_sessions from anon;
 
 create or replace function public.track_session(p_id text, p_patch jsonb)
 returns void language plpgsql security definer set search_path = public as $$
+declare v_ip text;
 begin
   if p_id !~ '^[A-Za-z0-9_-]{16,32}$' then raise exception 'identifiant invalide'; end if;
+  begin
+    v_ip := nullif(trim(split_part(coalesce(current_setting('request.headers', true)::json->>'x-forwarded-for', ''), ',', 1)), '');
+  exception when others then v_ip := null; end;
   if pg_column_size(p_patch) > 20000 then raise exception 'trop volumineux'; end if;
-  insert into public.funnel_sessions (id, started_at, updated_at, completed_at, last_step, max_step, steps, kind, surface, finance, ttc, ref, device, ua, referrer, user_id, data)
+  insert into public.funnel_sessions (id, started_at, updated_at, completed_at, last_step, max_step, steps, kind, surface, finance, ttc, ref, device, ua, referrer, user_id, ip, data)
   values (
     p_id, coalesce((p_patch->>'started_at')::timestamptz, now()), now(),
     (p_patch->>'completed_at')::timestamptz, p_patch->>'last_step', coalesce((p_patch->>'max_step')::int, 0),
     coalesce(p_patch->'steps', '{}'::jsonb), p_patch->>'kind', (p_patch->>'surface')::numeric, p_patch->>'finance', (p_patch->>'ttc')::numeric, p_patch->>'ref',
-    p_patch->>'device', left(p_patch->>'ua', 300), left(p_patch->>'referrer', 300), auth.uid(), coalesce(p_patch->'data', '{}'::jsonb)
+    p_patch->>'device', left(p_patch->>'ua', 300), left(p_patch->>'referrer', 300), auth.uid(), v_ip, coalesce(p_patch->'data', '{}'::jsonb)
   )
   on conflict (id) do update set
     updated_at = now(),
@@ -40,6 +46,7 @@ begin
     ref = coalesce(p_patch->>'ref', public.funnel_sessions.ref),
     device = coalesce(p_patch->>'device', public.funnel_sessions.device),
     user_id = coalesce(auth.uid(), public.funnel_sessions.user_id),
+    ip = coalesce(v_ip, public.funnel_sessions.ip),
     data = public.funnel_sessions.data || coalesce(p_patch->'data', '{}'::jsonb);
 end $$;
 grant execute on function public.track_session(text, jsonb) to anon, authenticated;
@@ -48,3 +55,8 @@ drop policy if exists "tunnel: admin lecture" on public.funnel_sessions;
 create policy "tunnel: admin lecture" on public.funnel_sessions for select to authenticated using (public.is_admin());
 grant select on public.funnel_sessions to authenticated;
 create index if not exists funnel_sessions_started_idx on public.funnel_sessions (started_at desc);
+
+-- Conservation : les IP des parcours anonymes de plus de 90 jours sont effacées (à lancer ponctuellement, ou via pg_cron).
+create or replace function public.purge_funnel_ips() returns void language sql security definer set search_path = public as $$
+  update public.funnel_sessions set ip = null where ip is not null and started_at < now() - interval '90 days';
+$$;
