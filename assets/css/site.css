@@ -405,9 +405,9 @@ body.admin { background: var(--bg); }
 /* ---------- page À propos ---------- */
 .about { max-width: 880px; margin: 0 auto; padding: 48px 28px 40px; display: flex; flex-direction: column; gap: 48px; }
 .about h2 { font-size: 30px; margin-bottom: 14px; }
-.about-hero h1 { font-size: 40px; line-height: 1.12; margin: 8px 0 16px; max-width: 24ch; }
-.about-hero p { margin: 0; font-size: 18px; color: var(--ink-2); max-width: 60ch; text-wrap: pretty; }
-.story p { margin: 0 0 14px; font-size: 16.5px; line-height: 1.6; max-width: 66ch; color: var(--ink); text-wrap: pretty; }
+.about-hero h1 { font-size: 40px; line-height: 1.12; margin: 8px 0 16px; text-wrap: balance; }
+.about-hero p { margin: 0; font-size: 18px; color: var(--ink-2); text-wrap: pretty; }
+.story p { margin: 0 0 14px; font-size: 16.5px; line-height: 1.6; color: var(--ink); text-wrap: pretty; }
 .founder-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .founder { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 22px 20px; display: flex; flex-direction: column; gap: 8px; }
 .founder .avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 22px; letter-spacing: .04em; }
