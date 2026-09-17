@@ -553,3 +553,16 @@ body.admin { background: var(--bg); }
   /* menu du compte : ancré à gauche du bouton, jamais hors écran */
   .auth-drop { left: 0; right: auto; min-width: 220px; max-width: calc(100vw - 32px); }
 }
+@media (max-width: 980px) {
+  /* en-tête sur une seule ligne : logo, À propos, compte */
+  .top { flex-wrap: nowrap; gap: 8px; padding: 8px 12px; }
+  .top .brand { flex-shrink: 0; }
+  .top .brand h1, .top .brand .sub { font-size: 18px; letter-spacing: .08em; }
+  .top .logo { width: 26px; height: 26px; }
+  .top .mainnav a[href="index.html"] { display: none; }
+  .top .mainnav { margin-left: 0; flex-shrink: 0; }
+  .top .mainnav a { padding: 6px 6px; font-size: 14px; }
+  .top .auth-slot { margin-left: auto; min-width: 0; }
+  .top .auth-slot .btn { max-width: 44vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; padding: 6px 10px; }
+  .top .auth-drop { right: 0; left: auto; }
+}
