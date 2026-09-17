@@ -394,3 +394,27 @@ body.admin { background: var(--bg); }
 .sortable th[data-sort]::after { content: "↕"; opacity: .35; margin-left: 6px; font-size: 11px; }
 .sortable th[data-sort].asc::after { content: "↑"; opacity: 1; color: var(--accent); }
 .sortable th[data-sort].desc::after { content: "↓"; opacity: 1; color: var(--accent); }
+
+/* ---------- menu principal ---------- */
+.mainnav { display: flex; align-items: center; gap: 4px; margin-left: 16px; }
+.mainnav a { text-decoration: none; color: var(--ink-2); font-weight: 600; padding: 8px 12px; border-radius: 4px; font-size: 14.5px; }
+.mainnav a:hover { background: var(--surface-2); color: var(--ink); }
+.mainnav a[aria-current="page"] { color: var(--accent); }
+.mainnav a.cta { color: var(--accent); }
+@media (max-width: 700px) { .mainnav a.cta { display: none; } .mainnav { margin-left: 4px; } .mainnav a { padding: 8px 8px; } }
+
+/* ---------- page À propos ---------- */
+.about { max-width: 880px; margin: 0 auto; padding: 48px 28px 40px; display: flex; flex-direction: column; gap: 48px; }
+.about h2 { font-size: 30px; margin-bottom: 14px; }
+.about-hero h1 { font-size: 40px; line-height: 1.12; margin: 8px 0 16px; max-width: 24ch; }
+.about-hero p { margin: 0; font-size: 18px; color: var(--ink-2); max-width: 60ch; text-wrap: pretty; }
+.story p { margin: 0 0 14px; font-size: 16.5px; line-height: 1.6; max-width: 66ch; color: var(--ink); text-wrap: pretty; }
+.founder-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.founder { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 22px 20px; display: flex; flex-direction: column; gap: 8px; }
+.founder .avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 22px; letter-spacing: .04em; }
+.founder h3 { font-size: 24px; }
+.founder .role { font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+.founder p { margin: 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.5; }
+.about-cta { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.about-cta .note { color: var(--ink-3); font-size: 13.5px; margin: 0; }
+@media (max-width: 800px) { .founder-grid { grid-template-columns: 1fr; } .about-hero h1 { font-size: 30px; } }
