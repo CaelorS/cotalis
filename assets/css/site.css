@@ -604,7 +604,7 @@ body.admin { background: var(--bg); }
 .hero2 h2 { font-size: 42px; text-wrap: balance; }
 .hero2 p { font-size: 18px; }
 .heroillu { width: 100%; height: auto; overflow: visible; }
-.heroillu .illu-scan { animation: scan 7s ease-in-out infinite; }
+.heroillu .illu-scan { animation: scan 9s ease-in-out 1 forwards; }
 .heroillu .illu-card { animation: floatA 6s ease-in-out infinite; transform-origin: 325px 115px; }
 .heroillu .illu-line { animation: draw 6s ease-in-out infinite; }
 .heroillu .illu-dot { animation: twinkle 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
@@ -614,12 +614,12 @@ body.admin { background: var(--bg); }
 .heroillu .illu-chip { animation: floatB 8s ease-in-out infinite; transform-origin: 341px 240px; }
 .heroillu .illu-spark { animation: twinkle 3.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
 .heroillu .illu-spark.s2 { animation-delay: 1.6s; }
-@keyframes scan { 0%, 100% { transform: translateY(40px); } 50% { transform: translateY(232px); } }
+@keyframes scan { 0% { transform: translateY(40px); opacity: 1; } 50% { transform: translateY(232px); opacity: 1; } 88% { transform: translateY(40px); opacity: 1; } 100% { transform: translateY(40px); opacity: 0; } }
 @keyframes floatA { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-5px) rotate(-.5deg); } }
 @keyframes floatB { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(4px) rotate(.5deg); } }
 @keyframes dash { to { stroke-dashoffset: -12; } }
 @keyframes twinkle { 0%, 100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
-@media (prefers-reduced-motion: reduce) { .heroillu * { animation: none !important; } .heroillu .illu-scan { transform: translateY(100px); } }
+@media (prefers-reduced-motion: reduce) { .heroillu * { animation: none !important; } .heroillu .illu-scan { display: none; } }
 .strip2 > div { display: flex; flex-direction: column; gap: 8px; }
 .strip2 svg { width: 44px; height: 44px; fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 2px; }
 @media (max-width: 900px) { .hero.hero2 { grid-template-columns: 1fr; gap: 24px; padding: 32px 16px 24px; } .hero2 h2 { font-size: 32px; } .hero2 .hero-text { align-items: flex-start; } .heroillu { max-width: 420px; margin: 0 auto; } }
