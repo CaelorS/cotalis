@@ -57,7 +57,7 @@
       const t = Math.min(1, (now - t0) / D), e = ease(t);
       const wob = Math.pow(1 - t, 1.5);                 // l'hésitation s'éteint à mesure que le chiffrage se précise
       const r = 7.5 + (9.1 - 7.5) * e + Math.sin(t * 9) * 0.3 * wob + Math.sin(t * 2.6) * 0.15 * wob;
-      const w = 195000 + (FINAL - 195000) * e + Math.sin(t * 6.5) * 20000 * wob + Math.sin(t * 1.9) * 8000 * wob;
+      const w = 195000 + (FINAL - 195000) * e + Math.sin(t * 6.5) * 20000 * wob + Math.sin(t * 1.9) * 8000 * wob + 9000 * Math.pow(1 - t, 1.3);   // le dernier réglage se fait à la baisse
       const wc = Math.max(LO, Math.min(HI, w));
       renta.textContent = fmtPct(Math.max(7.2, Math.min(9.4, r)));
       trav.textContent = fmtEur(wc);

@@ -612,7 +612,6 @@ body.admin { background: var(--bg); }
 @keyframes draw { 0% { stroke-dashoffset: 110; } 35%, 100% { stroke-dashoffset: 0; } }
 @keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .heroillu .illu-chip { animation: floatB 8s ease-in-out infinite; transform-origin: 341px 240px; }
-.heroillu .illu-link { animation: dash 2.4s linear infinite; }
 .heroillu .illu-spark { animation: twinkle 3.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
 .heroillu .illu-spark.s2 { animation-delay: 1.6s; }
 @keyframes scan { 0%, 100% { transform: translateY(40px); } 50% { transform: translateY(232px); } }
