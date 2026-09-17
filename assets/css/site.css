@@ -446,3 +446,28 @@ body.admin { background: var(--bg); }
 
 .founder .photo { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; object-position: center top; border: 3px solid var(--accent-soft); }
 .founder .avatar { width: 96px; height: 96px; font-size: 30px; }
+
+/* ---------- fil d'Ariane : icônes ---------- */
+.progress li button { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.progress li button svg { width: 18px; height: 18px; flex-shrink: 0; display: none; }
+.result .mini { display: none; }
+@media (max-width: 980px) {
+  .progress { padding: 8px 12px 0; }
+  .progress ol { gap: 4px; }
+  .progress li button { padding: 8px 0 8px; }
+  .progress li button svg { display: block; width: 22px; height: 22px; }
+  .progress li button span { display: none; }
+  .progress .pct { padding: 6px 0 4px; }
+  /* encadré compact : une ligne, la fourchette, rien d'autre */
+  .result { max-height: none; padding: 0; }
+  .result .head { padding: 0; }
+  .result .head .eyebrow, .result .head .big, .result .head .range, .result .panel-toggle, .result #p-body, .result .empty { display: none !important; }
+  .result .mini { display: flex; align-items: baseline; gap: 8px; padding: 10px 16px; }
+  .result .mini .k { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  .result .mini b { font-size: 17px; color: var(--accent); }
+  .result .mini small { font-size: 12px; color: var(--ink-3); }
+  body[data-step="kind"] .result, body[data-step="bien"] .result { display: none; }
+  .tunnel { padding-bottom: 96px; }
+  .stepnav { position: sticky; bottom: 46px; background: var(--bg); padding: 10px 0; z-index: 21; }
+  body[data-step="kind"] .stepnav, body[data-step="bien"] .stepnav { bottom: 0; }
+}

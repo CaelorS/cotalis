@@ -54,6 +54,15 @@
   }
 
   /* ---------- étapes ---------- */
+  const ICONS = {
+    kind: '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>',
+    bien: '<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    finition: '<rect x="4" y="4" width="12" height="6" rx="1"/><path d="M16 7h3v5h-7v3"/><rect x="10" y="15" width="4" height="6"/>',
+    travaux: '<path d="M14 4l6 6-2 2-6-6z"/><path d="M12 6 4 14v3h3l8-8"/>',
+    financeQ: '<path d="M3 10 12 4l9 6"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8M3 18h18"/>',
+    contact: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+    resultat: '<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6M9 8h3"/>',
+  };
   const PROGRESS = [['Bien', 'kind'], ['Descriptif', 'bien'], ['Finition', 'finition'], ['Travaux', 'travaux'], ['Financement', 'financeQ'], ['Coordonnées', 'contact'], ['Estimation', 'resultat']];
   const LABEL = { kind: 0, bien: 1, finition: 2, travaux: 3, financeQ: 4, acquisition: 4, situation: 4, contact: 5, resultat: 6 };
   const NEXT_LABEL = { kind: 'Continuer', bien: 'Continuer', finition: 'Voir mes travaux', travaux: 'Valider mes travaux', financeQ: 'Continuer', acquisition: 'Continuer', situation: 'Continuer', contact: 'Voir mon estimation' };
@@ -79,8 +88,9 @@
     $('surface-label').textContent = S.kind === 'immeuble' ? 'Surface habitable totale' : 'Surface habitable';
 
     const idx = list.indexOf(S.step);
-    $('progress').innerHTML = PROGRESS.map((p, i) => `<li class="${i < cur ? 'done' : i === cur ? 'now' : ''}"><button type="button" data-go="${p[1]}" ${i <= S.maxIdx ? '' : 'disabled'} aria-current="${i === cur ? 'step' : 'false'}">${p[0]}</button></li>`).join('');
-    $('pct').textContent = S.step === 'resultat' ? 'Estimation prête' : 'Étape ' + (idx + 1) + ' sur ' + list.length + ' · ' + Math.round(idx / (list.length - 1) * 100) + ' %';
+    $('progress').innerHTML = PROGRESS.map((p, i) => `<li class="${i < cur ? 'done' : i === cur ? 'now' : ''}"><button type="button" data-go="${p[1]}" ${i <= S.maxIdx ? '' : 'disabled'} aria-current="${i === cur ? 'step' : 'false'}" aria-label="${p[0]}" title="${p[0]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[p[1]]}</svg><span>${p[0]}</span></button></li>`).join('');
+    $('pct').textContent = S.step === 'resultat' ? 'Estimation prête' : 'Étape ' + (idx + 1) + ' sur ' + list.length + ' · ' + PROGRESS[cur][0] + ' · ' + Math.round(idx / (list.length - 1) * 100) + ' %';
+    document.body.dataset.step = S.step;
 
     $('stepnav').classList.toggle('hidden', S.step === 'resultat' || viewer);
     $('progress-wrap').classList.toggle('hidden', viewer);
@@ -338,6 +348,7 @@
     const R = C.compute(S);
     $('p-central').innerHTML = eur(R.ttc) + '<small>TTC</small>';
     $('p-low').textContent = eur(R.low); $('p-high').textContent = eur(R.high);
+    $('p-mini').innerHTML = '<span class="k">Travaux estimés</span><b class="num">' + eur(R.low) + ' – ' + eur(R.high) + '</b><small>TTC</small>';
     const span = R.high * 1.08 || 1, px = v => (v / span * 100).toFixed(1) + '%';
     $('p-band').style.left = px(R.low); $('p-band').style.width = px(R.high - R.low);
     $('p-pin-low').style.left = px(R.low); $('p-pin-mid').style.left = px(R.ttc); $('p-pin-high').style.left = px(R.high);
