@@ -624,3 +624,6 @@ body.admin { background: var(--bg); }
 .strip2 > div { display: flex; flex-direction: column; gap: 8px; }
 .strip2 svg { width: 44px; height: 44px; fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 2px; }
 @media (max-width: 900px) { .hero.hero2 { grid-template-columns: 1fr; gap: 24px; padding: 32px 16px 24px; } .hero2 h2 { font-size: 32px; } .hero2 .hero-text { align-items: flex-start; } .heroillu { max-width: 420px; margin: 0 auto; } }
+
+.top.slim .logo { width: 28px; height: 28px; color: var(--accent); }
+.top.slim .brand { gap: 10px; }
