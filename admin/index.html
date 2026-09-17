@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="../assets/css/site.css?v=202609171716">
+  <link rel="stylesheet" href="../assets/css/site.css?v=202609171720">
 </head>
 <body class="admin">
   <header class="top">
@@ -21,6 +21,7 @@
       <button type="button" class="tab selected" data-tab="dossiers">Dossiers</button>
       <button type="button" class="tab" data-tab="prix">Prix</button>
       <button type="button" class="tab" data-tab="selection">Algo des devis</button>
+      <button type="button" class="tab" data-tab="scoring">Scoring</button>
       <button type="button" class="tab" data-tab="tunnel">Analyse du tunnel</button>
       <button type="button" class="tab" data-tab="admins">Administrateurs</button>
     </nav>
@@ -51,7 +52,7 @@
         <label class="tlabel">Du <input id="f-from" type="date" aria-label="Date de début"> au <input id="f-to" type="date" aria-label="Date de fin"></label>
         <button type="button" class="btn small" id="f-reset">Réinitialiser les filtres</button>
       </div>
-      <div class="tablewrap"><table class="grid-table sortable" id="leads"><thead><tr><th data-sort="date">Date</th><th data-sort="contact">Contact</th><th data-sort="bien">Bien</th><th class="r" data-sort="ttc">Travaux TTC</th><th class="r" data-sort="marge">Marge est.</th><th data-sort="finance">Financement</th><th data-sort="status">Statut</th><th data-sort="assign">Responsable</th><th data-sort="next">Prochaine action</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="tablewrap"><table class="grid-table sortable" id="leads"><thead><tr><th data-sort="date">Date</th><th data-sort="contact">Contact</th><th data-sort="bien">Bien</th><th class="r" data-sort="ttc">Travaux TTC</th><th class="r" data-sort="marge">Marge est.</th><th data-sort="score">Score</th><th data-sort="finance">Financement</th><th data-sort="status">Statut</th><th data-sort="assign">Responsable</th><th data-sort="next">Prochaine action</th><th></th></tr></thead><tbody></tbody></table></div>
     </section>
 
     <section id="tab-prix" class="tabpane hidden">
@@ -102,6 +103,20 @@
       <div class="savebar"><span id="sel-msg" class="hint"></span><button type="button" class="btn" id="sel-reset">Revenir aux règles par défaut</button><button type="button" class="btn primary" id="sel-save">Enregistrer les règles</button></div>
     </section>
 
+    <section id="tab-scoring" class="tabpane hidden">
+      <div class="kpis" id="sc-kpis"></div>
+      <div class="panel">
+        <header><h2>Dossiers par score</h2><span class="hint">Note globale sur 100 et lettre : A à rappeler dans la journée, B sous 48 h, C relance automatique, D nurturing. Le score se recalcule à chaque ouverture à partir du barème ci-dessous.</span></header>
+        <div class="toolbar" style="padding:12px 24px 0"><select id="sc-letter" aria-label="Lettre"><option value="">Toutes les lettres</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select><select id="sc-status" aria-label="Statut"><option value="">Dossiers ouverts</option><option value="all">Tous les statuts</option></select><span class="count" id="sc-count"></span></div>
+        <div class="tablewrap"><table class="grid-table sortable" id="sc-table"><thead><tr><th data-sort="score">Score</th><th data-sort="contact">Contact</th><th data-sort="bien">Bien</th><th class="r" data-sort="ttc">Travaux TTC</th><th class="r" data-sort="valeur">Valeur</th><th class="r" data-sort="maturite">Maturité</th><th class="r" data-sort="engagement">Engagement</th><th data-sort="status">Statut</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="panel">
+        <header><h2>Barème</h2><span class="hint">Trois dimensions notées sur 100, pondérées dans la note globale. Modifiez les points, enregistrez : tous les dossiers sont renotés immédiatement. Les points d'une dimension sont plafonnés à 100.</span></header>
+        <div class="body"><div id="sc-bareme" class="bareme"></div></div>
+      </div>
+      <div class="savebar"><span id="sc-msg" class="hint"></span><button type="button" class="btn" id="sc-reset">Revenir au barème par défaut</button><button type="button" class="btn primary" id="sc-save">Enregistrer le barème</button></div>
+    </section>
+
     <section id="tab-tunnel" class="tabpane hidden">
       <div class="toolbar">
         <select id="t-period" aria-label="Période"><option value="7">7 derniers jours</option><option value="30" selected>30 derniers jours</option><option value="90">90 derniers jours</option><option value="365">12 derniers mois</option></select>
@@ -135,11 +150,11 @@
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../config.js?v=202609171716"></script>
-  <script src="../assets/js/catalog.js?v=202609171716"></script>
-  <script src="../assets/js/engine.js?v=202609171716"></script>
-  <script src="../assets/js/pricing.js?v=202609171716"></script>
-  <script src="../assets/js/auth.js?v=202609171716"></script>
-  <script src="../assets/js/admin.js?v=202609171716"></script>
+  <script src="../config.js?v=202609171720"></script>
+  <script src="../assets/js/catalog.js?v=202609171720"></script>
+  <script src="../assets/js/engine.js?v=202609171720"></script>
+  <script src="../assets/js/pricing.js?v=202609171720"></script>
+  <script src="../assets/js/auth.js?v=202609171720"></script>
+  <script src="../assets/js/admin.js?v=202609171720"></script>
 </body>
 </html>

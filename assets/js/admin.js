@@ -34,6 +34,7 @@
     if (name === 'dossiers') loadLeads();
     if (name === 'prix') loadPricingTab();
     if (name === 'selection') loadSelectionTab();
+    if (name === 'scoring') loadScoring();
     if (name === 'tunnel') { if (!leads.length && sb) sb.from('leads').select('id,project_id,prenom,nom').then(r => { leads = r.data || leads; loadTunnel(); }); else loadTunnel(); }
     if (name === 'admins') loadAdmins();
   }
@@ -50,6 +51,7 @@
     const { data, error } = await sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000);
     if (error) { $('count').textContent = 'Lecture impossible : ' + error.message; return; }
     leads = data || [];
+    rappelMap = null; await loadScoringConfig(); await loadScoringSessions();
     renderLeads();
   }
   const margeOf = l => (l.payload && l.payload.interne && l.payload.interne.marge) || 0;
@@ -66,6 +68,7 @@
     status: l => STATUS_RANK[l.status || 'nouveau'] || 0,
     assign: l => adminName(l.assigned_to).toLowerCase(),
     next: l => l.next_action || (sortDir === 1 ? '9999' : ''),
+    score: l => scoreLead(l).total,
   };
   function renderLeads() {
     const q = $('q').value.trim().toLowerCase(), fs = $('f-status').value, fa = $('f-assign').value;
@@ -95,12 +98,13 @@
       <td>${esc(KIND[l.type_bien] || l.type_bien || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}<small>${esc(l.ville || l.adresse || '')}</small></td>
       <td class="r num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</td>
       <td class="r num">${margeOf(l) ? eur(margeOf(l)) : '—'}</td>
+      <td>${scoreBadge(scoreLead(l))}</td>
       <td>${esc(FIN[l.finance] || '—')}${l.prix ? '<small>' + eur(l.prix) + ' d\'achat</small>' : ''}</td>
       <td><select data-f="status" class="inline">${STATUS.map(s => `<option value="${s[0]}"${(l.status || 'nouveau') === s[0] ? ' selected' : ''}>${s[1]}</option>`).join('')}</select></td>
       <td><select data-f="assigned_to" class="inline"><option value="">—</option>${admins.map(a => `<option value="${a.id}"${l.assigned_to === a.id ? ' selected' : ''}>${esc(a.prenom || a.email)}</option>`).join('')}</select></td>
       <td><input type="date" data-f="next_action" class="inline" value="${l.next_action || ''}"></td>
       <td><button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
-    </tr>`).join('') || '<tr><td colspan="10" class="empty">Aucun dossier.</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="11" class="empty">Aucun dossier.</td></tr>';
   }
   const FILTER_IDS = ['q', 'f-status', 'f-assign', 'f-kind', 'f-fin', 'f-stade', 'f-type', 'f-ville', 'f-min', 'f-max', 'f-from', 'f-to'];
   FILTER_IDS.forEach(id => $(id).addEventListener('input', renderLeads));
@@ -157,6 +161,7 @@
         <div class="box"><h3>Travaux retenus</h3><ul class="plain">${works.map(w => `<li>${esc(w)}</li>`).join('') || '<li>—</li>'}</ul></div>
         <div class="box"><h3>Plans et photos</h3><ul class="plain">${fileLinks.join('') || '<li>aucun fichier</li>'}</ul><p class="hint" style="margin:8px 0 0">Liens valables 10 minutes.</p></div>
       </div>
+      ${(() => { const sc = scoreLead(l); return `<div class="box"><h3>Score ${scoreBadge(sc)}</h3><div class="gauges">${['valeur', 'maturite', 'engagement'].map(k => `<div class="gauge"><div class="eyebrow">${{ valeur: 'Valeur du dossier', maturite: 'Maturité', engagement: 'Engagement' }[k]} · ${sc[k]} / 100</div><div class="track"><i style="width:${sc[k]}%"></i></div><ul class="plain">${sc.why[k].map(w => `<li>${esc(w)}</li>`).join('') || '<li>aucun signal</li>'}</ul></div>`).join('')}</div>${sc.rule ? `<p class="hint" style="margin:8px 0 0">Règle appliquée : ${esc(sc.rule)}</p>` : ''}</div>`; })()}
       <div class="box"><h3>Suivi</h3>
         <div class="grid">
           <div class="field"><label>Statut</label><select id="d-status">${STATUS.map(s => `<option value="${s[0]}"${(l.status || 'nouveau') === s[0] ? ' selected' : ''}>${s[1]}</option>`).join('')}</select></div>
@@ -318,6 +323,113 @@
     const { error } = await sb.from('pricing_settings').delete().in('key', ['PRESET', 'RULES']);
     if (error) { $('sel-msg').textContent = 'Impossible : ' + error.message; return; }
     location.reload();
+  });
+
+  /* ---------- scoring ---------- */
+  const SC_DEFAULT = {
+    poids: { valeur: 40, maturite: 35, engagement: 25 },
+    valeur: { ttc_15k: 10, ttc_40k: 25, ttc_80k: 40, ttc_plus: 50, marge_3k: 5, marge_8k: 15, marge_plus: 25, finance_oui: 15, bien_entier: 10 },
+    maturite: { stade_etude: 10, stade_compromis: 35, stade_acte: 50, dem_6: 10, dem_3: 20, dem_1: 30, finance_ok: 20, adresse_precise: 10 },
+    engagement: { rappel: 30, fichiers: 20, travaux_modifies: 15, partage: 15, compte: 10, session_unique: 10 },
+    paliers: { A: 70, B: 50, C: 30 },
+    regles: { acte_immediat_A: 1, plancher_ttc_C: 5000 },
+  };
+  const SC_LABELS = {
+    poids: ['Pondération de la note globale (%)', { valeur: 'Valeur', maturite: 'Maturité', engagement: 'Engagement' }],
+    valeur: ['Valeur du dossier', { ttc_15k: 'Travaux < 15 k€', ttc_40k: 'Travaux 15 à 40 k€', ttc_80k: 'Travaux 40 à 80 k€', ttc_plus: 'Travaux > 80 k€', marge_3k: 'Marge < 3 k€', marge_8k: 'Marge 3 à 8 k€', marge_plus: 'Marge > 8 k€', finance_oui: 'Accompagnement financement demandé', bien_entier: 'Maison ou immeuble' }],
+    maturite: ['Maturité', { stade_etude: 'En étude', stade_compromis: 'Sous compromis', stade_acte: 'Acte signé', dem_6: 'Démarrage sous 6 mois', dem_3: 'Démarrage sous 3 mois', dem_1: 'Démarrage dès que possible', finance_ok: 'Financement acquis ou accompagné', adresse_precise: 'Adresse précise choisie dans la liste' }],
+    engagement: ['Engagement', { rappel: 'Rappel visite technique demandé', fichiers: 'Plans ou photos déposés', travaux_modifies: 'Travaux modifiés à la main', partage: 'Estimation partagée ou rouverte', compte: 'Compte créé, téléphone valide', session_unique: 'Parcours complet d\'une traite' }],
+    paliers: ['Paliers (note globale minimale)', { A: 'Lettre A à partir de', B: 'Lettre B à partir de', C: 'Lettre C à partir de' }],
+    regles: ['Règles prioritaires', { acte_immediat_A: 'Acte signé + démarrage immédiat ⇒ A (1 = oui, 0 = non)', plancher_ttc_C: 'Travaux sous ce montant ⇒ plafonné à C (€)' }],
+  };
+  let SC = JSON.parse(JSON.stringify(SC_DEFAULT)), scLoaded = false, scSessions = {};
+  const rappelByProject = () => { const m = {}; leads.forEach(l => { if (l.kind === 'rappel' && l.project_id) m[l.project_id] = true; }); return m; };
+  let rappelMap = null;
+  function scoreLead(l) {
+    if (!rappelMap) rappelMap = rappelByProject();
+    const p = l.payload || {}, b = p.bien || {}, sess = scSessions[l.project_id] || null;
+    const why = { valeur: [], maturite: [], engagement: [] };
+    let v = 0, m = 0, e = 0;
+    const ttc = +l.estimation_ttc || 0, marge = margeOf(l);
+    const V = SC.valeur, M = SC.maturite, E = SC.engagement;
+    if (ttc) { const pts = ttc < 15000 ? V.ttc_15k : ttc < 40000 ? V.ttc_40k : ttc < 80000 ? V.ttc_80k : V.ttc_plus; v += pts; why.valeur.push('Travaux ' + eur(ttc) + ' : +' + pts); }
+    if (marge) { const pts = marge < 3000 ? V.marge_3k : marge < 8000 ? V.marge_8k : V.marge_plus; v += pts; why.valeur.push('Marge ' + eur(marge) + ' : +' + pts); }
+    if (l.finance === 'oui') { v += V.finance_oui; why.valeur.push('Accompagnement financement : +' + V.finance_oui); }
+    if (l.type_bien === 'maison' || l.type_bien === 'immeuble') { v += V.bien_entier; why.valeur.push((KIND[l.type_bien]) + ' : +' + V.bien_entier); }
+    const st = { etude: M.stade_etude, compromis: M.stade_compromis, acte: M.stade_acte }[l.stade]; if (st != null) { m += st; why.maturite.push('Stade ' + l.stade + ' : +' + st); }
+    const dm = { '6': M.dem_6, '3': M.dem_3, '1': M.dem_1 }[String(l.demarrage || '')]; if (dm != null) { m += dm; why.maturite.push('Démarrage sous ' + l.demarrage + ' mois : +' + dm); }
+    if (l.finance === 'oui' || l.finance === 'renta') { m += M.finance_ok; why.maturite.push('Financement ' + (l.finance === 'oui' ? 'accompagné' : 'acquis') + ' : +' + M.finance_ok); }
+    if (l.cp && l.ville) { m += M.adresse_precise; why.maturite.push('Adresse précise : +' + M.adresse_precise); }
+    if (l.kind === 'rappel' || rappelMap[l.project_id]) { e += E.rappel; why.engagement.push('Rappel demandé : +' + E.rappel); }
+    if (p.files && p.files.length) { e += E.fichiers; why.engagement.push(p.files.length + ' fichier(s) : +' + E.fichiers); }
+    if ((sess && sess.data && sess.data.worksTouched) || (p.qty && Object.keys(p.qty).length)) { e += E.travaux_modifies; why.engagement.push('Travaux ajustés : +' + E.travaux_modifies); }
+    if (sess && sess.data && (sess.data.shared || sess.data.reopened)) { e += E.partage; why.engagement.push('Estimation partagée : +' + E.partage); }
+    if (l.user_id && String(l.tel || '').replace(/\D/g, '').length >= 9) { e += E.compte; why.engagement.push('Compte et téléphone : +' + E.compte); }
+    if (sess && sess.completed_at) { const d = Date.parse(sess.completed_at) - Date.parse(sess.started_at); if (d > 0 && d < 45 * 60000) { e += E.session_unique; why.engagement.push('Parcours complet d\'une traite : +' + E.session_unique); } }
+    v = Math.min(100, v); m = Math.min(100, m); e = Math.min(100, e);
+    const w = SC.poids, tw = (w.valeur + w.maturite + w.engagement) || 100;
+    let total = Math.round((v * w.valeur + m * w.maturite + e * w.engagement) / tw);
+    let letter = total >= SC.paliers.A ? 'A' : total >= SC.paliers.B ? 'B' : total >= SC.paliers.C ? 'C' : 'D', rule = '';
+    if (SC.regles.acte_immediat_A && l.stade === 'acte' && String(l.demarrage) === '1') { letter = 'A'; rule = 'acte signé et démarrage immédiat, passé en A'; }
+    if (SC.regles.plancher_ttc_C && ttc && ttc < SC.regles.plancher_ttc_C && letter < 'C') { letter = 'C'; rule = 'travaux sous ' + eur(SC.regles.plancher_ttc_C) + ', plafonné à C'; }
+    return { total, letter, valeur: v, maturite: m, engagement: e, why, rule };
+  }
+  const scoreBadge = sc => `<span class="score s${sc.letter}" title="valeur ${sc.valeur} · maturité ${sc.maturite} · engagement ${sc.engagement}">${sc.letter}<small>${sc.total}</small></span>`;
+  async function loadScoringConfig() {
+    if (scLoaded) return;
+    try { const { data } = await sb.from('pricing_settings').select('value').eq('key', 'SCORING').maybeSingle(); if (data && data.value) SC = mergeDeep(JSON.parse(JSON.stringify(SC_DEFAULT)), data.value); } catch (e) {}
+    scLoaded = true;
+  }
+  function mergeDeep(a, b) { Object.keys(b || {}).forEach(k => { if (b[k] && typeof b[k] === 'object' && a[k] && typeof a[k] === 'object') mergeDeep(a[k], b[k]); else if (b[k] != null) a[k] = b[k]; }); return a; }
+  async function loadScoringSessions() {
+    const ids = leads.map(l => l.project_id).filter(Boolean);
+    if (!ids.length) return;
+    try { const { data } = await sb.from('funnel_sessions').select('id,started_at,completed_at,data').in('id', ids.slice(0, 1000)); (data || []).forEach(x => { scSessions[x.id] = x; }); } catch (e) {}
+  }
+  let scSortKey = 'score', scSortDir = -1;
+  async function loadScoring() {
+    await loadScoringConfig();
+    if (!leads.length) { const { data } = await sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000); leads = data || []; }
+    rappelMap = null; await loadScoringSessions();
+    renderBareme(); renderScoring();
+  }
+  function renderBareme() {
+    $('sc-bareme').innerHTML = Object.keys(SC_LABELS).map(g => `<div class="bareme-group"><h4>${SC_LABELS[g][0]}</h4><div class="grid">${Object.keys(SC_LABELS[g][1]).map(k => `<div class="field"><label>${SC_LABELS[g][1][k]} <span class="optsub">défaut ${SC_DEFAULT[g][k]}</span></label><input type="number" step="1" data-sc="${g}.${k}" value="${SC[g][k]}"></div>`).join('')}</div></div>`).join('');
+  }
+  function renderScoring() {
+    const fl = $('sc-letter').value, fs = $('sc-status').value;
+    let rows = leads.filter(l => l.kind !== 'test' && l.kind !== 'rappel');
+    if (fs !== 'all') rows = rows.filter(l => !['signe', 'perdu'].includes(l.status));
+    const scored = rows.map(l => ({ l, sc: scoreLead(l) }));
+    let list = fl ? scored.filter(x => x.sc.letter === fl) : scored;
+    const key = { score: x => x.sc.total, contact: x => ((x.l.nom || '') + (x.l.prenom || '')).toLowerCase(), bien: x => (KIND[x.l.type_bien] || '') + (x.l.ville || ''), ttc: x => +x.l.estimation_ttc || 0, valeur: x => x.sc.valeur, maturite: x => x.sc.maturite, engagement: x => x.sc.engagement, status: x => STATUS_RANK[x.l.status || 'nouveau'] || 0 }[scSortKey];
+    list.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'fr')) * scSortDir; });
+    document.querySelectorAll('#sc-table th[data-sort]').forEach(th => { th.classList.toggle('asc', th.dataset.sort === scSortKey && scSortDir === 1); th.classList.toggle('desc', th.dataset.sort === scSortKey && scSortDir === -1); });
+    const counts = { A: 0, B: 0, C: 0, D: 0 }; scored.forEach(x => { counts[x.sc.letter]++; });
+    $('sc-kpis').innerHTML = ['A', 'B', 'C', 'D'].map(k => `<div class="tile"><div class="eyebrow">${{ A: 'À rappeler aujourd\'hui', B: 'À rappeler sous 48 h', C: 'Relance automatique', D: 'Nurturing' }[k]}</div><div class="v num"><span class="score s${k}">${k}</span> ${counts[k]}</div><div class="d">${scored.length ? Math.round(counts[k] / scored.length * 100) + ' % des dossiers ouverts' : ''}</div></div>`).join('');
+    $('sc-count').textContent = list.length + ' dossier' + (list.length > 1 ? 's' : '');
+    $('sc-table').querySelector('tbody').innerHTML = list.map(({ l, sc }) => `<tr data-id="${l.id}">
+      <td>${scoreBadge(sc)}</td>
+      <td><b>${esc(l.prenom)} ${esc(l.nom)}</b><small>${dt(l.created_at)} · ${esc(l.stade || '')}${l.demarrage ? ' · sous ' + l.demarrage + ' mois' : ''}</small></td>
+      <td>${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}<small>${esc(l.ville || l.adresse || '')}</small></td>
+      <td class="r num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</td>
+      <td class="r num">${sc.valeur}</td><td class="r num">${sc.maturite}</td><td class="r num">${sc.engagement}</td>
+      <td>${STATUS_LABEL[l.status || 'nouveau']}</td>
+      <td><button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
+    </tr>`).join('') || '<tr><td colspan="9" class="empty">Aucun dossier.</td></tr>';
+  }
+  ['sc-letter', 'sc-status'].forEach(id => $(id).addEventListener('input', renderScoring));
+  $('sc-table').querySelector('thead').addEventListener('click', e => { const th = e.target.closest('th[data-sort]'); if (!th) return; if (scSortKey === th.dataset.sort) scSortDir = -scSortDir; else { scSortKey = th.dataset.sort; scSortDir = -1; } renderScoring(); });
+  $('sc-table').addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) openLead(+b.dataset.open); });
+  $('sc-bareme').addEventListener('input', () => { document.querySelectorAll('[data-sc]').forEach(inp => { const [g, k] = inp.dataset.sc.split('.'); SC[g][k] = +inp.value || 0; }); renderScoring(); $('sc-msg').textContent = 'Barème modifié, non enregistré.'; });
+  $('sc-save').addEventListener('click', async () => {
+    const { error } = await sb.from('pricing_settings').upsert({ key: 'SCORING', value: SC, updated_at: new Date().toISOString() });
+    $('sc-msg').textContent = error ? 'Enregistrement impossible : ' + error.message : 'Barème enregistré.';
+  });
+  $('sc-reset').addEventListener('click', async () => {
+    if (!confirm('Revenir au barème par défaut ?')) return;
+    await sb.from('pricing_settings').delete().eq('key', 'SCORING');
+    SC = JSON.parse(JSON.stringify(SC_DEFAULT)); renderBareme(); renderScoring(); $('sc-msg').textContent = 'Barème par défaut rétabli.';
   });
 
   /* ---------- analyse du tunnel ---------- */

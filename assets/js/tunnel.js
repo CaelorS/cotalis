@@ -502,7 +502,7 @@
   /* ---------- partage ---------- */
   function shareData() {
     const d = clone(S);
-    delete d.token; delete d.situation; delete d.leadSent; delete d.leadSubmitted; delete d.stepsAt; delete d.startedAt; delete d.completedAt;
+    delete d.token; delete d.situation; delete d.leadSent; delete d.leadSubmitted; delete d.stepsAt; delete d.startedAt; delete d.completedAt; delete d.sharedFlag; delete d.reopenedFlag;
     d.contact = { prenom: S.contact.prenom, nom: S.contact.nom, tel: '', email: '', consent: false };
     d.files = S.files.filter(f => f.path).map(f => ({ name: f.name, path: f.path, size: f.size, type: f.type }));
     d.sharedAt = new Date().toISOString();
@@ -525,6 +525,7 @@
   async function share() {
     const url = location.origin + location.pathname + '?p=' + encodeURIComponent(S.pid);
     const stored = viewer ? true : await saveProject();
+    if (!viewer) { S.sharedFlag = true; save(); track(); }
     $('share-url').value = url;
     $('modal-title').textContent = 'Lien copié';
     $('modal-text').textContent = stored
@@ -542,7 +543,7 @@
       const data = await fetchProject(id);
       if (!data) { notice('Ce lien ne correspond à aucun projet enregistré. Il a peut-être été créé sur un autre appareil sans être partagé.'); return; }
       if (mine) {
-        S = Object.assign(newState(), data, { pid: id, token: mine.token, step: 'resultat', maxIdx: 6 });
+        S = Object.assign(newState(), data, { pid: id, token: mine.token, step: 'resultat', maxIdx: 6, reopenedFlag: true });
         const cur = load(); if (cur && cur.pid === id) { S.contact = cur.contact; S.situation = cur.situation; }
         save(); fillForm(); showStep();
       } else {
@@ -609,7 +610,7 @@
       const patch = { started_at: S.startedAt, completed_at: S.completedAt || null, last_step: S.step, max_step: Math.max.apply(null, Object.keys(S.stepsAt).map(k => STEP_RANK[k] || 0)), steps: S.stepsAt,
         kind: S.kind, surface: +S.surface || null, finance: S.finance, ttc: R ? Math.round(R.ttc) : null, ref: S.ref || null,
         device: window.matchMedia('(max-width: 980px)').matches ? 'mobile' : 'ordinateur', ua: navigator.userAgent, referrer: document.referrer || null,
-        data: { etat: S.etat, gamme: S.gamme, stade: S.stade, demarrage: S.demarrage, zone: S.zone, works: Object.keys(S.works).filter(k => S.works[k]).length, files: S.files.length, worksTouched: S.worksTouched } };
+        data: { etat: S.etat, gamme: S.gamme, stade: S.stade, demarrage: S.demarrage, zone: S.zone, works: Object.keys(S.works).filter(k => S.works[k]).length, files: S.files.length, worksTouched: S.worksTouched, shared: !!S.sharedFlag, reopened: !!S.reopenedFlag } };
       fetch(BASE + '/rest/v1/rpc/track_session', { method: 'POST', headers: hdr(), body: JSON.stringify({ p_id: S.pid, p_patch: patch }), keepalive: true }).catch(() => {});
     }, 400);
   }
