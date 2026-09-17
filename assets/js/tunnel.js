@@ -598,8 +598,7 @@
     $('contact-login').classList.add('hidden');
     if (!S.contact.email) S.contact.email = u.email || '';
     if (p) { if (!S.contact.prenom) S.contact.prenom = p.prenom || ''; if (!S.contact.nom) S.contact.nom = p.nom || ''; if (!S.contact.tel) S.contact.tel = p.tel || ''; }
-    $('pw-field').classList.add('hidden'); $('contact-logged').classList.remove('hidden');
-    $('contact-logged').textContent = 'Connecté en tant que ' + (u.email || '') + '. Vos coordonnées sont pré-remplies.';
+    $('pw-field').classList.add('hidden'); $('contact-logged').classList.add('hidden');
     fillForm(); save();
   }
 
