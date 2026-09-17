@@ -652,3 +652,12 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
 .choice.wide-choice .display { font-size: 19px; }
 .choice.wide-choice .txt { display: flex; flex-direction: column; gap: 4px; }
 @media (max-width: 980px) { .choice.wide-choice { flex-direction: column; align-items: flex-start; } }
+
+/* boutons du rapport : libellés courts et une seule ligne sur mobile */
+.report .actions .s { display: none; }
+@media (max-width: 980px) {
+  .report .actions { display: flex; flex-wrap: nowrap; gap: 6px; width: 100%; }
+  .report .actions .btn { flex: 1 1 0; min-width: 0; padding: 8px 4px; font-size: 13px; white-space: nowrap; justify-content: center; }
+  .report .actions .l { display: none; }
+  .report .actions .s { display: inline; }
+}
