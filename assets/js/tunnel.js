@@ -556,7 +556,16 @@
   /* ---------- compte utilisateur ---------- */
   async function ensureAccount() {
     const A = C.auth;
-    if (!A || !A.sb || A.user) return true;
+    if (A && A.sb && A.user) {
+      // compte déjà ouvert : on complète le profil avec les coordonnées saisies si elles manquent
+      const p = A.profile || {}, c = S.contact, upd = {};
+      if (!p.prenom && c.prenom.trim()) upd.prenom = c.prenom.trim();
+      if (!p.nom && c.nom.trim()) upd.nom = c.nom.trim();
+      if (!p.tel && c.tel) upd.tel = c.tel;
+      if (Object.keys(upd).length) { try { await A.sb.from('profiles').update(upd).eq('id', A.user.id); await A.refreshProfile(); } catch (e) {} }
+      return true;
+    }
+    if (!A || !A.sb) return true;
     const c = S.contact, btn = $('btn-next');
     btn.disabled = true;
     try {

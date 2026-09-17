@@ -21,6 +21,7 @@
     async signIn(email, password) { const { error } = await sb.auth.signInWithPassword({ email, password }); if (error) throw error; },
     async signUp(email, password, meta) { const { data, error } = await sb.auth.signUp({ email, password, options: { data: meta || {} } }); if (error) throw error; return data; },
     async signOut() { await sb.auth.signOut(); },
+    async refreshProfile() { if (!A.user) return; try { const { data } = await sb.from('profiles').select('*').eq('id', A.user.id).maybeSingle(); A.profile = data || A.profile; } catch (e) {} renderWidget(); },
     async reset(email) { const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname.replace(/admin\/?$/, '') }); if (error) throw error; },
     async updatePassword(password) { const { error } = await sb.auth.updateUser({ password }); if (error) throw error; },
     open(mode) { openModal(mode || 'login'); },
@@ -51,7 +52,7 @@
     if (!slot) return;
     if (!sb) { slot.innerHTML = ''; return; }
     if (A.user) {
-      const name = (A.profile && A.profile.prenom) || A.user.email;
+      const name = [A.profile && A.profile.prenom, A.profile && A.profile.nom].filter(Boolean).join(' ') || 'Mon compte';
       slot.innerHTML = `<div class="auth-menu"><button type="button" class="btn" id="auth-toggle" aria-haspopup="true" aria-expanded="false">${esc(name)} <span aria-hidden="true">▾</span></button>
         <div class="auth-drop hidden" id="auth-drop"><a href="${ROOT}index.html#mine">Mes estimations</a><a href="${ROOT}estimation.html?new=1">Nouvelle estimation</a>${A.isAdmin() ? `<a href="${ROOT}admin/">Back-office</a>` : ''}<button type="button" id="auth-out">Se déconnecter</button></div></div>`;
       const t = document.getElementById('auth-toggle'), d = document.getElementById('auth-drop');
