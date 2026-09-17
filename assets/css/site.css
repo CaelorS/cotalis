@@ -627,3 +627,10 @@ body.admin { background: var(--bg); }
 
 .top.slim .logo { width: 28px; height: 28px; color: var(--accent); }
 .top.slim .brand { gap: 10px; }
+
+/* descriptif du bien : trois colonnes */
+.grid.grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 980px) { .grid.grid3 { grid-template-columns: 1fr; } }
+/* pas d'encadré avant la finition : le formulaire prend toute la largeur */
+body[data-step="kind"] #panel, body[data-step="bien"] #panel { display: none; }
+body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: minmax(0, 1fr); max-width: 1040px; }
