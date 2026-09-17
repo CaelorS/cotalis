@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="../assets/css/site.css?v=202609171021">
+  <link rel="stylesheet" href="../assets/css/site.css?v=202609171026">
 </head>
 <body class="admin">
   <header class="top">
@@ -48,12 +48,12 @@
         <header><h2>Réglages généraux</h2><span class="hint">Appliqués à toutes les estimations dès l'enregistrement. Les valeurs par défaut sont rappelées en gris.</span></header>
         <div class="body"><div class="grid" id="settings"></div></div>
       </div>
-      <div class="panel" style="margin-top:16px">
+      <div class="panel">
         <header><h2>Prix de référence par ouvrage</h2><span class="hint">Prix HT par unité, part de main-d'œuvre, TVA, marge spécifique (vide = marge par défaut). Décochez « actif » pour retirer un ouvrage du tunnel.</span></header>
         <div class="tablewrap"><table class="grid-table" id="items"><thead><tr><th>Actif</th><th>Ouvrage</th><th>Unité</th><th class="r">Prix HT</th><th class="r">Défaut</th><th class="r">Part MO %</th><th>TVA</th><th class="r">Marge %</th><th>Quantité proposée</th><th></th></tr></thead><tbody></tbody></table></div>
       </div>
       <div class="savebar"><span id="prix-msg" class="hint"></span><button type="button" class="btn" id="prix-reset">Revenir aux prix par défaut</button><button type="button" class="btn primary" id="prix-save">Enregistrer les modifications</button></div>
-      <div class="panel" style="margin-top:24px">
+      <div class="panel">
         <header><h2>Nouvel ouvrage</h2><span class="hint">Il apparaît dans le tunnel dès l'enregistrement, dans le lot choisi. La règle de quantité calcule la valeur proposée au prospect ; il peut ensuite la corriger.</span></header>
         <div class="body">
           <form id="new-item" class="grid" autocomplete="off">
@@ -65,13 +65,13 @@
             <div class="field"><label for="ni-pu">Prix de référence HT</label><div class="unit"><input id="ni-pu" type="number" min="0" step="1" required><span>€</span></div></div>
             <div class="field"><label for="ni-lab">Part main-d'œuvre</label><div class="unit"><input id="ni-lab" type="number" min="0" max="100" step="5" value="50"><span>%</span></div></div>
             <div class="field"><label for="ni-tva">TVA</label><select id="ni-tva"><option value="10">10 % (rénovation)</option><option value="5.5">5,5 % (énergétique)</option></select></div>
-            <div class="field"><label for="ni-marge">Marge spécifique <span class="optsub">vide = par défaut</span></label><div class="unit"><input id="ni-marge" type="number" min="0" max="60" step="0.5" placeholder="défaut"><span>%</span></div></div>
+            <div class="field"><label for="ni-marge">Marge spécifique <span class="optsub">vide : marge par défaut</span></label><div class="unit"><input id="ni-marge" type="number" min="0" max="60" step="0.5" placeholder="défaut"><span>%</span></div></div>
             <div class="field"><label for="ni-qmode">Quantité proposée</label><select id="ni-qmode"></select></div>
             <div class="field"><label for="ni-qcoef" id="ni-qcoef-label">Coefficient</label><input id="ni-qcoef" type="number" step="0.01" value="1"></div>
             <div class="field wide"><label>Proposé d'office quand l'état général est</label>
               <div class="checks" style="margin-top:6px"><label class="check"><input type="checkbox" name="ni-preset" value="bon"> Bon</label><label class="check"><input type="checkbox" name="ni-preset" value="correct"> Correct</label><label class="check"><input type="checkbox" name="ni-preset" value="degrade"> Dégradé</label><label class="check"><input type="checkbox" name="ni-preset" value="total"> À rénover entièrement</label></div></div>
-            <div class="field wide savebar" style="margin-top:4px"><span class="hint" id="ni-msg"></span><button type="submit" class="btn primary">Créer l'ouvrage</button></div>
           </form>
+          <div class="savebar"><span class="hint" id="ni-msg"></span><button type="submit" form="new-item" class="btn primary">Créer l'ouvrage</button></div>
         </div>
       </div>
     </section>
@@ -91,11 +91,11 @@
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../config.js?v=202609171021"></script>
-  <script src="../assets/js/catalog.js?v=202609171021"></script>
-  <script src="../assets/js/engine.js?v=202609171021"></script>
-  <script src="../assets/js/pricing.js?v=202609171021"></script>
-  <script src="../assets/js/auth.js?v=202609171021"></script>
-  <script src="../assets/js/admin.js?v=202609171021"></script>
+  <script src="../config.js?v=202609171026"></script>
+  <script src="../assets/js/catalog.js?v=202609171026"></script>
+  <script src="../assets/js/engine.js?v=202609171026"></script>
+  <script src="../assets/js/pricing.js?v=202609171026"></script>
+  <script src="../assets/js/auth.js?v=202609171026"></script>
+  <script src="../assets/js/admin.js?v=202609171026"></script>
 </body>
 </html>

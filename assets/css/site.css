@@ -418,3 +418,14 @@ body.admin { background: var(--bg); }
 .about-cta { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .about-cta .note { color: var(--ink-3); font-size: 13.5px; margin: 0; }
 @media (max-width: 800px) { .founder-grid { grid-template-columns: 1fr; } .about-hero h1 { font-size: 30px; } }
+
+/* ---------- back-office : espacement et textes ---------- */
+.admin .panel > header { padding: 20px 24px 14px; gap: 6px; }
+.admin .panel > header .hint, .admin .hint { max-width: none; }
+.admin .panel .body { padding: 20px 24px 24px; }
+.admin .tabpane > .panel + .panel { margin-top: 24px; }
+.admin .tabpane > .savebar { margin: 16px 0 8px; }
+.admin .savebar { margin-top: 16px; }
+.admin .grid { gap: 16px 20px; }
+.admin .field label { line-height: 1.3; }
+.admin .field label .optsub { display: block; font-weight: 400; color: var(--ink-3); font-size: 12px; margin-top: 2px; }
