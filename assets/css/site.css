@@ -443,3 +443,6 @@ body.admin { background: var(--bg); }
 .rule-then { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .rule-then select[multiple] { min-height: 110px; font-size: 13px; }
 @media (max-width: 800px) { .cond { grid-template-columns: 1fr; } .rule-then { grid-template-columns: 1fr; } }
+
+.founder .photo { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; object-position: center top; border: 3px solid var(--accent-soft); }
+.founder .avatar { width: 96px; height: 96px; font-size: 30px; }
