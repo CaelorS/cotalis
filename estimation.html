@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/site.css?v=202609171657">
+  <link rel="stylesheet" href="assets/css/site.css?v=202609171700">
 </head>
 <body>
   <header class="top">
@@ -175,15 +175,19 @@
       </section>
 
       <section class="step panel" data-step="financeQ">
-        <header><h2>On vous accompagne aussi pour le financement ?</h2><span class="hint">Nos courtiers montent le dossier avec vous et le présentent aux banques. Sinon, on passe directement à votre estimation.</span></header>
+        <header><h2>On vous accompagne aussi pour le financement ?</h2><span class="hint">Nos courtiers montent le dossier avec vous et le présentent aux banques. Vous pouvez aussi calculer la rentabilité seul, ou passer directement à votre estimation.</span></header>
         <div class="body">
           <div class="choices">
             <button type="button" class="choice" data-choice="finance" data-value="oui">
               <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 24 32 12l24 12" class="ink"/><path d="M12 24h40" class="ink"/><path d="M16 26v18M26 26v18M38 26v18M48 26v18" class="ink"/><path d="M10 48h44" class="ink"/><rect x="10" y="44" width="44" height="4" class="fa" stroke="none"/><path d="M40 6h16a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-8l-5 4v-4h-3a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3z" class="acc fms"/><text x="48" y="17" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="11" fill="#17212B" stroke="none">€</text><path d="M14 56c4-6 12-6 16 0" class="acc"/></svg>
               <span class="display">Oui, accompagnez-moi</span><small>On calcule la rentabilité complète et on prépare la synthèse pour la banque.</small></button>
+            <button type="button" class="choice" data-choice="finance" data-value="renta">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 54h48" class="ink"/><rect x="12" y="36" width="9" height="18" class="ink fa"/><rect x="26" y="26" width="9" height="28" class="ink fa"/><rect x="40" y="16" width="9" height="38" class="ink fa"/><path d="M12 30 26 20l14-6 12-6" class="acc"/><path d="M46 8h6v6" class="acc"/><circle cx="16" cy="12" r="6" class="ink fms"/><path d="M13 15l6-6M14 10h.5M18 14h.5" class="ink"/></svg>
+              <span class="display">J'ai mon financement, mais j'analyse la rentabilité</span><small>Prix, loyer, mensualité : on calcule le rendement et le cash-flow, sans accompagnement bancaire.</small>
+            </button>
             <button type="button" class="choice" data-choice="finance" data-value="non">
               <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="18" width="40" height="30" rx="4" class="ink fa"/><path d="M10 26h40" class="ink"/><rect x="36" y="30" width="12" height="10" rx="2" class="ink fms"/><circle cx="42" cy="35" r="1.5" class="fm" stroke="none"/><path d="M14 14h30" class="acc"/><circle cx="52" cy="48" r="8" class="ink" style="fill:#fff"/><path d="M48 48l3 3 5-6" class="acc"/></svg>
-              <span class="display">J'ai déjà mon financement</span><small>Direction l'estimation, sans question supplémentaire.</small></button>
+              <span class="display">Continuer sans évaluer la rentabilité</span><small>Une estimation simple des travaux, sans question sur l'achat ni le loyer.</small></button>
           </div>
         </div>
       </section>
@@ -280,11 +284,11 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="config.js?v=202609171657"></script>
-  <script src="assets/js/catalog.js?v=202609171657"></script>
-  <script src="assets/js/engine.js?v=202609171657"></script>
-  <script src="assets/js/pricing.js?v=202609171657"></script>
-  <script src="assets/js/auth.js?v=202609171657"></script>
-  <script src="assets/js/tunnel.js?v=202609171657"></script>
+  <script src="config.js?v=202609171700"></script>
+  <script src="assets/js/catalog.js?v=202609171700"></script>
+  <script src="assets/js/engine.js?v=202609171700"></script>
+  <script src="assets/js/pricing.js?v=202609171700"></script>
+  <script src="assets/js/auth.js?v=202609171700"></script>
+  <script src="assets/js/tunnel.js?v=202609171700"></script>
 </body>
 </html>

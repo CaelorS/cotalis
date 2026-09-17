@@ -74,6 +74,7 @@
   function stepList() {
     const s = ['kind', 'bien', 'finition', 'travaux', 'financeQ'];
     if (S.finance === 'oui') s.push('acquisition', 'situation');
+    else if (S.finance === 'renta') s.push('acquisition');
     s.push('contact', 'resultat');
     return s;
   }
@@ -119,7 +120,7 @@
         return null;
       case 'finition': return null;   // rien de bloquant : standard locatif et « en étude » par défaut, démarrage libre
       case 'travaux': return Object.keys(S.works).some(k => S.works[k]) ? null : 'Cochez au moins un ouvrage.';
-      case 'financeQ': return S.finance ? null : 'Dites-nous si vous souhaitez un accompagnement pour le financement.';
+      case 'financeQ': return S.finance ? null : 'Choisissez l\'une des trois options pour continuer.';
       case 'acquisition':
         if (!(+S.prix > 0)) return 'Le prix d\'acquisition est nécessaire pour calculer la rentabilité.';
         if (S.strat !== 'revente' && !(+S.loyer > 0)) return 'Indiquez le loyer mensuel visé.';
@@ -368,14 +369,14 @@
     const cb = $('p-conf-bar'); cb.className = 'conf' + (R.score < 50 ? ' c' : R.score < 70 ? ' w' : ''); cb.firstElementChild.style.width = R.score + '%';
     const arr = Object.entries(R.lots).sort((a, b) => b[1] - a[1]); const max = arr.length ? arr[0][1] : 1;
     $('p-lots').innerHTML = arr.map(([n, v]) => `<div class="row"><span class="n" title="${esc(n)}">${esc(n)}</span><span class="bar"><i style="width:${(v / max * 100).toFixed(1)}%"></i></span><span class="v num">${eur(v)}</span></div>`).join('');
-    const fin = S.finance === 'oui' && R.total > 0;
+    const fin = (S.finance === 'oui' || S.finance === 'renta') && R.total > 0;
     $('p-tiles').classList.toggle('hidden', !fin);
     if (fin) $('p-tiles').innerHTML = tilesHtml(R, true);
   }
   function tvaLabel(R) { return 'TVA ' + (R.ancien ? (R.share55 > 0 ? '10 % et 5,5 % (moy. ' + pct(R.tvaRate) + ')' : '10 %') : '20 % (logement de moins de 2 ans)'); }
   function tilesHtml(R, compact) {
     const t = [];
-    const fin = S.finance === 'oui' && R.total > 0;
+    const fin = (S.finance === 'oui' || S.finance === 'renta') && R.total > 0;
     if (fin) t.push(['Coût total du projet', eur(R.total), 'bien + notaire + travaux + ameublement']);
     if (!compact) { t.push(['Travaux estimés', eur(R.ttc), 'TTC, estimation centrale']); t.push(['Travaux au m²', fmt(R.ttc / R.ctx.surface) + ' €', 'TTC']); t.push(['Durée probable', R.weeks + ' sem.', 'chantier']); }
     if (fin && S.strat !== 'revente') {
@@ -419,7 +420,7 @@
       if (!rows.length) return '';
       return `<tr class="lot"><td colspan="4">${esc(l.lot)}</td><td class="r num">${eur(R.lots[l.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}${x.it.sub ? `<small>${esc(x.it.sub)}</small>` : ''}</td><td class="r num">${fmt(x.q)}</td><td>${x.it.unit}</td><td class="r num">${eur(x.unitPrice)}</td><td class="r num">${eur(x.amount)}</td></tr>`).join('');
     }).join('');
-    const fin = S.finance === 'oui' && R.total > 0;
+    const fin = (S.finance === 'oui' || S.finance === 'renta') && R.total > 0;
     const bank = fin ? [
       ['Prix d\'acquisition', eur(R.prix)], ['Frais de notaire (' + pct(C.NOTAIRE) + ', ancien)', eur(R.notaire)], ['Travaux estimés, centrale TTC', eur(R.ttc)],
       ['Fourchette travaux', eur(R.low) + ' à ' + eur(R.high)], ['Ameublement locatif', eur(R.meubles)], ['Coût total du projet', eur(R.total), 1],
@@ -468,7 +469,7 @@
         </div>
       </div>
       <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Qté</th><th>Unité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody></table></div><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Montants HT hors provision pour aléas. Le total ci-dessus inclut frais généraux, pilotage, marge, aléas et TVA.</p></div>
-      ${fin ? `<div class="box"><h3>Synthèse pour la banque</h3><table class="kv">${bank.map(b => `<tr${b[2] ? ' class="total"' : ''}><td>${esc(b[0])}</td><td class="num">${esc(b[1])}</td></tr>`).join('')}</table><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Estimation indicative à distinguer du devis contractuel. Un courtier Cotalia reprend contact pour instruire le dossier.</p></div>` : ''}
+      ${fin ? `<div class="box"><h3>${S.finance === 'oui' ? 'Synthèse pour la banque' : 'Synthèse du projet'}</h3><table class="kv">${bank.map(b => `<tr${b[2] ? ' class="total"' : ''}><td>${esc(b[0])}</td><td class="num">${esc(b[1])}</td></tr>`).join('')}</table><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">${S.finance === 'oui' ? 'Estimation indicative à distinguer du devis contractuel. Un courtier Cotalia reprend contact pour instruire le dossier.' : 'Estimation indicative à distinguer du devis contractuel. Vous pouvez la joindre à votre dossier de financement.'}</p></div>` : ''}
       <div class="two">
         <div class="box"><h3>Points de vigilance</h3><div class="alerts">${A.length ? A.map(a => `<div class="alert ${a[0]}"><i></i><div><b><span class="k">${{ crit: 'Bloquant', warn: 'À vérifier', info: 'Information', good: 'Avantage' }[a[0]]}</span>${esc(a[1])}</b>${esc(a[2])}</div></div>`).join('') : '<p style="color:var(--ink-3);margin:0">Aucune incohérence détectée.</p>'}</div></div>
         <div class="box"><h3>Hypothèses retenues</h3><ul class="plain">${hyp.map(h => `<li>${esc(h)}</li>`).join('')}</ul>

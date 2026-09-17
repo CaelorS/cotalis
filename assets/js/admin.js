@@ -9,7 +9,7 @@
   const KIND = { appart: 'Appartement', maison: 'Maison', immeuble: 'Immeuble' };
   const STATUS = [['nouveau', 'Nouveau'], ['contacte', 'Contacté'], ['relance', 'Relancé'], ['visite', 'Visite planifiée'], ['devis', 'Devis envoyé'], ['signe', 'Signé'], ['perdu', 'Perdu']];
   const STATUS_LABEL = Object.fromEntries(STATUS);
-  const FIN = { oui: 'Accompagné', non: 'Déjà financé' };
+  const FIN = { oui: 'Accompagné', renta: 'Rentabilité seule', non: 'Sans rentabilité' };
   let sb = null, leads = [], admins = [], pricingLoaded = false, dirty = new Set();
 
   /* ---------- accès ---------- */

@@ -81,7 +81,7 @@
 
     const R = { ctx, cReg, cGamme, cCx: cx.c, cxParts: cx.parts, lines, lots, direct, fg, marge, alea, aleaAmt, htSans, ht, tvaRate, tva, ttc, low, high, spread, score, weeks, share55, ancien };
 
-    if (S.finance === 'oui') {
+    if (S.finance === 'oui' || S.finance === 'renta') {
       const prix = +S.prix || 0;
       const notaire = prix * C.NOTAIRE;
       const meubles = (C.AMEUBLEMENT[S.strat] || 0) * ctx.surface;
@@ -162,7 +162,7 @@
     if (w.elec && w.tableau) A.push(['warn', 'Électricité comptée deux fois', 'La mise en conformité complète comprend déjà le tableau. Retirez « Mise en sécurité seule ».']);
     if (R.share55 > 0 && R.ancien) A.push(['good', 'TVA réduite appliquée', Math.round(R.share55 * 100) + ' % des coûts directs relèvent de l\'amélioration énergétique à 5,5 %. Une attestation simplifiée signée sera demandée avec le devis.']);
     if (S.visite !== 'oui') A.push(['info', 'Score de confiance plafonné', 'Sans visite technique, la fourchette reste large. La visite fait passer le score au maximum et ouvre la voie au devis contractuel.']);
-    if (S.finance === 'oui' && S.strat !== 'revente') {
+    if ((S.finance === 'oui' || S.finance === 'renta') && S.strat !== 'revente') {
       if (['paris', 'lyon', 'pc'].includes(S.zone) && R.ctx.surface && R.loyer / R.ctx.surface > 22) A.push(['warn', 'Encadrement des loyers', 'Loyer visé de ' + (R.loyer / R.ctx.surface).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' €/m² : Paris, Lyon, Villeurbanne et plusieurs communes de petite couronne encadrent les loyers. Vérifiez le plafond du secteur.']);
       if (R.cf < 0) A.push(['info', 'Effort d\'épargne', 'Cash-flow négatif de ' + fmt(Math.abs(R.cf)) + ' € par mois avec ' + fmt(+S.apport) + ' € d\'apport. Un apport plus élevé, une durée plus longue ou une autre stratégie locative changent la donne.']);
       if (R.endettement != null && R.endettement > 0.35) A.push(['warn', 'Endettement au-dessus de 35 %', 'Taux d\'endettement indicatif de ' + Math.round(R.endettement * 100) + ' % après projet, loyers retenus à 70 %. Nos financeurs regarderont l\'apport, le reste à vivre et le différé.']);

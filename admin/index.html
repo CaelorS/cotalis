@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="../assets/css/site.css?v=202609171657">
+  <link rel="stylesheet" href="../assets/css/site.css?v=202609171700">
 </head>
 <body class="admin">
   <header class="top">
@@ -39,7 +39,7 @@
         <select id="f-status" aria-label="Filtrer par statut"><option value="">Tous les statuts</option></select>
         <select id="f-assign" aria-label="Filtrer par responsable"><option value="">Toute l'équipe</option><option value="none">Non attribués</option></select>
         <select id="f-kind" aria-label="Type de bien"><option value="">Tous les biens</option><option value="appart">Appartements</option><option value="maison">Maisons</option><option value="immeuble">Immeubles</option></select>
-        <select id="f-fin" aria-label="Financement"><option value="">Financement : tous</option><option value="oui">Accompagnés</option><option value="non">Déjà financés</option></select>
+        <select id="f-fin" aria-label="Financement"><option value="">Financement : tous</option><option value="oui">Accompagnés</option><option value="renta">Rentabilité seule</option><option value="non">Sans rentabilité</option></select>
         <select id="f-stade" aria-label="Stade du projet"><option value="">Stade : tous</option><option value="etude">En étude</option><option value="compromis">Sous compromis</option><option value="acte">Acte signé</option></select>
         <select id="f-type" aria-label="Type de demande"><option value="">Estimations et rappels</option><option value="estimation">Estimations</option><option value="rappel">Rappels</option></select>
         <span class="count" id="count"></span>
@@ -116,11 +116,11 @@
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../config.js?v=202609171657"></script>
-  <script src="../assets/js/catalog.js?v=202609171657"></script>
-  <script src="../assets/js/engine.js?v=202609171657"></script>
-  <script src="../assets/js/pricing.js?v=202609171657"></script>
-  <script src="../assets/js/auth.js?v=202609171657"></script>
-  <script src="../assets/js/admin.js?v=202609171657"></script>
+  <script src="../config.js?v=202609171700"></script>
+  <script src="../assets/js/catalog.js?v=202609171700"></script>
+  <script src="../assets/js/engine.js?v=202609171700"></script>
+  <script src="../assets/js/pricing.js?v=202609171700"></script>
+  <script src="../assets/js/auth.js?v=202609171700"></script>
+  <script src="../assets/js/admin.js?v=202609171700"></script>
 </body>
 </html>
