@@ -64,7 +64,7 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 .hero h2 em { font-style: normal; color: var(--accent); }
 .hero p { margin: 0; font-size: 19px; color: var(--ink-2); max-width: 100%; text-wrap: pretty; }
 .hero .note { font-size: 13.5px; color: var(--ink-3); }
-.strip { max-width: 880px; margin: 0 auto; padding: 0 28px 64px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.strip { max-width: 1040px; margin: 0 auto; padding: 0 28px 64px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .strip > div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; }
 .strip .display { font-size: 20px; margin-bottom: 4px; }
 .strip p { margin: 0; color: var(--ink-2); font-size: 14.5px; }
@@ -304,7 +304,7 @@ ul.plain li { margin: 4px 0; }
 .modal-actions { display: flex; justify-content: flex-end; }
 
 /* ---------- accueil : estimations précédentes ---------- */
-.mine { max-width: 880px; margin: 0 auto; padding: 0 28px 56px; }
+.mine { max-width: 1040px; margin: 0 auto; padding: 0 28px 56px; }
 .mine h3 { font-size: 22px; margin-bottom: 10px; }
 .mine ul { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .mine li a { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 16px; align-items: center; padding: 12px 18px; text-decoration: none; color: inherit; border-bottom: 1px solid var(--line-2); }
