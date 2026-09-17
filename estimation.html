@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/site.css?v=202609171620">
+  <link rel="stylesheet" href="assets/css/site.css?v=202609171623">
 </head>
 <body>
   <header class="top">
@@ -148,8 +148,12 @@
 
       <section class="step panel" data-step="travaux">
         <header><h2>Voici notre meilleure estimation</h2><span class="hint">Sur la base de vos réponses, nous avons pré-rempli les travaux. La transparence est notre credo : cochez, décochez, corrigez les quantités, tout se recalcule à côté.</span></header>
-        <div class="cols"><span></span><span>Ouvrage</span><span class="r">Quantité</span><span>Unité</span><span class="r">Prix réf. HT</span><span class="r">Montant HT</span></div>
+        <div class="cols"><span></span><span>Ouvrage</span><span class="r">Quantité</span><span></span><span class="r">Montant HT</span></div>
         <div id="lots"></div>
+        <details class="more" id="more">
+          <summary><span class="display">Besoin d'un truc en plus ?</span><small>Tout ce que nous n'avons pas retenu d'office. Cochez ce qui vous manque, corrigez les quantités.</small></summary>
+          <div id="lots-more"></div>
+        </details>
       </section>
 
       <section class="step panel" data-step="financeQ">
@@ -254,11 +258,11 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="config.js?v=202609171620"></script>
-  <script src="assets/js/catalog.js?v=202609171620"></script>
-  <script src="assets/js/engine.js?v=202609171620"></script>
-  <script src="assets/js/pricing.js?v=202609171620"></script>
-  <script src="assets/js/auth.js?v=202609171620"></script>
-  <script src="assets/js/tunnel.js?v=202609171620"></script>
+  <script src="config.js?v=202609171623"></script>
+  <script src="assets/js/catalog.js?v=202609171623"></script>
+  <script src="assets/js/engine.js?v=202609171623"></script>
+  <script src="assets/js/pricing.js?v=202609171623"></script>
+  <script src="assets/js/auth.js?v=202609171623"></script>
+  <script src="assets/js/tunnel.js?v=202609171623"></script>
 </body>
 </html>

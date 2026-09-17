@@ -134,16 +134,16 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 .lot-head h3 { font-size: 17px; }
 .lot-head .sum { font-size: 13px; color: var(--ink-2); }
 .lot-head .sum b { color: var(--ink); font-weight: 500; }
-.cols { display: grid; grid-template-columns: 26px minmax(0,1fr) 92px 58px 100px 100px; gap: 10px; padding: 10px 22px 4px; }
+.cols { display: grid; grid-template-columns: 26px minmax(0,1fr) 92px 58px 110px; gap: 10px; padding: 10px 22px 4px; }
 .cols span { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
 .cols span.r { text-align: right; }
-.item { display: grid; grid-template-columns: 26px minmax(0,1fr) 92px 58px 100px 100px; gap: 10px; align-items: center; padding: 7px 22px; font-size: 14px; }
+.item { display: grid; grid-template-columns: 26px minmax(0,1fr) 92px 58px 110px; gap: 10px; align-items: center; padding: 7px 22px; font-size: 14px; }
 .item:hover { background: var(--surface-2); }
 .item .lbl { cursor: pointer; }
 .item .lbl small { display: block; color: var(--ink-3); font-size: 12px; }
 .item input[type="number"] { width: 100%; padding: 4px 6px; font-size: 13.5px; min-height: 34px; }
 .item .u { color: var(--ink-3); font-size: 12.5px; }
-.item .pu { text-align: right; color: var(--ink-3); font-size: 12.5px; }
+.item .pu { color: var(--ink-3); font-size: 12px; }
 .item .tot { text-align: right; font-size: 13.5px; }
 .item.off .tot, .item.off .pu { color: var(--ink-3); opacity: .55; }
 .item.off .lbl { color: var(--ink-2); }
@@ -248,9 +248,8 @@ ul.plain li { margin: 4px 0; }
   .result.hidden { display: none; }
   .report .two, .strip { grid-template-columns: 1fr; }
   .steps { grid-template-columns: 1fr 1fr; }
-  .cols { grid-template-columns: 26px minmax(0,1fr) 76px 44px 88px; }
-  .item { grid-template-columns: 26px minmax(0,1fr) 76px 44px 88px; padding: 7px 14px; }
-  .item .pu, .cols span:nth-child(5) { display: none; }
+  .cols { grid-template-columns: 26px minmax(0,1fr) 72px 40px 84px; gap: 8px; }
+  .item { grid-template-columns: 26px minmax(0,1fr) 72px 40px 84px; gap: 8px; padding: 7px 14px; }
   .lot-head, .panel .body, .panel > header { padding-left: 16px; padding-right: 16px; }
   .hero { padding: 40px 20px 32px; }
   .hero .wordmark { font-size: 44px; }
@@ -491,4 +490,28 @@ body.admin { background: var(--bg); }
   input, select, textarea, .seg button, .choice { font-size: 16px; }
   html, body { overflow-x: hidden; max-width: 100%; }
   .wb, .tunnel, .result, .report { max-width: 100%; }
+}
+
+/* ---------- travaux : boîte « besoin d'un truc en plus » ---------- */
+.more { margin: 18px 22px 22px; border: 1.5px dashed var(--line); border-radius: 6px; background: var(--surface-2); }
+.more summary { list-style: none; cursor: pointer; padding: 14px 18px; display: flex; flex-direction: column; gap: 2px; position: relative; }
+.more summary::-webkit-details-marker { display: none; }
+.more summary::after { content: "+"; position: absolute; right: 18px; top: 12px; font-size: 24px; color: var(--accent); font-weight: 600; }
+.more[open] summary::after { content: "−"; }
+.more summary .display { font-size: 20px; }
+.more summary small { color: var(--ink-3); font-size: 13px; }
+.more[open] { background: var(--surface); border-style: solid; }
+.more .lot { border-top: 1px solid var(--line-2); }
+.more .lot-head { background: transparent; }
+@media (max-width: 980px) { .more { margin: 14px 14px 18px; } .more summary { padding: 12px 40px 12px 14px; } }
+@media (max-width: 980px) {
+  /* travaux : le libellé sur toute la largeur, quantité et montant sur la ligne suivante */
+  .cols { display: none; }
+  .item { grid-template-columns: 26px 96px 52px minmax(0, 1fr); grid-template-rows: auto auto; row-gap: 6px; column-gap: 8px; padding: 10px 14px; }
+  .item input[type="checkbox"] { grid-row: 1 / 3; align-self: start; margin-top: 3px; }
+  .item .lbl { grid-column: 2 / -1; }
+  .item .lbl small { display: block; margin-top: 2px; }
+  .item input[type="number"] { grid-column: 2; }
+  .item .u { grid-column: 3; }
+  .item .tot { grid-column: 4; font-size: 15px; }
 }

@@ -302,21 +302,33 @@
 
   /* ---------- tableau des travaux ---------- */
   let lotsBuilt = false;
-  function renderLots() {
-    if (!lotsBuilt) {
-      $('lots').innerHTML = C.CATALOG.map(l => `
+  function lotHtml(l, items, withSum) {
+    return `
         <div class="lot">
-          <div class="lot-head"><h3>${esc(l.lot)}</h3><span class="sum">sous-total <b class="num" data-lotsum="${esc(l.lot)}"></b></span></div>
-          ${l.items.filter(it => !it.inactive).map(it => `
+          <div class="lot-head"><h3>${esc(l.lot)}</h3>${withSum ? `<span class="sum">sous-total <b class="num" data-lotsum="${esc(l.lot)}"></b></span>` : ''}</div>
+          ${items.map(it => `
             <div class="item" data-item="${it.id}">
               <input type="checkbox" id="w-${it.id}" data-w="${it.id}">
-              <label class="lbl" for="w-${it.id}">${esc(it.label)}${it.tva === 5.5 ? '<span class="tva55">TVA 5,5 %</span>' : ''}${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</label>
+              <label class="lbl" for="w-${it.id}">${esc(it.label)}${it.tva === 5.5 ? '<span class="tva55">TVA 5,5 %</span>' : ''}<small>${it.sub ? esc(it.sub) + ' · ' : ''}<span class="pu num" data-pu="${it.id}"></span></small></label>
               <input type="number" min="0" step="1" data-q="${it.id}" inputmode="numeric" aria-label="Quantité ${esc(it.label)}">
               <span class="u">${it.unit}</span>
-              <span class="pu num" data-pu="${it.id}"></span>
               <span class="tot num" data-tot="${it.id}"></span>
             </div>`).join('')}
-        </div>`).join('');
+        </div>`;
+  }
+  function renderLots() {
+    if (!lotsBuilt) {
+      const rec = C.preselect(S);
+      const main = [], more = [];
+      C.CATALOG.forEach(l => {
+        const items = l.items.filter(it => !it.inactive);
+        const a = items.filter(it => rec[it.id] || S.works[it.id]), b = items.filter(it => !(rec[it.id] || S.works[it.id]));
+        if (a.length) main.push(lotHtml(l, a, true));
+        if (b.length) more.push(lotHtml(l, b, false));
+      });
+      $('lots').innerHTML = main.join('') || '<p class="hint" style="padding:14px 22px">Aucun ouvrage retenu d\'office : ouvrez la boîte ci-dessous.</p>';
+      $('lots-more').innerHTML = more.join('');
+      $('more').classList.toggle('hidden', !more.length);
       lotsBuilt = true;
     }
     document.querySelectorAll('[data-w]').forEach(el => { el.checked = !!S.works[el.dataset.w]; });
