@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/site.css?v=202609171754">
+  <link rel="stylesheet" href="assets/css/site.css?v=202609171755">
 </head>
 <body>
   <header class="top">
@@ -105,9 +105,17 @@
             </div>
             <div class="optgroup">
               <div class="optlabel">Plans et photos <span class="optsub">facultatif, mais ils resserrent la fourchette</span></div>
-              <div class="drop" id="drop" tabindex="0" role="button" aria-label="Déposer des plans ou des photos">
-                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 15v4h16v-4"/></svg>
-                <div><b>Glissez vos plans ou photos ici</b>, ou cliquez pour les choisir.<br><small>JPG, PNG, PDF · 15 Mo par fichier · 12 fichiers maximum</small></div>
+              <div class="drop drop-big" id="drop" tabindex="0" role="button" aria-label="Déposer des plans ou des photos">
+                <svg class="illus dropillu" viewBox="0 0 120 96" aria-hidden="true">
+                  <rect x="8" y="14" width="58" height="72" rx="3" class="ink fa"/>
+                  <path d="M18 60 36 42l14 12 8-8 8 8" class="ink"/><rect x="18" y="24" width="18" height="12" class="ink" style="fill:#fff"/><path d="M22 30h10M27 26v8" class="ink"/>
+                  <path d="M18 72h30" class="acc"/><path d="M18 69v6M48 69v6" class="acc"/>
+                  <rect x="52" y="30" width="58" height="46" rx="3" class="ink" style="fill:#fff"/>
+                  <path d="M58 68l14-16 10 10 8-8 14 14" class="ink fa"/><circle cx="96" cy="42" r="4" class="fm" stroke="none"/>
+                  <rect x="30" y="0" width="34" height="12" rx="2" class="fms" stroke="none" transform="rotate(-6 47 6)"/>
+                  <g class="dropillu-arrow"><circle cx="98" cy="76" r="13" class="acc" style="fill:#fff"/><path d="M98 83V70M92 76l6-6 6 6" class="acc"/></g>
+                </svg>
+                <div class="drop-text"><b>Glissez vos plans ou photos ici</b>, ou cliquez pour les choisir.<br><small>Plan, photos des pièces, diagnostic : tout ce qui aide à resserrer la fourchette. JPG, PNG, PDF · 15 Mo par fichier · 12 fichiers maximum.</small></div>
                 <input type="file" id="file-input" multiple accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" hidden>
               </div>
               <ul class="files" id="files"></ul>
@@ -284,11 +292,11 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="config.js?v=202609171754"></script>
-  <script src="assets/js/catalog.js?v=202609171754"></script>
-  <script src="assets/js/engine.js?v=202609171754"></script>
-  <script src="assets/js/pricing.js?v=202609171754"></script>
-  <script src="assets/js/auth.js?v=202609171754"></script>
-  <script src="assets/js/tunnel.js?v=202609171754"></script>
+  <script src="config.js?v=202609171755"></script>
+  <script src="assets/js/catalog.js?v=202609171755"></script>
+  <script src="assets/js/engine.js?v=202609171755"></script>
+  <script src="assets/js/pricing.js?v=202609171755"></script>
+  <script src="assets/js/auth.js?v=202609171755"></script>
+  <script src="assets/js/tunnel.js?v=202609171755"></script>
 </body>
 </html>

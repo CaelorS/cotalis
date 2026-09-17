@@ -634,3 +634,13 @@ body.admin { background: var(--bg); }
 /* pas d'encadré avant la finition : le formulaire prend toute la largeur */
 body[data-step="kind"] #panel, body[data-step="bien"] #panel { display: none; }
 body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: minmax(0, 1fr); max-width: 1040px; }
+
+/* zone de dépôt illustrée */
+.drop.drop-big { padding: 24px 28px; min-height: 150px; gap: 24px; border-width: 2px; }
+.drop.drop-big .dropillu { width: 120px; height: 96px; flex-shrink: 0; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.drop.drop-big .dropillu .ink { stroke: var(--ink); } .drop.drop-big .dropillu .acc { stroke: var(--accent); } .drop.drop-big .dropillu .fa { fill: var(--accent-soft); } .drop.drop-big .dropillu .fm { fill: var(--mark); } .drop.drop-big .dropillu .fms { fill: var(--mark-soft); }
+.drop.drop-big .drop-text { font-size: 15.5px; line-height: 1.5; }
+.drop.drop-big .drop-text b { font-size: 17px; }
+.drop.drop-big .drop-text small { display: block; margin-top: 6px; font-size: 13px; }
+.drop.drop-big:hover .dropillu-arrow, .drop.drop-big.over .dropillu-arrow { animation: nudge 1.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@media (max-width: 980px) { .drop.drop-big { flex-direction: column; align-items: flex-start; padding: 18px; gap: 12px; } .drop.drop-big .dropillu { width: 96px; height: 77px; } }

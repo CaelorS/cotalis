@@ -113,26 +113,26 @@
   function validate() {
     const c = S.contact;
     switch (S.step) {
-      case 'kind': return S.kind ? null : 'Choisissez un type de bien pour continuer.';
+      case 'kind': return S.kind ? null : 'Appartement, maison ou immeuble ? On ne chiffre pas encore les châteaux, mais tout le reste, oui.';
       case 'bien':
-        if (!S.adresse.trim()) return 'Indiquez l\'adresse du bien, même approximative : elle fixe la zone de prix.';
-        if (!(+S.surface > 0)) return 'La surface habitable est indispensable pour proposer des quantités.';
-        if (S.kind === 'immeuble' && !(+S.nbapts >= 2)) return 'Un immeuble compte au moins deux appartements.';
-        if (S.files.some(f => f.pending)) return 'Un fichier est encore en cours d\'envoi, patientez quelques secondes.';
+        if (!S.adresse.trim()) return 'Sans adresse, on ne sait pas si vos artisans viennent de Lyon ou de Lozère. Même approximative, elle fixe la zone de prix.';
+        if (!(+S.surface > 0)) return 'Sans surface, il va être difficile de vous faire un devis ! Même à 5 m² près, ça nous aide.';
+        if (S.kind === 'immeuble' && !(+S.nbapts >= 2)) return 'Un immeuble avec un seul appartement, on appelle ça une maison. Indiquez au moins deux logements.';
+        if (S.files.some(f => f.pending)) return 'Un fichier est encore en route vers nos serveurs. Deux secondes, il arrive.';
         return null;
       case 'finition': return null;   // rien de bloquant : standard locatif et « en étude » par défaut, démarrage libre
-      case 'travaux': return Object.keys(S.works).some(k => S.works[k]) ? null : 'Cochez au moins un ouvrage.';
-      case 'financeQ': return S.finance ? null : 'Choisissez l\'une des trois options pour continuer.';
+      case 'travaux': return Object.keys(S.works).some(k => S.works[k]) ? null : 'Aucun ouvrage coché : le chantier le moins cher du monde, mais pas très utile. Cochez-en au moins un.';
+      case 'financeQ': return S.finance ? null : 'Une des trois options, s\'il vous plaît. Promis, aucune n\'engage votre banquier.';
       case 'acquisition':
-        if (!(+S.prix > 0)) return 'Le prix d\'acquisition est nécessaire pour calculer la rentabilité.';
-        if (S.strat !== 'revente' && !(+S.loyer > 0)) return 'Indiquez le loyer mensuel visé.';
+        if (!(+S.prix > 0)) return 'Calculer une rentabilité sans prix d\'achat, c\'est diviser par zéro. Un ordre de grandeur suffit.';
+        if (S.strat !== 'revente' && !(+S.loyer > 0)) return 'Un loyer visé, même optimiste : c\'est lui qui fait décoller la renta.';
         return null;
       case 'contact':
-        if (!c.prenom.trim() || !c.nom.trim()) return 'Prénom et nom, pour personnaliser votre estimation.';
-        if (!(C.auth && C.auth.user) && C.auth && C.auth.sb && !$('pw-field').classList.contains('hidden') && String(c.password || '').length < 8) return 'Choisissez un mot de passe d\'au moins 8 caractères : il vous permettra de retrouver vos estimations.';
-        if (String(c.tel).replace(/\D/g, '').length < 9) return 'Un numéro de téléphone valide, pour vous rappeler si besoin.';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c.email)) return 'Une adresse e-mail valide, pour vous envoyer le PDF.';
-        if (!c.consent) return 'Cochez la case pour que nous puissions vous recontacter.';
+        if (!c.prenom.trim() || !c.nom.trim()) return 'Un prénom et un nom : « Cher inconnu » fait mauvais effet en tête d\'une estimation.';
+        if (!(C.auth && C.auth.user) && C.auth && C.auth.sb && !$('pw-field').classList.contains('hidden') && String(c.password || '').length < 8) return 'Huit caractères minimum pour le mot de passe. « 1234 » est populaire, mais pas chez nous.';
+        if (String(c.tel).replace(/\D/g, '').length < 9) return 'Ce numéro de téléphone a l\'air incomplet. On préfère vous appeler, vous, plutôt qu\'un inconnu.';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c.email)) return 'Cette adresse e-mail ne ressemble pas à une adresse e-mail. Le PDF n\'arrivera jamais.';
+        if (!c.consent) return 'La petite case, juste en dessous : sans elle, on n\'a pas le droit de vous rappeler, même pour une bonne nouvelle.';
         return null;
     }
     return null;
@@ -281,9 +281,9 @@
   async function addFiles(list) {
     const files = Array.from(list || []);
     for (const file of files) {
-      if (S.files.length >= MAX_FILES) { flashErr('12 fichiers maximum.'); break; }
-      if (!OK_TYPES.includes(file.type) && !/\.(jpe?g|png|webp|heic|pdf)$/i.test(file.name)) { flashErr(file.name + ' : format non pris en charge (JPG, PNG, WEBP, HEIC ou PDF).'); continue; }
-      if (file.size > MAX_SIZE) { flashErr(file.name + ' dépasse 15 Mo.'); continue; }
+      if (S.files.length >= MAX_FILES) { flashErr('Douze fichiers, c\'est déjà un beau dossier. On s\'arrête là.'); break; }
+      if (!OK_TYPES.includes(file.type) && !/\.(jpe?g|png|webp|heic|pdf)$/i.test(file.name)) { flashErr(file.name + ' : ce format nous résiste. JPG, PNG, WEBP, HEIC ou PDF, et tout ira bien.'); continue; }
+      if (file.size > MAX_SIZE) { flashErr(file.name + ' pèse plus de 15 Mo. Même nos chiffreurs ne le soulèveraient pas.'); continue; }
       const entry = { name: file.name, size: file.size, type: file.type, pending: hasDb(), local: !hasDb() };
       S.files.push(entry); renderFiles(); save(); renderPanel();
       if (hasDb()) {
