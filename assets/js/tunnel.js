@@ -89,7 +89,7 @@
 
     const idx = list.indexOf(S.step);
     $('progress').innerHTML = PROGRESS.map((p, i) => `<li class="${i < cur ? 'done' : i === cur ? 'now' : ''}"><button type="button" data-go="${p[1]}" ${i <= S.maxIdx ? '' : 'disabled'} aria-current="${i === cur ? 'step' : 'false'}" aria-label="${p[0]}" title="${p[0]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[p[1]]}</svg><span>${p[0]}</span></button></li>`).join('');
-    $('pct').textContent = S.step === 'resultat' ? 'Estimation prête' : 'Étape ' + (idx + 1) + ' sur ' + list.length + ' · ' + PROGRESS[cur][0] + ' · ' + Math.round(idx / (list.length - 1) * 100) + ' %';
+    $('pct').textContent = S.step === 'resultat' ? 'Estimation prête' : 'Étape ' + (idx + 1) + ' sur ' + list.length + ' · ' + PROGRESS[cur][0];
     document.body.dataset.step = S.step;
 
     $('stepnav').classList.toggle('hidden', S.step === 'resultat' || viewer);
@@ -348,7 +348,7 @@
     const R = C.compute(S);
     $('p-central').innerHTML = eur(R.ttc) + '<small>TTC</small>';
     $('p-low').textContent = eur(R.low); $('p-high').textContent = eur(R.high);
-    $('p-mini').innerHTML = '<span class="k">Travaux estimés</span><b class="num">' + eur(R.low) + ' – ' + eur(R.high) + '</b><small>TTC</small>';
+    $('p-mini').innerHTML = '<span class="k">Travaux estimés</span><b class="num">' + eur(R.ttc) + '</b><small>TTC</small>';
     const span = R.high * 1.08 || 1, px = v => (v / span * 100).toFixed(1) + '%';
     $('p-band').style.left = px(R.low); $('p-band').style.width = px(R.high - R.low);
     $('p-pin-low').style.left = px(R.low); $('p-pin-mid').style.left = px(R.ttc); $('p-pin-high').style.left = px(R.high);
@@ -605,7 +605,6 @@
   $('progress').addEventListener('click', onClick);
   $('btn-next').addEventListener('click', goNext);
   $('btn-prev').addEventListener('click', goPrev);
-  $('btn-restart').addEventListener('click', () => { if (confirm('Repartir de zéro ? Vos réponses en cours seront effacées.')) { S = newState(); save(); lotsBuilt = false; fillForm(); showStep(); } });
   $('panel-toggle').addEventListener('click', () => { const p = $('panel'); p.classList.toggle('open'); $('panel-toggle').textContent = p.classList.contains('open') ? 'Réduire' : 'Voir le détail'; });
   $('adresse').addEventListener('input', e => { clearTimeout(acTimer); acTimer = setTimeout(() => fetchAddr(e.target.value), 250); });
   $('suggest').addEventListener('mousedown', e => { const li = e.target.closest('li'); if (li) { e.preventDefault(); pickAddr(li); } });
