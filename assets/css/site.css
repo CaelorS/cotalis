@@ -664,3 +664,6 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
 
 .choices.cols4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 980px) { .choices.cols4 { grid-template-columns: 1fr; } }
+
+.heroillu .illu-tag { animation: floatB 7s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.heroillu .illu-check { transition: fill .3s; }

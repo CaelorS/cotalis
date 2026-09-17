@@ -39,4 +39,31 @@
   }
   render(localItems());
   if (C.auth) C.auth.onChange(async A => { render(localItems().concat(await accountItems(A))); });
+
+  /* ---------- illustration : les chiffres se règlent sous les yeux ---------- */
+  (function () {
+    const renta = document.getElementById('illu-renta'), trav = document.getElementById('illu-travaux'), bar = document.getElementById('illu-bar'), cf = document.getElementById('illu-cf');
+    if (!renta || !trav) return;
+    const checks = ['chk1', 'chk2', 'chk3', 'chk4'].map(id => document.getElementById(id));
+    const fmtEur = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+    const fmtPct = v => v.toFixed(1).replace('.', ',') + ' %';
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finish = () => { renta.textContent = fmtPct(9.1); trav.textContent = fmtEur(197245); bar.setAttribute('width', 94); cf.textContent = '+185 €/mois'; checks.forEach(c => { if (c) c.textContent = '✓' + c.textContent.slice(1); }); };
+    if (reduced) { finish(); return; }
+    const D = 5200, t0 = performance.now();
+    const ease = t => 1 - Math.pow(1 - t, 3);
+    function frame(now) {
+      const t = Math.min(1, (now - t0) / D), e = ease(t);
+      const wob = (1 - t) * (1 - t);                    // l'oscillation s'éteint à l'approche de la valeur finale
+      const r = 7.5 + (9.1 - 7.5) * e + Math.sin(t * 31) * 0.35 * wob + Math.sin(t * 7.3) * 0.2 * wob;
+      const w = 170000 + (197245 - 170000) * e + Math.sin(t * 23) * 22000 * wob + Math.sin(t * 5.1) * 9000 * wob;
+      renta.textContent = fmtPct(Math.max(7.2, Math.min(9.4, r)));
+      trav.textContent = fmtEur(Math.max(170000, Math.min(220000, w)));
+      bar.setAttribute('width', 10 + 84 * e);
+      cf.textContent = (Math.round((60 + 125 * e) / 5) * 5 > 0 ? '+' : '') + Math.round((60 + 125 * e) / 5) * 5 + ' €/mois';
+      checks.forEach((c, i) => { if (c && t > (i + 1) / 5) c.textContent = '✓' + c.textContent.slice(1); });
+      if (t < 1) requestAnimationFrame(frame); else finish();
+    }
+    requestAnimationFrame(frame);
+  })();
 })();
