@@ -465,10 +465,15 @@
     geoBusy = false;
     setTimeout(geoPump, 700);   // ipapi.co tolère une trentaine d'appels par minute
   }
+  // Puce colorée : le vrai nom quand on le connaît (dossier ou compte), un pseudonyme d'animal sinon.
   function ipChip(ip) {
     if (!ip) return '';
     const id = ipIdentity(ip), city = geoCity(ip);
     return `<span class="ipchip" style="${chipStyle(id.hue)}" title="IP ${esc(ip)}">${esc(id.name)}<span data-geo="${esc(ip)}">${city ? ' · ' + esc(city) : ''}</span></span>`;
+  }
+  function namedChip(label, key, ip, openId) {
+    const hue = hashStr(String(key)) % 360, city = ip ? geoCity(ip) : '';
+    return `<span class="ipchip${openId ? ' clickable' : ''}" style="${chipStyle(hue)}" title="${ip ? 'IP ' + esc(ip) : ''}"${openId ? ` data-open="${openId}" role="button"` : ''}>${esc(label)}${ip ? `<span data-geo="${esc(ip)}">${city ? ' · ' + esc(city) : ''}</span>` : ''}</span>`;
   }
 
   /* ---------- analyse du tunnel ---------- */
@@ -532,7 +537,7 @@
       <td class="r num">${dur(sessionDuration(x))}</td>
       <td class="r num">${x.ttc ? eur(x.ttc) : '—'}</td>
       <td>${esc(FIN[x.finance] || '—')}</td>
-      <td>${l ? `<button type="button" class="btn small" data-open="${l.id}">${esc(l.prenom)} ${esc(l.nom)}</button>` : (x.user_id ? '<small>compte connecté</small>' : '')}${x.ip ? ipChip(x.ip) : (l || x.user_id ? '' : '—')}</td>
+      <td>${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip, l.id) : x.user_id ? namedChip('Compte connecté', x.user_id, x.ip) : x.ip ? ipChip(x.ip) : '—'}</td>
     </tr>`; }).join('') || '<tr><td colspan="9" class="empty">Aucun parcours sur la période.</td></tr>';
   }
   ['t-device', 't-state'].forEach(id => $(id).addEventListener('input', renderTunnel));

@@ -685,3 +685,5 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
 @media (prefers-reduced-motion: reduce) { .btn.shine::after { animation: none; } }
 
 .ipchip { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-top: 3px; white-space: nowrap; }
+.ipchip.clickable { cursor: pointer; }
+.ipchip.clickable:hover { filter: brightness(.95); text-decoration: underline; }
