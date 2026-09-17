@@ -60,9 +60,9 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 .hero { max-width: 880px; margin: 0 auto; padding: 72px 28px 48px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px; }
 .hero .logo-big { width: 120px; height: 120px; color: var(--accent); }
 .hero .wordmark { font-family: "Barlow Condensed", "Arial Narrow", Impact, sans-serif; font-weight: 600; font-size: 64px; line-height: 1; letter-spacing: .14em; text-transform: uppercase; }
-.hero h2 { font-size: 38px; font-weight: 600; line-height: 1.12; max-width: 18ch; }
+.hero h2 { font-size: 44px; font-weight: 600; line-height: 1.12; max-width: 100%; text-wrap: balance; }
 .hero h2 em { font-style: normal; color: var(--accent); }
-.hero p { margin: 0; font-size: 18px; color: var(--ink-2); max-width: 52ch; text-wrap: pretty; }
+.hero p { margin: 0; font-size: 19px; color: var(--ink-2); max-width: 100%; text-wrap: pretty; }
 .hero .note { font-size: 13.5px; color: var(--ink-3); }
 .strip { max-width: 880px; margin: 0 auto; padding: 0 28px 64px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .strip > div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; }
@@ -535,3 +535,4 @@ body.admin { background: var(--bg); }
 .choice svg.illus .fms { fill: var(--mark-soft); }
 .choice.selected svg.illus .fa { fill: #fff; }
 @media (max-width: 980px) { .choice svg.illus { width: 48px; height: 48px; } }
+@media (max-width: 700px) { .hero h2 { font-size: 32px; } .hero p { font-size: 17px; } }
