@@ -47,10 +47,11 @@
     const checks = ['chk1', 'chk2', 'chk3', 'chk4'].map(id => document.getElementById(id));
     const fmtEur = v => Math.round(v).toLocaleString('fr-FR') + ' €';
     const fmtPct = v => v.toFixed(1).replace('.', ',') + ' %';
-    const track = document.getElementById('illu-track');
+    const track = document.getElementById('illu-track'), line = document.getElementById('illu-line'), dot = document.getElementById('illu-dot');
+    const lineLen = line && line.getTotalLength ? line.getTotalLength() : 0; if (line && lineLen) { line.setAttribute('stroke-dasharray', lineLen); line.setAttribute('stroke-dashoffset', lineLen); }
     const LO = 170000, HI = 220000, FINAL = 197245, X0 = track ? +track.getAttribute('x') : 298, W = track ? +track.getAttribute('width') : 94;   // curseur : 170 k€ à gauche, 220 k€ à droite
     const knobX = v => X0 + (v - LO) / (HI - LO) * W;
-    const finish = () => { renta.textContent = fmtPct(9.1); trav.textContent = fmtEur(FINAL); knob.setAttribute('cx', knobX(FINAL)); cf.textContent = '+185 €/mois'; checks.forEach(c => { if (c) c.textContent = '✓' + c.textContent.slice(1); }); };
+    const finish = () => { renta.textContent = fmtPct(9.1); trav.textContent = fmtEur(FINAL); knob.setAttribute('cx', knobX(FINAL)); cf.textContent = '+185 €/mois'; if (line && lineLen) line.setAttribute('stroke-dashoffset', 0); if (dot) dot.setAttribute('r', 4); checks.forEach(c => { if (c) c.textContent = '✓' + c.textContent.slice(1); }); };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
     const D = 15000, t0 = performance.now();
     const ease = t => 1 - Math.pow(1 - t, 2);
@@ -64,6 +65,8 @@
       trav.textContent = fmtEur(wc);
       knob.setAttribute('cx', knobX(wc).toFixed(1));
       const cfv = Math.round((60 + 125 * e) / 5) * 5; cf.textContent = (cfv > 0 ? '+' : '') + cfv + ' €/mois';
+      if (line && lineLen) line.setAttribute('stroke-dashoffset', (lineLen * (1 - Math.max(0, (r - 7.5) / 1.6))).toFixed(1));   // la courbe grimpe avec la renta
+      if (dot) dot.setAttribute('r', t > 0.97 ? 4 : 0);
       checks.forEach((c, i) => { if (c && t > (i + 1) / 5) c.textContent = '✓' + c.textContent.slice(1); });
       if (t < 1) requestAnimationFrame(frame); else finish();
     }

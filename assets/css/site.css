@@ -675,3 +675,6 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
 .heroillu .illu-tag.t2 { animation-delay: 2s; } .heroillu .illu-tag.t3 { animation-delay: 4s; }
 .heroillu .illu-smoke { animation: smoke 5s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom; }
 @keyframes smoke { 0% { opacity: .2; transform: translateY(0) scale(.9); } 50% { opacity: .7; } 100% { opacity: .1; transform: translateY(-10px) scale(1.15); } }
+
+.heroillu #illu-line { animation: none; }
+.heroillu .illu-card, .heroillu .illu-chip { animation: none; }
