@@ -677,4 +677,3 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
 @keyframes smoke { 0% { opacity: .2; transform: translateY(0) scale(.9); } 50% { opacity: .7; } 100% { opacity: .1; transform: translateY(-10px) scale(1.15); } }
 
 .heroillu #illu-line { animation: none; }
-.heroillu .illu-card, .heroillu .illu-chip { animation: none; }
