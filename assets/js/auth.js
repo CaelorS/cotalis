@@ -74,6 +74,7 @@
       <h3 id="auth-title">Se connecter</h3>
       <p id="auth-text" class="hint">Retrouvez vos estimations sur tous vos appareils.</p>
       <form id="auth-form" class="auth-form" novalidate>
+        <div class="grid auth-id hidden" id="auth-id"><div class="field"><label for="auth-prenom">Prénom</label><input id="auth-prenom" autocomplete="given-name"></div><div class="field"><label for="auth-nom">Nom</label><input id="auth-nom" autocomplete="family-name"></div><div class="field wide"><label for="auth-tel">Téléphone</label><input id="auth-tel" type="tel" autocomplete="tel" inputmode="tel"></div></div>
         <div class="field"><label for="auth-email">E-mail</label><input id="auth-email" type="email" autocomplete="email" inputmode="email"></div>
         <div class="field" id="auth-pw-field"><label for="auth-pw">Mot de passe</label><input id="auth-pw" type="password" autocomplete="current-password"></div>
         <div class="field hidden" id="auth-pw2-field"><label for="auth-pw2">Confirmez le mot de passe</label><input id="auth-pw2" type="password" autocomplete="new-password"></div>
@@ -95,6 +96,7 @@
     document.getElementById('auth-title').textContent = T[0];
     document.getElementById('auth-text').textContent = T[1];
     document.getElementById('auth-submit').textContent = T[2];
+    document.getElementById('auth-id').classList.toggle('hidden', m !== 'signup');
     document.getElementById('auth-pw-field').classList.toggle('hidden', m === 'forgot');
     document.getElementById('auth-pw2-field').classList.toggle('hidden', m !== 'signup' && m !== 'recovery');
     document.getElementById('auth-email').closest('.field').classList.toggle('hidden', m === 'recovery');
@@ -110,12 +112,15 @@
     const email = document.getElementById('auth-email').value.trim(), pw = document.getElementById('auth-pw').value, pw2 = document.getElementById('auth-pw2').value;
     err.classList.add('hidden');
     try {
+      const prenom = document.getElementById('auth-prenom').value.trim(), nom = document.getElementById('auth-nom').value.trim(), tel = document.getElementById('auth-tel').value.trim();
+      if (mode === 'signup' && (!prenom || !nom)) throw new Error('Votre prénom et votre nom, pour personnaliser vos estimations.');
+      if (mode === 'signup' && tel.replace(/\D/g, '').length < 9) throw new Error('Un numéro de téléphone valide, pour vous rappeler si besoin.');
       if (mode !== 'recovery' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new Error('Une adresse e-mail valide, s\'il vous plaît.');
       if ((mode === 'signup' || mode === 'recovery') && pw.length < 8) throw new Error('Le mot de passe doit faire au moins 8 caractères.');
       if ((mode === 'signup' || mode === 'recovery') && pw !== pw2) throw new Error('Les deux mots de passe ne correspondent pas.');
       btn.disabled = true;
       if (mode === 'login') { await A.signIn(email, pw); closeModal(); }
-      else if (mode === 'signup') { const d = await A.signUp(email, pw); if (d.session) closeModal(); else { document.getElementById('auth-text').textContent = 'Compte créé. Un e-mail de confirmation vous a été envoyé : cliquez sur le lien, puis connectez-vous.'; setTimeout(() => setMode('login'), 4000); } }
+      else if (mode === 'signup') { const d = await A.signUp(email, pw, { prenom, nom, tel }); if (d.session) closeModal(); else { document.getElementById('auth-text').textContent = 'Compte créé. Un e-mail de confirmation vous a été envoyé : cliquez sur le lien, puis connectez-vous.'; setTimeout(() => setMode('login'), 4000); } }
       else if (mode === 'forgot') { await A.reset(email); document.getElementById('auth-text').textContent = 'Si un compte existe avec cet e-mail, le lien est parti. Pensez aux indésirables.'; }
       else if (mode === 'recovery') { await A.updatePassword(pw); closeModal(); }
     } catch (ex) { err.textContent = A.message(ex); err.classList.remove('hidden'); }
