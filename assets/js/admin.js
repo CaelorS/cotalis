@@ -139,7 +139,7 @@
           <tr><td>E-mail</td><td><a href="mailto:${esc(l.email)}">${esc(l.email)}</a></td></tr><tr><td>Téléphone</td><td><a href="tel:${esc(l.tel)}">${esc(l.tel)}</a></td></tr>
           <tr><td>Demande</td><td>${l.kind === 'rappel' ? 'Rappel pour visite technique' : 'Estimation'} · ${dt(l.created_at)}</td></tr>
           <tr><td>Stade</td><td>${esc(l.stade || '')} · ${esc(demLabel(l.demarrage) || 'démarrage non précisé')}</td></tr>
-          <tr><td>Projet partagé</td><td>${l.project_id ? `<a href="../estimation.html?p=${encodeURIComponent(l.project_id)}" target="_blank" rel="noopener">ouvrir l'estimation</a>` : '—'}</td></tr>
+          <tr><td>Projet partagé</td><td>${l.project_id ? `<a href="/estimation/?p=${encodeURIComponent(l.project_id)}" target="_blank" rel="noopener">ouvrir l'estimation</a>` : '—'}</td></tr>
         </table></div>
         <div class="box"><h3>Bien</h3><table class="kv">
           <tr><td>Type</td><td>${esc(KIND[l.type_bien] || '')} · ${esc(b.type || '')}</td></tr><tr><td>Adresse</td><td>${esc(l.adresse || '')}</td></tr>

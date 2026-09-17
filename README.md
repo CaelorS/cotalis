@@ -1,11 +1,11 @@
 # Cotalia - site et estimateur travaux
 
 Site statique, sans outil de build : une page d'accueil (`index.html`) et un tunnel
-d'estimation en sept étapes (`estimation.html`). Tout se calcule dans le navigateur.
+d'estimation en sept étapes (`/estimation/`). Tout se calcule dans le navigateur.
 
 ```
 index.html            accueil : logo, promesse, bouton vers le tunnel
-estimation.html       tunnel : bien, descriptif, finition, travaux, financement, coordonnées, estimation
+estimation/index.html tunnel : bien, descriptif, finition, travaux, financement, coordonnées, estimation
 config.js             URL et clé Supabase, e-mail de contact (vide par défaut)
 assets/css/site.css   styles, thème clair et sombre, impression PDF
 assets/js/catalog.js  référentiel travaux, coefficients, prix de référence : c'est ici qu'on administre les prix
@@ -55,7 +55,7 @@ d'estimation (ci-dessous).
    `supabase/schema.sql`. Il crée :
    - la table `leads` (demandes d'estimation et de rappel), en insertion seule pour le site ;
    - la table `projects` et les fonctions `save_project` / `get_project`, qui portent le lien
-     de partage `estimation.html?p=<identifiant>` ; la table n'est jamais lisible directement,
+     de partage `/estimation/?p=<identifiant>` ; la table n'est jamais lisible directement,
      seule la fonction renvoie un projet à qui connaît son identifiant ;
    - le bucket privé `plans` où les prospects déposent plans et photos (15 Mo par fichier).
 

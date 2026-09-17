@@ -12,8 +12,8 @@
     const items = [];
     try {
       const cur = JSON.parse(localStorage.getItem('cotalia-tunnel-v2') || 'null');
-      if (cur && cur.kind && (cur.maxIdx || 0) < 6) items.push({ resume: true, href: 'estimation.html', label: 'Reprendre l\'estimation en cours', when: '', amt: '→' });
-      JSON.parse(localStorage.getItem('cotalia-projects') || '[]').filter(p => p.done).forEach(p => items.push({ pid: p.pid, href: 'estimation.html?p=' + encodeURIComponent(p.pid), label: p.label, at: p.at, amt: p.ttc ? eur(p.ttc) : '' }));
+      if (cur && cur.kind && (cur.maxIdx || 0) < 6) items.push({ resume: true, href: '/estimation/', label: 'Reprendre l\'estimation en cours', when: '', amt: '→' });
+      JSON.parse(localStorage.getItem('cotalia-projects') || '[]').filter(p => p.done).forEach(p => items.push({ pid: p.pid, href: '/estimation/?p=' + encodeURIComponent(p.pid), label: p.label, at: p.at, amt: p.ttc ? eur(p.ttc) : '' }));
     } catch (e) {}
     return items;
   }
@@ -24,7 +24,7 @@
       return (data || []).map(r => {
         const d = r.data || {};
         const label = (KIND[d.kind] || 'Projet') + (d.ville ? ' · ' + d.ville : (d.adresse ? ' · ' + d.adresse : '')) + (d.surface ? ' · ' + (+d.surface).toLocaleString('fr-FR') + ' m²' : '');
-        return { pid: r.id, href: 'estimation.html?p=' + encodeURIComponent(r.id), label, at: r.updated_at, amt: '' };
+        return { pid: r.id, href: '/estimation/?p=' + encodeURIComponent(r.id), label, at: r.updated_at, amt: '' };
       });
     } catch (e) { return []; }
   }

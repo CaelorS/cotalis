@@ -3,7 +3,7 @@
   'use strict';
   const CFG = window.COTALIA_CONFIG || {};
   const C = window.COTALIA = window.COTALIA || {};
-  const ROOT = location.pathname.includes('/admin/') ? '../' : './';
+  const ROOT = '/';
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const sb = (CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase) ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey) : null;
 
@@ -55,11 +55,11 @@
     if (A.user) {
       const name = [A.profile && A.profile.prenom, A.profile && A.profile.nom].filter(Boolean).join(' ') || 'Mon compte';
       slot.innerHTML = adminLink + `<div class="auth-menu"><button type="button" class="btn" id="auth-toggle" aria-haspopup="true" aria-expanded="false">${esc(name)} <span aria-hidden="true">▾</span></button>
-        <div class="auth-drop hidden" id="auth-drop"><a href="${ROOT}index.html#mine">Mes estimations</a><a href="${ROOT}estimation.html?new=1">Nouvelle estimation</a>${A.isAdmin() ? `<a href="${ROOT}admin/">Back-office</a>` : ''}<button type="button" id="auth-out">Se déconnecter</button></div></div>`;
+        <div class="auth-drop hidden" id="auth-drop"><a href="${ROOT}#mine">Mes estimations</a><a href="${ROOT}estimation/?new=1">Nouvelle estimation</a>${A.isAdmin() ? `<a href="${ROOT}admin/">Back-office</a>` : ''}<button type="button" id="auth-out">Se déconnecter</button></div></div>`;
       const t = document.getElementById('auth-toggle'), d = document.getElementById('auth-drop');
       t.addEventListener('click', () => { d.classList.toggle('hidden'); t.setAttribute('aria-expanded', String(!d.classList.contains('hidden'))); });
       document.addEventListener('click', e => { if (!slot.contains(e.target)) d.classList.add('hidden'); });
-      document.getElementById('auth-out').addEventListener('click', async () => { await A.signOut(); if (location.pathname.includes('/admin/')) location.href = ROOT + 'index.html'; });
+      document.getElementById('auth-out').addEventListener('click', async () => { await A.signOut(); if (location.pathname.includes('/admin/')) location.href = ROOT; });
     } else {
       slot.innerHTML = '<button type="button" class="btn" id="auth-open">Se connecter</button>';
       document.getElementById('auth-open').addEventListener('click', () => openModal('login'));
