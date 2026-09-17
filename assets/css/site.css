@@ -566,8 +566,8 @@ body.admin { background: var(--bg); }
   .top .auth-slot .btn { max-width: 44vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; padding: 6px 10px; }
   .top .auth-drop { right: 0; left: auto; }
 }
-.mainnav a.nav-admin { color: var(--mark-ink, #8a6a1a); background: var(--mark-soft); }
-.mainnav a.nav-admin:hover { background: var(--mark); color: var(--ink); }
+.mainnav a.nav-admin { color: var(--accent); background: var(--accent-soft); }
+.mainnav a.nav-admin:hover { background: var(--accent); color: #fff; }
 
 /* ---------- scoring ---------- */
 .score { display: inline-flex; align-items: baseline; gap: 4px; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 18px; padding: 2px 8px; border-radius: 4px; line-height: 1.2; }
