@@ -605,7 +605,12 @@ body.admin { background: var(--bg); }
 .hero2 p { font-size: 18px; }
 .heroillu { width: 100%; height: auto; overflow: visible; }
 .heroillu .illu-scan { animation: scan 7s ease-in-out infinite; }
-.heroillu .illu-card { animation: floatA 6s ease-in-out infinite; transform-origin: 325px 116px; }
+.heroillu .illu-card { animation: floatA 6s ease-in-out infinite; transform-origin: 325px 115px; }
+.heroillu .illu-line { animation: draw 6s ease-in-out infinite; }
+.heroillu .illu-dot { animation: twinkle 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.heroillu .illu-arrow { animation: nudge 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes draw { 0% { stroke-dashoffset: 110; } 35%, 100% { stroke-dashoffset: 0; } }
+@keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .heroillu .illu-chip { animation: floatB 8s ease-in-out infinite; transform-origin: 341px 240px; }
 .heroillu .illu-link { animation: dash 2.4s linear infinite; }
 .heroillu .illu-spark { animation: twinkle 3.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
