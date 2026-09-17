@@ -426,7 +426,7 @@
       ['Année de construction', S.annee || 'inconnue'], ['DPE', S.dpe || 'inconnu'], ['État général', etatSel ? etatSel.textContent : 'non renseigné'],
       ['Occupé pendant les travaux', TRI[S.occupe]], ['Accès difficile', TRI[S.acces]], ['Visite technique', S.visite === 'oui' ? 'déjà réalisée' : S.visite === 'plan' ? 'à planifier' : 'pas encore'],
       ['Plans et photos', S.files.length ? S.files.length + ' fichier' + (S.files.length > 1 ? 's' : '') : 'aucun'],
-      ['Finition', C.GAMME[S.gamme][1]], ['Projet', (STADE[S.stade] || 'en étude') + (S.demarrage ? ', démarrage souhaité sous ' + S.demarrage + ' mois' : ', démarrage non précisé')],
+      ['Finition', C.GAMME[S.gamme][1]], ['Projet', (STADE[S.stade] || 'en étude') + (S.demarrage === 'later' ? ', travaux non planifiés pour l\'instant' : S.demarrage ? ', démarrage souhaité sous ' + S.demarrage + ' mois' : ', démarrage non précisé')],
     ].filter(Boolean);
     const devisRows = C.CATALOG.map(l => {
       const rows = R.lines.filter(x => x.on && x.it.lotName === l.lot && x.amount > 0);

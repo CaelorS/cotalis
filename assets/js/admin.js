@@ -10,6 +10,8 @@
   const STATUS = [['nouveau', 'Nouveau'], ['contacte', 'Contacté'], ['relance', 'Relancé'], ['visite', 'Visite planifiée'], ['devis', 'Devis envoyé'], ['signe', 'Signé'], ['perdu', 'Perdu']];
   const STATUS_LABEL = Object.fromEntries(STATUS);
   const FIN = { oui: 'Accompagné', renta: 'Rentabilité seule', non: 'Sans rentabilité' };
+  const DEM = { '1': 'dès que possible', '3': 'sous 3 mois', '6': 'sous 6 mois', later: 'travaux non planifiés' };
+  const demLabel = d => DEM[String(d || '')] || '';
   let sb = null, leads = [], admins = [], pricingLoaded = false, dirty = new Set();
 
   /* ---------- accès ---------- */
@@ -136,7 +138,7 @@
         <div class="box"><h3>Contact</h3><table class="kv">
           <tr><td>E-mail</td><td><a href="mailto:${esc(l.email)}">${esc(l.email)}</a></td></tr><tr><td>Téléphone</td><td><a href="tel:${esc(l.tel)}">${esc(l.tel)}</a></td></tr>
           <tr><td>Demande</td><td>${l.kind === 'rappel' ? 'Rappel pour visite technique' : 'Estimation'} · ${dt(l.created_at)}</td></tr>
-          <tr><td>Stade</td><td>${esc(l.stade || '')} · démarrage sous ${esc(l.demarrage || '?')} mois</td></tr>
+          <tr><td>Stade</td><td>${esc(l.stade || '')} · ${esc(demLabel(l.demarrage) || 'démarrage non précisé')}</td></tr>
           <tr><td>Projet partagé</td><td>${l.project_id ? `<a href="../estimation.html?p=${encodeURIComponent(l.project_id)}" target="_blank" rel="noopener">ouvrir l'estimation</a>` : '—'}</td></tr>
         </table></div>
         <div class="box"><h3>Bien</h3><table class="kv">
@@ -410,7 +412,7 @@
     $('sc-count').textContent = list.length + ' dossier' + (list.length > 1 ? 's' : '');
     $('sc-table').querySelector('tbody').innerHTML = list.map(({ l, sc }) => `<tr data-id="${l.id}">
       <td>${scoreBadge(sc)}</td>
-      <td><b>${esc(l.prenom)} ${esc(l.nom)}</b><small>${dt(l.created_at)} · ${esc(l.stade || '')}${l.demarrage ? ' · sous ' + l.demarrage + ' mois' : ''}</small></td>
+      <td><b>${esc(l.prenom)} ${esc(l.nom)}</b><small>${dt(l.created_at)} · ${esc(l.stade || '')}${demLabel(l.demarrage) ? ' · ' + esc(demLabel(l.demarrage)) : ''}</small></td>
       <td>${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}<small>${esc(l.ville || l.adresse || '')}</small></td>
       <td class="r num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</td>
       <td class="r num">${sc.valeur}</td><td class="r num">${sc.maturite}</td><td class="r num">${sc.engagement}</td>

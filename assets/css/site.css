@@ -646,3 +646,9 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
 @media (max-width: 980px) { .drop.drop-big { flex-direction: column; align-items: flex-start; padding: 18px; gap: 12px; } .drop.drop-big .dropillu { width: 96px; height: 77px; } }
 
 .result .meta { grid-template-columns: 1fr 1fr; }
+
+.choice.wide-choice { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 16px; min-height: 0; background: var(--surface-2); }
+.choice.wide-choice svg.illus { width: 48px; height: 48px; margin: 0; flex-shrink: 0; }
+.choice.wide-choice .display { font-size: 19px; }
+.choice.wide-choice .txt { display: flex; flex-direction: column; gap: 4px; }
+@media (max-width: 980px) { .choice.wide-choice { flex-direction: column; align-items: flex-start; } }
