@@ -604,7 +604,7 @@ body.admin { background: var(--bg); }
 .hero2 h2 { font-size: 42px; text-wrap: balance; }
 .hero2 p { font-size: 18px; }
 .heroillu { width: 100%; height: auto; overflow: visible; }
-.heroillu .illu-scan { animation: scan 9s ease-in-out 1 forwards; }
+.heroillu .illu-scan { animation: scan 10s ease-in-out 1 forwards; }
 .heroillu .illu-card { animation: floatA 6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .heroillu .illu-line { animation: draw 6s ease-in-out infinite; }
 .heroillu .illu-dot { animation: twinkle 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
@@ -677,3 +677,9 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
 @keyframes smoke { 0% { opacity: .2; transform: translateY(0) scale(.9); } 50% { opacity: .7; } 100% { opacity: .1; transform: translateY(-10px) scale(1.15); } }
 
 .heroillu #illu-line { animation: none; }
+
+/* reflet de lumière sur le bouton principal, 5 s après l'arrivée */
+.btn.shine { position: relative; overflow: hidden; }
+.btn.shine::after { content: ""; position: absolute; top: -20%; bottom: -20%; left: 0; width: 34%; background: linear-gradient(105deg, rgba(228,179,59,0) 0%, rgba(228,179,59,.55) 45%, rgba(255,241,200,.85) 50%, rgba(228,179,59,.55) 55%, rgba(228,179,59,0) 100%); transform: translateX(-160%) skewX(-12deg); animation: shine 1.3s ease-in-out 5s 1; pointer-events: none; }
+@keyframes shine { from { transform: translateX(-160%) skewX(-12deg); } to { transform: translateX(420%) skewX(-12deg); } }
+@media (prefers-reduced-motion: reduce) { .btn.shine::after { animation: none; } }
