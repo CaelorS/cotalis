@@ -605,16 +605,16 @@ body.admin { background: var(--bg); }
 .hero2 p { font-size: 18px; }
 .heroillu { width: 100%; height: auto; overflow: visible; }
 .heroillu .illu-scan { animation: scan 9s ease-in-out 1 forwards; }
-.heroillu .illu-card { animation: floatA 6s ease-in-out infinite; transform-origin: 325px 115px; }
+.heroillu .illu-card { animation: floatA 6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .heroillu .illu-line { animation: draw 6s ease-in-out infinite; }
 .heroillu .illu-dot { animation: twinkle 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .heroillu .illu-arrow { animation: nudge 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes draw { 0% { stroke-dashoffset: 110; } 35%, 100% { stroke-dashoffset: 0; } }
 @keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-.heroillu .illu-chip { animation: floatB 8s ease-in-out infinite; transform-origin: 341px 240px; }
+.heroillu .illu-chip { animation: floatB 8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .heroillu .illu-spark { animation: twinkle 3.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
 .heroillu .illu-spark.s2 { animation-delay: 1.6s; }
-@keyframes scan { 0% { transform: translateY(40px); opacity: 1; } 50% { transform: translateY(232px); opacity: 1; } 88% { transform: translateY(40px); opacity: 1; } 100% { transform: translateY(40px); opacity: 0; } }
+@keyframes scan { 0% { transform: translateY(0); opacity: 1; } 50% { transform: translateY(205px); opacity: 1; } 88% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(0); opacity: 0; } }
 @keyframes floatA { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-5px) rotate(-.5deg); } }
 @keyframes floatB { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(4px) rotate(.5deg); } }
 @keyframes dash { to { stroke-dashoffset: -12; } }
@@ -666,3 +666,12 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
 
 .heroillu .illu-tag { animation: floatB 7s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .heroillu .illu-check { transition: fill .3s; }
+
+/* accueil : coupe d'immeuble */
+.heroillu .ink { stroke: var(--ink); } .heroillu .thin { stroke: var(--ink); stroke-width: 1; } .heroillu .soft { stroke: #9FB3CC; stroke-width: 1; }
+.heroillu .acc { stroke: var(--accent); } .heroillu .g { stroke: var(--good); }
+.heroillu .fa { fill: var(--accent-soft); } .heroillu .fw { fill: #fff; } .heroillu .fm { fill: var(--mark); } .heroillu .fms { fill: var(--mark-soft); } .heroillu .fg { fill: #F3F4F6; }
+.heroillu .mono { font-family: "IBM Plex Mono", monospace; } .heroillu .sans { font-family: "Source Sans 3", sans-serif; }
+.heroillu .illu-tag.t2 { animation-delay: 2s; } .heroillu .illu-tag.t3 { animation-delay: 4s; }
+.heroillu .illu-smoke { animation: smoke 5s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom; }
+@keyframes smoke { 0% { opacity: .2; transform: translateY(0) scale(.9); } 50% { opacity: .7; } 100% { opacity: .1; transform: translateY(-10px) scale(1.15); } }

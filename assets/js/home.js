@@ -47,7 +47,8 @@
     const checks = ['chk1', 'chk2', 'chk3', 'chk4'].map(id => document.getElementById(id));
     const fmtEur = v => Math.round(v).toLocaleString('fr-FR') + ' €';
     const fmtPct = v => v.toFixed(1).replace('.', ',') + ' %';
-    const LO = 170000, HI = 220000, FINAL = 197245, X0 = 298, W = 94;   // curseur : 170 k€ à gauche, 220 k€ à droite
+    const track = document.getElementById('illu-track');
+    const LO = 170000, HI = 220000, FINAL = 197245, X0 = track ? +track.getAttribute('x') : 298, W = track ? +track.getAttribute('width') : 94;   // curseur : 170 k€ à gauche, 220 k€ à droite
     const knobX = v => X0 + (v - LO) / (HI - LO) * W;
     const finish = () => { renta.textContent = fmtPct(9.1); trav.textContent = fmtEur(FINAL); knob.setAttribute('cx', knobX(FINAL)); cf.textContent = '+185 €/mois'; checks.forEach(c => { if (c) c.textContent = '✓' + c.textContent.slice(1); }); };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
