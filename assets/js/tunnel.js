@@ -616,6 +616,6 @@
   if (params.has('new')) { S = newState(); save(); history.replaceState(null, '', location.pathname); }
   fillForm();
   if (params.get('p')) { openProject(params.get('p')); } else { showStep(); }
-  if (C.loadPricing) C.loadPricing().then(ok => { if (!ok) return; renderPanel(); if (S.step === 'travaux') updateLots(); if (S.step === 'resultat' && !viewer) renderReport(); });
+  if (C.loadPricing) C.loadPricing().then(ok => { if (!ok) return; lotsBuilt = false; if (!S.worksTouched && S.kind) S.works = C.preselect(S); renderPanel(); if (S.step === 'travaux') renderLots(); if (S.step === 'resultat' && !viewer) renderReport(); });
   if (C.auth) C.auth.onChange(A => { if (!viewer) applyProfile(A); });
 })();

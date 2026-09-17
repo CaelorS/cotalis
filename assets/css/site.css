@@ -387,3 +387,10 @@ body.admin { background: var(--bg); }
 .drawer .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .drawer textarea { width: 100%; resize: vertical; }
 @media (max-width: 980px) { .drawer .two { grid-template-columns: 1fr; } .tabs { order: 3; width: 100%; margin-left: 0; } }
+
+/* tri par colonne */
+.sortable th[data-sort] { cursor: pointer; user-select: none; }
+.sortable th[data-sort]:hover { color: var(--ink); }
+.sortable th[data-sort]::after { content: "↕"; opacity: .35; margin-left: 6px; font-size: 11px; }
+.sortable th[data-sort].asc::after { content: "↑"; opacity: 1; color: var(--accent); }
+.sortable th[data-sort].desc::after { content: "↓"; opacity: 1; color: var(--accent); }

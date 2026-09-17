@@ -51,15 +51,29 @@
     renderLeads();
   }
   const margeOf = l => (l.payload && l.payload.interne && l.payload.interne.marge) || 0;
+  let sortKey = 'date', sortDir = -1;   // -1 décroissant, 1 croissant
+  const STATUS_RANK = Object.fromEntries(STATUS.map((s, i) => [s[0], i]));
+  const adminName = id => { const a = admins.find(x => x.id === id); return a ? (a.prenom || a.email) : ''; };
+  const SORTERS = {
+    date: l => l.created_at || '',
+    contact: l => ((l.nom || '') + ' ' + (l.prenom || '')).toLowerCase(),
+    bien: l => ((KIND[l.type_bien] || '') + ' ' + (l.ville || l.adresse || '')).toLowerCase(),
+    ttc: l => +l.estimation_ttc || 0,
+    marge: l => margeOf(l),
+    finance: l => FIN[l.finance] || '',
+    status: l => STATUS_RANK[l.status || 'nouveau'] || 0,
+    assign: l => adminName(l.assigned_to).toLowerCase(),
+    next: l => l.next_action || (sortDir === 1 ? '9999' : ''),
+  };
   function renderLeads() {
-    const q = $('q').value.trim().toLowerCase(), fs = $('f-status').value, fa = $('f-assign').value, sort = $('f-sort').value;
+    const q = $('q').value.trim().toLowerCase(), fs = $('f-status').value, fa = $('f-assign').value;
     let rows = leads.filter(l => l.kind !== 'test');
     if (q) rows = rows.filter(l => [l.prenom, l.nom, l.email, l.ville, l.adresse, l.ref, l.tel].join(' ').toLowerCase().includes(q));
     if (fs) rows = rows.filter(l => (l.status || 'nouveau') === fs);
     if (fa === 'none') rows = rows.filter(l => !l.assigned_to); else if (fa) rows = rows.filter(l => l.assigned_to === fa);
-    if (sort === 'ttc') rows.sort((a, b) => (b.estimation_ttc || 0) - (a.estimation_ttc || 0));
-    else if (sort === 'marge') rows.sort((a, b) => margeOf(b) - margeOf(a));
-    else if (sort === 'next') rows.sort((a, b) => String(a.next_action || '9999').localeCompare(String(b.next_action || '9999')));
+    const key = SORTERS[sortKey] || SORTERS.date;
+    rows.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'fr')) * sortDir; });
+    document.querySelectorAll('#leads th[data-sort]').forEach(th => { th.classList.toggle('asc', th.dataset.sort === sortKey && sortDir === 1); th.classList.toggle('desc', th.dataset.sort === sortKey && sortDir === -1); th.setAttribute('aria-sort', th.dataset.sort === sortKey ? (sortDir === 1 ? 'ascending' : 'descending') : 'none'); });
     $('count').textContent = rows.length + ' dossier' + (rows.length > 1 ? 's' : '');
     const today = new Date().toISOString().slice(0, 10);
     $('leads').querySelector('tbody').innerHTML = rows.map(l => `<tr data-id="${l.id}" class="${l.next_action && l.next_action < today ? 'late' : ''}">
@@ -75,7 +89,12 @@
       <td><button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
     </tr>`).join('') || '<tr><td colspan="10" class="empty">Aucun dossier.</td></tr>';
   }
-  ['q', 'f-status', 'f-assign', 'f-sort'].forEach(id => $(id).addEventListener('input', renderLeads));
+  ['q', 'f-status', 'f-assign'].forEach(id => $(id).addEventListener('input', renderLeads));
+  $('leads').querySelector('thead').addEventListener('click', e => {
+    const th = e.target.closest('th[data-sort]'); if (!th) return;
+    if (sortKey === th.dataset.sort) sortDir = -sortDir; else { sortKey = th.dataset.sort; sortDir = ['ttc', 'marge', 'date'].includes(sortKey) ? -1 : 1; }
+    renderLeads();
+  });
   $('leads').addEventListener('change', async e => {
     const el = e.target.closest('[data-f]'); if (!el) return;
     const id = +el.closest('tr').dataset.id, f = el.dataset.f, v = el.value || null;
@@ -155,7 +174,7 @@
     if (!pricingLoaded) { await C.loadPricing(); pricingLoaded = true; }
     dirty.clear(); $('prix-msg').textContent = '';
     $('settings').innerHTML = SETTINGS.map(([k, label, unit, mult]) => { const v = getSetting(k), d = getDefault(k); return `<div class="field"><label>${label} <span class="optsub">défaut ${(d * mult).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}${unit}</span></label><div class="unit"><input type="number" step="${mult === 100 ? 0.5 : 0.01}" data-set="${k}" value="${+(v * mult).toFixed(3)}">${unit ? `<span>${unit}</span>` : ''}</div></div>`; }).join('');
-    $('items').querySelector('tbody').innerHTML = C.CATALOG.map(l => `<tr class="lot"><td colspan="8">${esc(l.lot)}</td></tr>` + l.items.map(it => { const d = C.DEFAULTS.items[it.id]; return `<tr data-item="${it.id}">
+    $('items').querySelector('tbody').innerHTML = C.CATALOG.map(l => `<tr class="lot"><td colspan="10">${esc(l.lot)}</td></tr>` + l.items.map(it => { const d = C.DEFAULTS.items[it.id] || { pu: '—' }; return `<tr data-item="${it.id}"${it.custom ? ' data-custom="1"' : ''}>
       <td><input type="checkbox" data-f="active"${it.inactive ? '' : ' checked'}></td>
       <td><input type="text" data-f="label" value="${esc(it.label)}" class="wide"><input type="text" data-f="sub" value="${esc(it.sub || '')}" class="wide sub" placeholder="précision"></td>
       <td>${esc(it.unit)}</td>
@@ -164,8 +183,35 @@
       <td class="r"><input type="number" step="5" min="0" max="100" data-f="lab" value="${Math.round(it.lab * 100)}"></td>
       <td><select data-f="tva"><option value="10"${it.tva === 5.5 ? '' : ' selected'}>10 %</option><option value="5.5"${it.tva === 5.5 ? ' selected' : ''}>5,5 %</option></select></td>
       <td class="r"><input type="number" step="0.5" min="0" max="60" data-f="marge" value="${it.marge == null ? '' : +(it.marge * 100).toFixed(2)}" placeholder="défaut"></td>
+      <td class="hint">${it.custom ? `<select data-f="qty_mode" class="inline">${Object.keys(C.QTY_MODES).map(k => `<option value="${k}"${it.qtyMode === k ? ' selected' : ''}>${C.QTY_MODES[k]}</option>`).join('')}</select> <input type="number" step="0.01" data-f="qty_coef" value="${it.qtyCoef == null ? 1 : it.qtyCoef}" style="width:70px">` : esc(QTY_DESC[it.id] || 'règle du catalogue')}</td>
+      <td>${it.custom ? `<button type="button" class="btn small" data-del="${it.id}">Supprimer</button>` : ''}</td>
     </tr>`; }).join('')).join('');
+    const lots = $('ni-lot'); lots.innerHTML = C.CATALOG.map(l => `<option value="${esc(l.lot)}">${esc(l.lot)}</option>`).join('') + '<option value="__new">Nouveau lot…</option>';
+    $('ni-qmode').innerHTML = Object.keys(C.QTY_MODES).map(k => `<option value="${k}">${C.QTY_MODES[k]}</option>`).join('');
   }
+  const QTY_DESC = { dep_rev: 'surface', dep_eq: 'logements', benne: 'logements / 2', mur_np: 'logements', mur_p: '1', cloison: 'surface × 0,08', plafond: 'surface', elec: 'surface', tableau: 'logements', plomb: 'pièces d\'eau + logements', ballon: 'logements', thermo: 'logements', radia: 'pièces + logements', chaud: 'logements', vmc: 'logements', fen: 'pièces + logements', iti: 'surface × 0,9', combles: 'surface / niveaux', porte: 'logements', sdb: 'logements', wc: 'pièces d\'eau − logements', cuis: 'logements', ragr: 'surface', parq: 'surface × 0,72', strat: 'surface × 0,72', carr: 'surface × 0,2', peint: 'surface × 2,8', portes: 'pièces + logements', placard: '2 × logements', nett: 'logements' };
+  $('ni-lot').addEventListener('change', () => $('ni-newlot-field').classList.toggle('hidden', $('ni-lot').value !== '__new'));
+  $('ni-qmode').addEventListener('change', () => { $('ni-qcoef-label').textContent = $('ni-qmode').value === 'fixed' ? 'Quantité' : 'Coefficient'; });
+  $('new-item').addEventListener('submit', async e => {
+    e.preventDefault();
+    const lot = $('ni-lot').value === '__new' ? $('ni-newlot').value.trim() : $('ni-lot').value;
+    const label = $('ni-label').value.trim();
+    if (!lot || !label || !$('ni-pu').value) { $('ni-msg').textContent = 'Lot, nom et prix sont obligatoires.'; return; }
+    const slug = label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40);
+    const id = 'c_' + slug + '_' + Date.now().toString(36).slice(-4);
+    const row = { id, custom: true, lot, label, sub: $('ni-sub').value.trim(), unit: $('ni-unit').value, pu: +$('ni-pu').value, lab: Math.min(1, Math.max(0, +$('ni-lab').value / 100)), tva: +$('ni-tva').value, marge: $('ni-marge').value === '' ? null : +$('ni-marge').value / 100, qty_mode: $('ni-qmode').value, qty_coef: +$('ni-qcoef').value || 1, presets: [...document.querySelectorAll('[name="ni-preset"]:checked')].map(c => c.value), active: true, sort_order: 100, updated_by: A.user.id, updated_at: new Date().toISOString() };
+    const { error } = await sb.from('pricing_items').insert(row);
+    if (error) { $('ni-msg').textContent = 'Création impossible : ' + error.message; return; }
+    C.addCustomItem(row); $('new-item').reset(); $('ni-newlot-field').classList.add('hidden'); $('ni-msg').textContent = 'Ouvrage créé : il est visible dans le tunnel.'; await loadPricingTab(); $('ni-msg').textContent = 'Ouvrage « ' + label + ' » créé.';
+  });
+  $('items').addEventListener('click', async e => {
+    const b = e.target.closest('[data-del]'); if (!b) return;
+    if (!confirm('Supprimer cet ouvrage ? Les estimations déjà faites ne sont pas modifiées.')) return;
+    const { error } = await sb.from('pricing_items').delete().eq('id', b.dataset.del);
+    if (error) { alert('Suppression impossible : ' + error.message); return; }
+    const it = C.ITEMS[b.dataset.del]; if (it) { const lot = C.CATALOG.find(l => l.lot === it.lotName); if (lot) lot.items = lot.items.filter(x => x.id !== it.id); delete C.ITEMS[it.id]; Object.keys(C.PRESET).forEach(k => { C.PRESET[k] = C.PRESET[k].filter(x => x !== it.id); }); }
+    await loadPricingTab();
+  });
   $('tab-prix').addEventListener('input', e => { const tr = e.target.closest('tr[data-item]'); if (tr) dirty.add(tr.dataset.item); if (e.target.dataset.set) dirty.add('settings'); $('prix-msg').textContent = 'Modifications non enregistrées.'; });
   $('prix-save').addEventListener('click', async () => {
     const btn = $('prix-save'); btn.disabled = true; $('prix-msg').textContent = 'Enregistrement…';
@@ -174,7 +220,9 @@
       const rows = [...document.querySelectorAll('tr[data-item]')].filter(tr => dirty.has(tr.dataset.item)).map(tr => {
         const g = f => tr.querySelector(`[data-f="${f}"]`);
         const it = C.ITEMS[tr.dataset.item];
-        return { id: tr.dataset.item, lot: it.lotName, label: g('label').value.trim() || it.label, sub: g('sub').value.trim(), unit: it.unit, pu: +g('pu').value, lab: Math.min(1, Math.max(0, +g('lab').value / 100)), tva: +g('tva').value, marge: g('marge').value === '' ? null : +g('marge').value / 100, active: g('active').checked, updated_by: uid, updated_at: new Date().toISOString() };
+        const row = { id: tr.dataset.item, lot: it.lotName, label: g('label').value.trim() || it.label, sub: g('sub').value.trim(), unit: it.unit, pu: +g('pu').value, lab: Math.min(1, Math.max(0, +g('lab').value / 100)), tva: +g('tva').value, marge: g('marge').value === '' ? null : +g('marge').value / 100, active: g('active').checked, updated_by: uid, updated_at: new Date().toISOString() };
+        if (it.custom) { row.custom = true; row.qty_mode = g('qty_mode').value; row.qty_coef = +g('qty_coef').value || 1; row.presets = it.presets || []; }
+        return row;
       });
       if (rows.length) { const { error } = await sb.from('pricing_items').upsert(rows); if (error) throw error; }
       if (dirty.has('settings')) {
