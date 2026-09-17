@@ -370,7 +370,7 @@
     $('p-conf').innerHTML = R.score + '<small> / 100 · ' + lab + '</small>';
     const cb = $('p-conf-bar'); cb.className = 'conf' + (R.score < 50 ? ' c' : R.score < 70 ? ' w' : ''); cb.firstElementChild.style.width = R.score + '%';
     const arr = Object.entries(R.lots).sort((a, b) => b[1] - a[1]); const max = arr.length ? arr[0][1] : 1;
-    $('p-lots').innerHTML = arr.map(([n, v]) => `<div class="row"><span class="n" title="${esc(n)}">${esc(n)}</span><span class="bar"><i style="width:${(v / max * 100).toFixed(1)}%"></i></span><span class="v num">${eur(v)}<small>${pct(v / R.direct, 0)}</small></span></div>`).join('');
+    $('p-lots').innerHTML = arr.map(([n, v]) => `<div class="row"><span class="n" title="${esc(n)}">${esc(n)}</span><span class="bar"><i style="width:${(v / max * 100).toFixed(1)}%"></i></span><span class="v num">${eur(v)}</span></div>`).join('');
     const fin = S.finance === 'oui' && R.total > 0;
     $('p-tiles').classList.toggle('hidden', !fin);
     if (fin) $('p-tiles').innerHTML = tilesHtml(R, true);
