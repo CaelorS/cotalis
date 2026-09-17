@@ -540,3 +540,12 @@ body.admin { background: var(--bg); }
 .auth-form .auth-id { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .auth-form .auth-id .wide { grid-column: 1 / -1; }
 .auth-form .auth-id.hidden { display: none; }
+
+/* ---------- analyse du tunnel ---------- */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 0 0 20px; }
+.kpis .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; }
+.kpis .tile .v { font-size: 30px; font-weight: 500; margin: 4px 0 2px; }
+.kpis .tile .d { color: var(--ink-3); font-size: 12.5px; }
+
+.bylot .row { grid-template-columns: minmax(0, 1fr) auto; }
+.bylot .row .n { white-space: normal; }

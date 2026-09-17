@@ -30,6 +30,7 @@
     situation: { statut: '', revenus: '', credits: '', apportDispo: '', proprietaire: '' },
     contact: { prenom: '', nom: '', tel: '', email: '', consent: false, password: '' },
     step: 'kind', maxIdx: 0, ref: '', leadSubmitted: false, leadSent: false, rappel: false, savedAt: '',
+    stepsAt: {}, startedAt: '', completedAt: '',
   };
   let S = load() || newState();
   let viewer = false;
@@ -103,6 +104,7 @@
     if (S.step === 'travaux') renderLots();
     if (S.step === 'resultat') renderReport();
     renderPanel();
+    track();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     const first = document.querySelector('.step.active input:not([type="checkbox"]), .step.active select');
     if (first && window.matchMedia('(min-width: 981px)').matches) first.focus({ preventScroll: true });
@@ -368,7 +370,7 @@
     $('p-conf').innerHTML = R.score + '<small> / 100 · ' + lab + '</small>';
     const cb = $('p-conf-bar'); cb.className = 'conf' + (R.score < 50 ? ' c' : R.score < 70 ? ' w' : ''); cb.firstElementChild.style.width = R.score + '%';
     const arr = Object.entries(R.lots).sort((a, b) => b[1] - a[1]); const max = arr.length ? arr[0][1] : 1;
-    $('p-lots').innerHTML = arr.map(([n, v]) => `<div class="row"><span class="n" title="${esc(n)}">${esc(n)}</span><span class="bar"><i style="width:${(v / max * 100).toFixed(1)}%"></i></span><span class="v num">${eur(v)}</span></div>`).join('');
+    $('p-lots').innerHTML = arr.map(([n, v]) => `<div class="row"><span class="n" title="${esc(n)}">${esc(n)}</span><span class="v num">${eur(v)}</span></div>`).join('');
     const fin = (S.finance === 'oui' || S.finance === 'renta') && R.total > 0;
     $('p-tiles').classList.toggle('hidden', !fin);
     if (fin) $('p-tiles').innerHTML = tilesHtml(R, true);
@@ -500,7 +502,7 @@
   /* ---------- partage ---------- */
   function shareData() {
     const d = clone(S);
-    delete d.token; delete d.situation; delete d.leadSent; delete d.leadSubmitted;
+    delete d.token; delete d.situation; delete d.leadSent; delete d.leadSubmitted; delete d.stepsAt; delete d.startedAt; delete d.completedAt;
     d.contact = { prenom: S.contact.prenom, nom: S.contact.nom, tel: '', email: '', consent: false };
     d.files = S.files.filter(f => f.path).map(f => ({ name: f.name, path: f.path, size: f.size, type: f.type }));
     d.sharedAt = new Date().toISOString();
@@ -587,6 +589,29 @@
     $('pw-field').classList.add('hidden'); $('contact-logged').classList.remove('hidden');
     $('contact-logged').textContent = 'Connecté en tant que ' + (u.email || '') + '. Vos coordonnées sont pré-remplies.';
     fillForm(); save();
+  }
+
+  /* ---------- suivi du parcours (analyse du tunnel) ---------- */
+  const STEP_RANK = { kind: 0, bien: 1, finition: 2, travaux: 3, financeQ: 4, acquisition: 5, situation: 6, contact: 7, resultat: 8 };
+  let trackTimer = null;
+  function track() {
+    if (viewer || !S.pid) return;
+    const now = new Date().toISOString();
+    if (!S.startedAt) S.startedAt = now;
+    if (!S.stepsAt) S.stepsAt = {};
+    if (!S.stepsAt[S.step]) S.stepsAt[S.step] = now;
+    if (S.step === 'resultat' && !S.completedAt) S.completedAt = now;
+    save();
+    if (!hasDb()) return;
+    clearTimeout(trackTimer);
+    trackTimer = setTimeout(() => {
+      const R = ready() ? C.compute(S) : null;
+      const patch = { started_at: S.startedAt, completed_at: S.completedAt || null, last_step: S.step, max_step: Math.max.apply(null, Object.keys(S.stepsAt).map(k => STEP_RANK[k] || 0)), steps: S.stepsAt,
+        kind: S.kind, surface: +S.surface || null, finance: S.finance, ttc: R ? Math.round(R.ttc) : null, ref: S.ref || null,
+        device: window.matchMedia('(max-width: 980px)').matches ? 'mobile' : 'ordinateur', ua: navigator.userAgent, referrer: document.referrer || null,
+        data: { etat: S.etat, gamme: S.gamme, stade: S.stade, demarrage: S.demarrage, zone: S.zone, works: Object.keys(S.works).filter(k => S.works[k]).length, files: S.files.length, worksTouched: S.worksTouched } };
+      fetch(BASE + '/rest/v1/rpc/track_session', { method: 'POST', headers: hdr(), body: JSON.stringify({ p_id: S.pid, p_patch: patch }), keepalive: true }).catch(() => {});
+    }, 400);
   }
 
   /* ---------- envoi de la demande ---------- */

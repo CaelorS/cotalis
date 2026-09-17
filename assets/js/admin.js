@@ -34,6 +34,7 @@
     if (name === 'dossiers') loadLeads();
     if (name === 'prix') loadPricingTab();
     if (name === 'selection') loadSelectionTab();
+    if (name === 'tunnel') { if (!leads.length && sb) sb.from('leads').select('id,project_id,prenom,nom').then(r => { leads = r.data || leads; loadTunnel(); }); else loadTunnel(); }
     if (name === 'admins') loadAdmins();
   }
 
@@ -318,6 +319,75 @@
     if (error) { $('sel-msg').textContent = 'Impossible : ' + error.message; return; }
     location.reload();
   });
+
+  /* ---------- analyse du tunnel ---------- */
+  const T_STEPS = [['kind', 'Bien'], ['bien', 'Descriptif'], ['finition', 'Finition'], ['travaux', 'Travaux'], ['financeQ', 'Financement'], ['acquisition', 'Acquisition'], ['situation', 'Situation'], ['contact', 'Coordonnées'], ['resultat', 'Estimation']];
+  const T_LABEL = Object.fromEntries(T_STEPS);
+  let sessions = [], tSortKey = 'date', tSortDir = -1;
+  const median = arr => { const a = arr.filter(x => x != null && isFinite(x)).sort((x, y) => x - y); if (!a.length) return null; const m = Math.floor(a.length / 2); return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+  const dur = ms => { if (ms == null) return '—'; const s = Math.round(ms / 1000); if (s < 60) return s + ' s'; if (s < 3600) return Math.floor(s / 60) + ' min ' + String(s % 60).padStart(2, '0') + ' s'; return Math.floor(s / 3600) + ' h ' + String(Math.floor(s % 3600 / 60)).padStart(2, '0'); };
+  async function loadTunnel() {
+    const days = +$('t-period').value;
+    const since = new Date(Date.now() - days * 864e5).toISOString();
+    const { data, error } = await sb.from('funnel_sessions').select('*').gte('started_at', since).order('started_at', { ascending: false }).limit(5000);
+    if (error) { $('t-count').textContent = 'Lecture impossible : ' + error.message + (error.code === '42P01' ? ' (exécutez supabase/schema-v4.sql)' : ''); return; }
+    sessions = data || [];
+    renderTunnel();
+  }
+  function sessionDuration(x) {
+    const t = Object.values(x.steps || {}).map(v => Date.parse(v)).filter(isFinite);
+    if (t.length < 2) return x.completed_at ? Date.parse(x.completed_at) - Date.parse(x.started_at) : null;
+    return Math.max.apply(null, t) - Math.min.apply(null, t);
+  }
+  function renderTunnel() {
+    const dev = $('t-device').value, st = $('t-state').value;
+    let rows = sessions.slice();
+    if (dev) rows = rows.filter(x => x.device === dev);
+    if (st === 'done') rows = rows.filter(x => x.completed_at); else if (st === 'abandon') rows = rows.filter(x => !x.completed_at);
+    const started = rows.length, done = rows.filter(x => x.completed_at).length;
+    const medDone = median(rows.filter(x => x.completed_at).map(sessionDuration));
+    const mobile = rows.filter(x => x.device === 'mobile').length;
+    const withContact = rows.filter(x => (x.max_step || 0) >= 7).length;
+    $('t-count').textContent = started + ' parcours';
+    $('t-kpis').innerHTML = [
+      ['Parcours commencés', started, mobile ? Math.round(mobile / started * 100) + ' % sur mobile' : ''],
+      ['Estimations complètes', done, started ? Math.round(done / started * 100) + ' % de conversion' : ''],
+      ['Coordonnées laissées', withContact, started ? Math.round(withContact / started * 100) + ' % des départs' : ''],
+      ['Durée médiane d\'un parcours complet', dur(medDone), 'de la première à la dernière étape'],
+    ].map(k => `<div class="tile"><div class="eyebrow">${k[0]}</div><div class="v num">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('');
+    // entonnoir
+    const reach = T_STEPS.map(([k]) => rows.filter(x => x.steps && x.steps[k]));
+    const exits = T_STEPS.map(([k]) => rows.filter(x => !x.completed_at && x.last_step === k).length);
+    const times = T_STEPS.map(([k], i) => median(rows.map(x => { const a = x.steps && x.steps[k]; if (!a) return null; const later = T_STEPS.slice(i + 1).map(([n]) => x.steps[n]).filter(Boolean).map(Date.parse); return later.length ? Math.min.apply(null, later) - Date.parse(a) : null; })));
+    let worst = -1, worstLoss = 0;
+    const lossRows = T_STEPS.map(([k, label], i) => {
+      const n = reach[i].length, prev = i ? reach[i - 1].length : n;
+      const loss = i && prev ? (prev - n) / prev : 0;
+      if (i && ['acquisition', 'situation'].indexOf(k) < 0 && loss > worstLoss && prev >= 5) { worstLoss = loss; worst = i; }
+      return { k, label, n, prev, loss, i };
+    });
+    $('t-funnel').querySelector('tbody').innerHTML = lossRows.map(r => `<tr class="${r.i === worst ? 'late' : ''}"><td><b>${r.label}</b>${['acquisition', 'situation'].includes(r.k) ? '<small>étape optionnelle, selon le choix de financement</small>' : ''}</td><td class="r num">${r.n}</td><td class="r num">${started ? Math.round(r.n / started * 100) + ' %' : '—'}</td><td class="r num">${r.i && r.prev ? '−' + Math.round(r.loss * 100) + ' %' : '—'}</td><td class="r num">${exits[r.i] || 0}</td><td class="r num">${dur(times[r.i])}</td><td class="r num">${reach[r.i].filter(x => x.device === 'mobile').length}</td><td class="r num">${reach[r.i].filter(x => x.device === 'ordinateur').length}</td></tr>`).join('');
+    // parcours
+    const key = { date: x => x.started_at || '', device: x => x.device || '', bien: x => (KIND[x.kind] || '') + (x.surface || ''), step: x => x.max_step || 0, done: x => x.completed_at ? 1 : 0, duration: x => sessionDuration(x) || 0, ttc: x => +x.ttc || 0, finance: x => x.finance || '' }[tSortKey];
+    rows.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'fr')) * tSortDir; });
+    document.querySelectorAll('#t-sessions th[data-sort]').forEach(th => { th.classList.toggle('asc', th.dataset.sort === tSortKey && tSortDir === 1); th.classList.toggle('desc', th.dataset.sort === tSortKey && tSortDir === -1); });
+    const leadByRef = Object.fromEntries(leads.map(l => [l.project_id, l]));
+    $('t-sessions').querySelector('tbody').innerHTML = rows.map(x => { const l = leadByRef[x.id]; return `<tr>
+      <td class="num">${new Date(x.started_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+      <td>${esc(x.device || '—')}</td>
+      <td>${esc(KIND[x.kind] || '—')}${x.surface ? ' · ' + x.surface + ' m²' : ''}<small>${esc((x.data && x.data.etat) || '')}${x.data && x.data.works ? ' · ' + x.data.works + ' ouvrages' : ''}</small></td>
+      <td>${esc(T_LABEL[x.last_step] || x.last_step || '—')}<small>${T_STEPS.filter(([k]) => x.steps && x.steps[k]).length} étape(s) vue(s)</small></td>
+      <td>${x.completed_at ? '<span class="pill" style="background:var(--good-soft);color:var(--good)">complet</span>' : '<span class="pill">incomplet</span>'}</td>
+      <td class="r num">${dur(sessionDuration(x))}</td>
+      <td class="r num">${x.ttc ? eur(x.ttc) : '—'}</td>
+      <td>${esc(FIN[x.finance] || '—')}</td>
+      <td>${l ? `<button type="button" class="btn small" data-open="${l.id}">${esc(l.prenom)} ${esc(l.nom)}</button>` : (x.user_id ? '<small>compte connecté</small>' : '—')}</td>
+    </tr>`; }).join('') || '<tr><td colspan="9" class="empty">Aucun parcours sur la période.</td></tr>';
+  }
+  ['t-device', 't-state'].forEach(id => $(id).addEventListener('input', renderTunnel));
+  $('t-period').addEventListener('input', loadTunnel);
+  $('t-sessions').querySelector('thead').addEventListener('click', e => { const th = e.target.closest('th[data-sort]'); if (!th) return; if (tSortKey === th.dataset.sort) tSortDir = -tSortDir; else { tSortKey = th.dataset.sort; tSortDir = -1; } renderTunnel(); });
+  $('t-sessions').addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) openLead(+b.dataset.open); });
 
   /* ---------- administrateurs ---------- */
   async function loadAdmins() {
