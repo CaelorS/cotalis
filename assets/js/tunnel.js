@@ -117,11 +117,7 @@
         if (S.kind === 'immeuble' && !(+S.nbapts >= 2)) return 'Un immeuble compte au moins deux appartements.';
         if (S.files.some(f => f.pending)) return 'Un fichier est encore en cours d\'envoi, patientez quelques secondes.';
         return null;
-      case 'finition':
-        if (!S.gamme) return 'Choisissez un niveau de finition.';
-        if (!S.stade) return 'Dites-nous où en est votre projet.';
-        if (!S.demarrage) return 'Indiquez le démarrage souhaité des travaux.';
-        return null;
+      case 'finition': return null;   // rien de bloquant : standard locatif et « en étude » par défaut, démarrage libre
       case 'travaux': return Object.keys(S.works).some(k => S.works[k]) ? null : 'Cochez au moins un ouvrage.';
       case 'financeQ': return S.finance ? null : 'Dites-nous si vous souhaitez un accompagnement pour le financement.';
       case 'acquisition':
@@ -143,6 +139,7 @@
     const err = validate();
     if (err) { $('err').textContent = err; $('err').classList.remove('hidden'); return; }
     if (S.step === 'bien' && !S.worksTouched) S.works = C.preselect(S);
+    if (S.step === 'finition') { if (!S.gamme) S.gamme = 'std'; if (!S.stade) S.stade = 'etude'; fillForm(); }
     if (S.step === 'acquisition') { const added = C.lateRules(S, 'strat'); if (added.length) S.autoAdded = (S.autoAdded || []).concat(added.filter(id => !(S.autoAdded || []).includes(id))); }
     if (S.step === 'contact') {
       if (!(await ensureAccount())) return;
@@ -415,7 +412,7 @@
       ['Année de construction', S.annee || 'inconnue'], ['DPE', S.dpe || 'inconnu'], ['État général', etatSel ? etatSel.textContent : 'non renseigné'],
       ['Occupé pendant les travaux', TRI[S.occupe]], ['Accès difficile', TRI[S.acces]], ['Visite technique', S.visite === 'oui' ? 'déjà réalisée' : S.visite === 'plan' ? 'à planifier' : 'pas encore'],
       ['Plans et photos', S.files.length ? S.files.length + ' fichier' + (S.files.length > 1 ? 's' : '') : 'aucun'],
-      ['Finition', C.GAMME[S.gamme][1]], ['Projet', STADE[S.stade] + ', démarrage souhaité sous ' + S.demarrage + ' mois'],
+      ['Finition', C.GAMME[S.gamme][1]], ['Projet', (STADE[S.stade] || 'en étude') + (S.demarrage ? ', démarrage souhaité sous ' + S.demarrage + ' mois' : ', démarrage non précisé')],
     ].filter(Boolean);
     const devisRows = C.CATALOG.map(l => {
       const rows = R.lines.filter(x => x.on && x.it.lotName === l.lot && x.amount > 0);
