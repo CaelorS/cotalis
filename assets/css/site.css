@@ -549,3 +549,7 @@ body.admin { background: var(--bg); }
 
 .bylot .row { grid-template-columns: minmax(0, 1fr) auto; }
 .bylot .row .n { white-space: normal; }
+@media (max-width: 980px) {
+  /* menu du compte : ancré à gauche du bouton, jamais hors écran */
+  .auth-drop { left: 0; right: auto; min-width: 220px; max-width: calc(100vw - 32px); }
+}
