@@ -501,7 +501,7 @@
         <div class="stepc"><div class="display">Devis contractuel</div>Prix et délais fermes, écarts avec l'estimation expliqués ligne à ligne, signature et acompte.</div>
         <div class="stepc"><div class="display">Chantier suivi</div>Planning, jalons, appels de fonds, réception.</div>
       </div></div>
-      <p style="font-size:12.5px;color:var(--ink-3);margin:0;max-width:80ch">Prix de référence relevés en septembre 2026 sur des chantiers de rénovation locative. Les montants restent indicatifs tant qu'un devis signé ne les remplace pas. Document généré par Cotalia, réf. ${esc(S.ref)}.</p>`;
+      <p style="font-size:12.5px;color:var(--ink-3);margin:0">Prix de référence relevés en septembre 2026 sur des chantiers de rénovation locative. Les montants restent indicatifs tant qu'un devis signé ne les remplace pas. Document généré par Cotalia, réf. ${esc(S.ref)}.</p>`;
     $('btn-pdf').addEventListener('click', () => window.print());
     $('btn-share').addEventListener('click', share);
     if (!viewer) {
