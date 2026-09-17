@@ -351,7 +351,7 @@
   /* ---------- encadré d'estimation ---------- */
   function ready() { return S.kind && +S.surface > 0 && Object.keys(S.works).some(k => S.works[k]); }
   function renderPanel() {
-    const ok = ready();
+    const ok = ready() && (LABEL[S.step] || 0) >= LABEL.finition;   // l'estimation n'apparaît qu'à partir de la finition
     $('p-empty').classList.toggle('hidden', ok);
     $('p-head').classList.toggle('hidden', !ok);
     $('panel-toggle').classList.toggle('hidden', !ok);
