@@ -136,6 +136,13 @@
     FG: 0.08,         // frais généraux, sur les coûts directs
     NOTAIRE: 0.075,   // frais d'acquisition dans l'ancien
     AMEUBLEMENT: { nue: 0, meuble: 120, coloc: 150, revente: 0 }, // €/m²
-    LOYER_M2: { nue: 13, meuble: 16, coloc: 20, revente: 0 },      // repère pour préremplir le loyer visé
+    LOYER_M2: { nue: 13, meuble: 16, coloc: 20, revente: 0 },      // repère national, ajusté par zone ci-dessous
+    // Prix d'achat d'un bien à rénover, € par m² habitable, par zone de prix (repères septembre 2026)
+    PRIX_M2: { paris: 9200, pc: 5800, gc: 3900, lyon: 4400, metro: 3100, moy: 2100, rural: 1400 },
+    // Loyer nu, € par m² et par mois, par zone ; meublé et colocation appliquent un multiplicateur
+    LOYER_M2_ZONE: { paris: 31, pc: 23, gc: 17.5, lyon: 16.5, metro: 13.5, moy: 11, rural: 9 },
+    LOYER_STRAT: { nue: 1, meuble: 1.15, coloc: 1.3, revente: 0 },
+    // Décote du prix selon l'état général déclaré
+    PRIX_ETAT: { bon: 1, correct: 0.94, degrade: 0.85, total: 0.76, '': 0.9 },
   });
 })(window);

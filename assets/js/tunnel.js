@@ -26,7 +26,7 @@
     ascenseur: '', copro: '', occupe: '', acces: '', visite: '', files: [],
     gamme: 'std', stade: '', demarrage: '',
     works: {}, qty: {}, worksTouched: false,
-    finance: null, prix: '', strat: 'meuble', loyer: '', loyerAuto: true, charges: '', apport: '', apportAuto: true, taux: 3.35, duree: 25,
+    finance: null, prix: '', prixAuto: true, strat: 'meuble', loyer: '', loyerAuto: true, charges: '', chargesAuto: true, apport: '', apportAuto: true, taux: 3.35, duree: 20,
     situation: { statut: '', revenus: '', credits: '', apportDispo: '', proprietaire: '' },
     contact: { prenom: '', nom: '', tel: '', email: '', consent: false, password: '' },
     step: 'kind', maxIdx: 0, ref: '', leadSubmitted: false, leadSent: false, rappel: false, savedAt: '',
@@ -101,6 +101,7 @@
     $('err').classList.add('hidden');
     $('panel').classList.toggle('hidden', S.step === 'resultat' || viewer);
 
+    if (S.step === 'acquisition') proposeAcquisition();
     if (S.step === 'travaux') renderLots();
     if (S.step === 'resultat') renderReport();
     renderPanel();
@@ -207,10 +208,11 @@
       if (k === 'nbapts') { renderApts(); S.eau = defaultEau(); $('eau').value = S.eau; S.qty = {}; }
       if (k === 'surface' || k === 'eau') S.qty = {};
       if ((k === 'etat' || k === 'dpe') && !S.worksTouched) S.works = C.preselect(S);
-      if ((k === 'strat' || k === 'surface') && S.loyerAuto && +S.surface) { S.loyer = Math.round((C.LOYER_M2[S.strat] || 0) * +S.surface / 10) * 10; $('loyer').value = S.loyer || ''; }
-      if (k === 'loyer') S.loyerAuto = el.value === '';
-      if (k === 'prix' && S.apportAuto) { S.apport = +S.prix ? Math.round(+S.prix * 0.1 / 1000) * 1000 : ''; $('apport').value = S.apport; }
-      if (k === 'apport') S.apportAuto = el.value === '';
+      if (k === 'prix') { S.prixAuto = el.value === ''; }
+      if (k === 'loyer') { S.loyerAuto = el.value === ''; }
+      if (k === 'charges') { S.chargesAuto = el.value === ''; }
+      if (k === 'apport') { S.apportAuto = el.value === ''; }
+      if (['strat', 'surface', 'zone', 'etat', 'prix', 'loyer'].includes(k)) proposeAcquisition();
     } else if (el.dataset.w) {
       S.works[el.dataset.w] = el.checked ? 1 : 0; S.worksTouched = true;
     } else if (el.dataset.q) {
@@ -246,6 +248,18 @@
     }
     save(); renderPanel();
     if (k === 'kind' || k === 'finance') setTimeout(goNext, 220);
+  }
+
+  /* ---------- financement : valeurs proposées d'après ce qu'on sait déjà ---------- */
+  // Prix d'achat d'après la zone, la surface et l'état ; loyer légèrement optimiste ; charges et taxe foncière légèrement minorées ;
+  // apport à 10 % du prix. Chaque valeur cesse d'être proposée dès que la personne la saisit elle-même.
+  function proposeAcquisition() {
+    const surf = +S.surface || 0;
+    if (S.prixAuto) { S.prix = surf ? Math.round((C.PRIX_M2[S.zone] || 2100) * surf * (C.PRIX_ETAT[S.etat] ?? 0.9) / 1000) * 1000 : ''; }
+    if (S.loyerAuto) { S.loyer = surf && S.strat !== 'revente' ? Math.round((C.LOYER_M2_ZONE[S.zone] || 11) * (C.LOYER_STRAT[S.strat] || 1) * surf * 1.05 / 10) * 10 : ''; }
+    if (S.chargesAuto) { S.charges = +S.loyer ? Math.round(+S.loyer * 12 * 0.08 / 50) * 50 : (+S.prix ? Math.round(+S.prix * 0.005 / 50) * 50 : ''); }
+    if (S.apportAuto) { S.apport = +S.prix ? Math.round(+S.prix * 0.1 / 1000) * 1000 : ''; }
+    ['prix', 'loyer', 'charges', 'apport'].forEach(k => { const el = $(k); if (el && document.activeElement !== el) el.value = S[k] === '' ? '' : S[k]; });
   }
 
   /* ---------- adresse (Base Adresse Nationale, gratuite, sans clé) ---------- */
@@ -366,9 +380,6 @@
     $('p-pin-low').style.left = px(R.low); $('p-pin-mid').style.left = px(R.ttc); $('p-pin-high').style.left = px(R.high);
     $('p-m2').innerHTML = fmt(R.ttc / R.ctx.surface) + '<small> €/m²</small>';
     $('p-duree').innerHTML = R.weeks + '<small> sem.</small>';
-    const lab = R.score < 50 ? 'faible' : R.score < 70 ? 'moyenne' : R.score < 85 ? 'bonne' : 'élevée';
-    $('p-conf').innerHTML = R.score + '<small> / 100 · ' + lab + '</small>';
-    const cb = $('p-conf-bar'); cb.className = 'conf' + (R.score < 50 ? ' c' : R.score < 70 ? ' w' : ''); cb.firstElementChild.style.width = R.score + '%';
     const arr = Object.entries(R.lots).sort((a, b) => b[1] - a[1]); const max = arr.length ? arr[0][1] : 1;
     $('p-lots').innerHTML = arr.map(([n, v]) => `<div class="row"><span class="n" title="${esc(n)}">${esc(n)}</span><span class="v num">${eur(v)}</span></div>`).join('');
     const fin = (S.finance === 'oui' || S.finance === 'renta') && R.total > 0;
