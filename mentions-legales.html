@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cotalia · Mentions légales</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/site.css?v=202609171722">
+</head>
+<body>
+  <header class="top slim">
+    <a class="brand" href="index.html"><span class="sub">Cotalia</span></a>
+    <nav class="mainnav"><a href="index.html">Accueil</a><a href="apropos.html">À propos</a><a href="estimation.html?new=1" class="cta">Obtenir mon estimation</a></nav>
+    <span class="spacer"></span>
+    <div id="auth-slot" class="auth-slot"></div>
+  </header>
+
+  <main class="about legal">
+    <section class="about-hero">
+      <div class="eyebrow">Mentions légales</div>
+      <h1>Qui édite cotalia.fr, et qui l'héberge.</h1>
+      <p>Informations prévues par la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie numérique.</p>
+    </section>
+
+    <section class="story">
+      <h2>Éditeur du site</h2>
+      <p>Le site cotalia.fr est édité par la société <strong>ALTIOR</strong>, contractant général du bâtiment, dont le siège est situé à Rouen (Seine-Maritime).</p>
+      <table class="kv legal-kv">
+        <tr><td>Forme juridique et capital</td><td data-fill>à compléter</td></tr>
+        <tr><td>SIREN / RCS</td><td data-fill>à compléter</td></tr>
+        <tr><td>Numéro de TVA intracommunautaire</td><td data-fill>à compléter</td></tr>
+        <tr><td>Adresse du siège</td><td data-fill>à compléter, Rouen</td></tr>
+        <tr><td>Téléphone</td><td><a href="tel:+33770079584">07 70 07 95 84</a></td></tr>
+        <tr><td>E-mail</td><td><a href="mailto:contact@altior-france.fr">contact@altior-france.fr</a></td></tr>
+      </table>
+      <p>La marque et le service Cotalia sont portés par cette société avec ses associés, présentés sur la page <a href="apropos.html">À propos</a>.</p>
+
+      <h2>Directeur de la publication</h2>
+      <p>Jérémy Wauquier, joignable via <span id="legal-contact">le formulaire d'estimation</span>.</p>
+
+      <h2>Hébergement</h2>
+      <p>Les pages du site sont hébergées par <strong>GitHub, Inc.</strong>, 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis (service GitHub Pages).</p>
+      <p>Les données des estimations, des comptes et des fichiers déposés sont hébergées par <strong>Supabase, Inc.</strong>, 970 Toa Payoh North #07-04, Singapour 318992, sur des serveurs situés dans l'Union européenne.</p>
+
+      <h2>Propriété intellectuelle</h2>
+      <p>L'ensemble du site, textes, illustrations, logo, moteur d'estimation et base de prix, est protégé par le droit d'auteur. Toute reproduction ou extraction, même partielle, sans autorisation écrite de l'éditeur est interdite. Les estimations produites sont destinées à l'usage personnel de la personne qui les a demandées.</p>
+
+      <h2>Nature des estimations</h2>
+      <p>Les montants affichés par le site sont des estimations indicatives, calculées à partir des informations déclarées et de prix de référence. Elles ne constituent ni un devis ni une offre contractuelle. Seul un devis écrit, établi après visite technique et signé par les deux parties, engage l'éditeur.</p>
+
+      <h2>Données personnelles</h2>
+      <p>Le traitement des données personnelles est décrit dans la <a href="confidentialite.html">politique de confidentialité</a>.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>© Cotalia · rénovation, financement et chasse immobilière pour investisseurs</span>
+    <span><a href="apropos.html">À propos</a> · <a href="mentions-legales.html">Mentions légales</a> · <a href="confidentialite.html">Confidentialité</a></span>
+    <span id="foot-contact"></span>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="config.js?v=202609171722"></script>
+  <script src="assets/js/auth.js?v=202609171722"></script>
+  <script>
+    (function () { var c = window.COTALIA_CONFIG || {}; if (c.contactEmail) { document.getElementById('foot-contact').innerHTML = '<a href="mailto:' + c.contactEmail + '">' + c.contactEmail + '</a>'; document.getElementById('legal-contact').innerHTML = '<a href="mailto:' + c.contactEmail + '">' + c.contactEmail + '</a>'; } })();
+  </script>
+</body>
+</html>

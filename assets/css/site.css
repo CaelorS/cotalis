@@ -584,3 +584,11 @@ body.admin { background: var(--bg); }
 .bareme-group h4 { font-size: 15px; margin: 0 0 8px; color: var(--ink-2); }
 .bareme .field input { width: 110px; }
 @media (max-width: 800px) { .gauges { grid-template-columns: 1fr; } }
+
+/* ---------- pages légales ---------- */
+.legal .story h2 { font-size: 22px; margin: 26px 0 8px; }
+.legal .story p { font-size: 15.5px; }
+.legal-kv { width: 100%; border-collapse: collapse; margin: 6px 0 14px; font-size: 14.5px; }
+.legal-kv td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+.legal-kv td:first-child { color: var(--ink-2); width: 46%; }
+.legal-kv td[data-fill] { color: var(--warn); font-style: italic; }
