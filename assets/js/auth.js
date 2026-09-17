@@ -49,14 +49,12 @@
   /* ---------- bouton en haut à droite ---------- */
   function renderWidget() {
     const slot = document.getElementById('auth-slot');
-    // lien Back-office dans le menu principal pour les administrateurs
-    const nav = document.querySelector('.mainnav');
-    if (nav) { const old = nav.querySelector('.nav-admin'); if (old) old.remove(); if (A.isAdmin() && !location.pathname.includes('/admin/')) { const a = document.createElement('a'); a.href = ROOT + 'admin/'; a.className = 'nav-admin'; a.textContent = 'Back-office'; nav.appendChild(a); } }
     if (!slot) return;
+    const adminLink = (A.isAdmin() && !location.pathname.includes('/admin/')) ? `<a href="${ROOT}admin/" class="btn nav-admin">Back-office</a>` : '';
     if (!sb) { slot.innerHTML = ''; return; }
     if (A.user) {
       const name = [A.profile && A.profile.prenom, A.profile && A.profile.nom].filter(Boolean).join(' ') || 'Mon compte';
-      slot.innerHTML = `<div class="auth-menu"><button type="button" class="btn" id="auth-toggle" aria-haspopup="true" aria-expanded="false">${esc(name)} <span aria-hidden="true">▾</span></button>
+      slot.innerHTML = adminLink + `<div class="auth-menu"><button type="button" class="btn" id="auth-toggle" aria-haspopup="true" aria-expanded="false">${esc(name)} <span aria-hidden="true">▾</span></button>
         <div class="auth-drop hidden" id="auth-drop"><a href="${ROOT}index.html#mine">Mes estimations</a><a href="${ROOT}estimation.html?new=1">Nouvelle estimation</a>${A.isAdmin() ? `<a href="${ROOT}admin/">Back-office</a>` : ''}<button type="button" id="auth-out">Se déconnecter</button></div></div>`;
       const t = document.getElementById('auth-toggle'), d = document.getElementById('auth-drop');
       t.addEventListener('click', () => { d.classList.toggle('hidden'); t.setAttribute('aria-expanded', String(!d.classList.contains('hidden'))); });
