@@ -594,3 +594,28 @@ body.admin { background: var(--bg); }
 .legal-kv td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line-2); vertical-align: top; }
 .legal-kv td:first-child { color: var(--ink-2); width: 46%; }
 .legal-kv td[data-fill] { color: var(--warn); font-style: italic; }
+
+/* ---------- accueil illustré ---------- */
+.hero.hero2 { max-width: 1040px; display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; text-align: left; padding: 56px 28px 40px; }
+.hero2 .hero-text { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
+.hero2 .brandline { display: flex; align-items: center; gap: 12px; }
+.hero2 .logo-inline { width: 44px; height: 44px; color: var(--accent); }
+.hero2 .wordmark { font-size: 34px; }
+.hero2 h2 { font-size: 42px; text-wrap: balance; }
+.hero2 p { font-size: 18px; }
+.heroillu { width: 100%; height: auto; overflow: visible; }
+.heroillu .illu-scan { animation: scan 7s ease-in-out infinite; }
+.heroillu .illu-card { animation: floatA 6s ease-in-out infinite; transform-origin: 325px 116px; }
+.heroillu .illu-chip { animation: floatB 8s ease-in-out infinite; transform-origin: 341px 240px; }
+.heroillu .illu-link { animation: dash 2.4s linear infinite; }
+.heroillu .illu-spark { animation: twinkle 3.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+.heroillu .illu-spark.s2 { animation-delay: 1.6s; }
+@keyframes scan { 0%, 100% { transform: translateY(40px); } 50% { transform: translateY(232px); } }
+@keyframes floatA { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-5px) rotate(-.5deg); } }
+@keyframes floatB { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(4px) rotate(.5deg); } }
+@keyframes dash { to { stroke-dashoffset: -12; } }
+@keyframes twinkle { 0%, 100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .heroillu * { animation: none !important; } .heroillu .illu-scan { transform: translateY(100px); } }
+.strip2 > div { display: flex; flex-direction: column; gap: 8px; }
+.strip2 svg { width: 44px; height: 44px; fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 2px; }
+@media (max-width: 900px) { .hero.hero2 { grid-template-columns: 1fr; gap: 24px; padding: 32px 16px 24px; } .hero2 h2 { font-size: 32px; } .hero2 .hero-text { align-items: flex-start; } .heroillu { max-width: 420px; margin: 0 auto; } }
