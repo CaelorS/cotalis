@@ -33,6 +33,7 @@
     document.querySelectorAll('.tabpane').forEach(p => p.classList.toggle('hidden', p.id !== 'tab-' + name));
     if (name === 'dossiers') loadLeads();
     if (name === 'prix') loadPricingTab();
+    if (name === 'selection') loadSelectionTab();
     if (name === 'admins') loadAdmins();
   }
 
@@ -67,10 +68,21 @@
   };
   function renderLeads() {
     const q = $('q').value.trim().toLowerCase(), fs = $('f-status').value, fa = $('f-assign').value;
+    const fk = $('f-kind').value, ff = $('f-fin').value, fst = $('f-stade').value, ft = $('f-type').value, fv = $('f-ville').value.trim().toLowerCase();
+    const fmin = $('f-min').value === '' ? null : +$('f-min').value, fmax = $('f-max').value === '' ? null : +$('f-max').value, ffrom = $('f-from').value, fto = $('f-to').value;
     let rows = leads.filter(l => l.kind !== 'test');
     if (q) rows = rows.filter(l => [l.prenom, l.nom, l.email, l.ville, l.adresse, l.ref, l.tel].join(' ').toLowerCase().includes(q));
     if (fs) rows = rows.filter(l => (l.status || 'nouveau') === fs);
     if (fa === 'none') rows = rows.filter(l => !l.assigned_to); else if (fa) rows = rows.filter(l => l.assigned_to === fa);
+    if (fk) rows = rows.filter(l => l.type_bien === fk);
+    if (ff) rows = rows.filter(l => l.finance === ff);
+    if (fst) rows = rows.filter(l => l.stade === fst);
+    if (ft) rows = rows.filter(l => (l.kind || 'estimation') === ft);
+    if (fv) rows = rows.filter(l => ((l.ville || '') + ' ' + (l.adresse || '')).toLowerCase().includes(fv));
+    if (fmin != null) rows = rows.filter(l => (+l.estimation_ttc || 0) >= fmin);
+    if (fmax != null) rows = rows.filter(l => (+l.estimation_ttc || 0) <= fmax);
+    if (ffrom) rows = rows.filter(l => (l.created_at || '').slice(0, 10) >= ffrom);
+    if (fto) rows = rows.filter(l => (l.created_at || '').slice(0, 10) <= fto);
     const key = SORTERS[sortKey] || SORTERS.date;
     rows.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'fr')) * sortDir; });
     document.querySelectorAll('#leads th[data-sort]').forEach(th => { th.classList.toggle('asc', th.dataset.sort === sortKey && sortDir === 1); th.classList.toggle('desc', th.dataset.sort === sortKey && sortDir === -1); th.setAttribute('aria-sort', th.dataset.sort === sortKey ? (sortDir === 1 ? 'ascending' : 'descending') : 'none'); });
@@ -89,7 +101,9 @@
       <td><button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
     </tr>`).join('') || '<tr><td colspan="10" class="empty">Aucun dossier.</td></tr>';
   }
-  ['q', 'f-status', 'f-assign'].forEach(id => $(id).addEventListener('input', renderLeads));
+  const FILTER_IDS = ['q', 'f-status', 'f-assign', 'f-kind', 'f-fin', 'f-stade', 'f-type', 'f-ville', 'f-min', 'f-max', 'f-from', 'f-to'];
+  FILTER_IDS.forEach(id => $(id).addEventListener('input', renderLeads));
+  $('f-reset').addEventListener('click', () => { FILTER_IDS.forEach(id => { $(id).value = ''; }); renderLeads(); });
   $('leads').querySelector('thead').addEventListener('click', e => {
     const th = e.target.closest('th[data-sort]'); if (!th) return;
     if (sortKey === th.dataset.sort) sortDir = -sortDir; else { sortKey = th.dataset.sort; sortDir = ['ttc', 'marge', 'date'].includes(sortKey) ? -1 : 1; }
@@ -183,13 +197,12 @@
       <td class="r"><input type="number" step="5" min="0" max="100" data-f="lab" value="${Math.round(it.lab * 100)}"></td>
       <td><select data-f="tva"><option value="10"${it.tva === 5.5 ? '' : ' selected'}>10 %</option><option value="5.5"${it.tva === 5.5 ? ' selected' : ''}>5,5 %</option></select></td>
       <td class="r"><input type="number" step="0.5" min="0" max="60" data-f="marge" value="${it.marge == null ? '' : +(it.marge * 100).toFixed(2)}" placeholder="défaut"></td>
-      <td class="hint">${it.custom ? `<select data-f="qty_mode" class="inline">${Object.keys(C.QTY_MODES).map(k => `<option value="${k}"${it.qtyMode === k ? ' selected' : ''}>${C.QTY_MODES[k]}</option>`).join('')}</select> <input type="number" step="0.01" data-f="qty_coef" value="${it.qtyCoef == null ? 1 : it.qtyCoef}" style="width:70px">` : esc(QTY_DESC[it.id] || 'règle du catalogue')}</td>
+      <td class="qtycell"><select data-f="qty_mode" class="inline">${Object.keys(C.QTY_MODES).map(k => `<option value="${k}"${it.qm === k ? ' selected' : ''}>${C.QTY_MODES[k]}</option>`).join('')}</select> <input type="number" step="0.01" data-f="qty_coef" value="${it.qc == null ? 1 : it.qc}" style="width:72px" aria-label="Coefficient">${d.qm ? `<small>défaut : ${esc(C.QTY_MODES[d.qm])} ${d.qc}</small>` : ''}</td>
       <td>${it.custom ? `<button type="button" class="btn small" data-del="${it.id}">Supprimer</button>` : ''}</td>
     </tr>`; }).join('')).join('');
     const lots = $('ni-lot'); lots.innerHTML = C.CATALOG.map(l => `<option value="${esc(l.lot)}">${esc(l.lot)}</option>`).join('') + '<option value="__new">Nouveau lot…</option>';
     $('ni-qmode').innerHTML = Object.keys(C.QTY_MODES).map(k => `<option value="${k}">${C.QTY_MODES[k]}</option>`).join('');
   }
-  const QTY_DESC = { dep_rev: 'surface', dep_eq: 'logements', benne: 'logements / 2', mur_np: 'logements', mur_p: '1', cloison: 'surface × 0,08', plafond: 'surface', elec: 'surface', tableau: 'logements', plomb: 'pièces d\'eau + logements', ballon: 'logements', thermo: 'logements', radia: 'pièces + logements', chaud: 'logements', vmc: 'logements', fen: 'pièces + logements', iti: 'surface × 0,9', combles: 'surface / niveaux', porte: 'logements', sdb: 'logements', wc: 'pièces d\'eau − logements', cuis: 'logements', ragr: 'surface', parq: 'surface × 0,72', strat: 'surface × 0,72', carr: 'surface × 0,2', peint: 'surface × 2,8', portes: 'pièces + logements', placard: '2 × logements', nett: 'logements' };
   $('ni-lot').addEventListener('change', () => $('ni-newlot-field').classList.toggle('hidden', $('ni-lot').value !== '__new'));
   $('ni-qmode').addEventListener('change', () => { $('ni-qcoef-label').textContent = $('ni-qmode').value === 'fixed' ? 'Quantité' : 'Coefficient'; });
   $('new-item').addEventListener('submit', async e => {
@@ -221,7 +234,8 @@
         const g = f => tr.querySelector(`[data-f="${f}"]`);
         const it = C.ITEMS[tr.dataset.item];
         const row = { id: tr.dataset.item, lot: it.lotName, label: g('label').value.trim() || it.label, sub: g('sub').value.trim(), unit: it.unit, pu: +g('pu').value, lab: Math.min(1, Math.max(0, +g('lab').value / 100)), tva: +g('tva').value, marge: g('marge').value === '' ? null : +g('marge').value / 100, active: g('active').checked, updated_by: uid, updated_at: new Date().toISOString() };
-        if (it.custom) { row.custom = true; row.qty_mode = g('qty_mode').value; row.qty_coef = +g('qty_coef').value || 1; row.presets = it.presets || []; }
+        row.qty_mode = g('qty_mode').value; row.qty_coef = g('qty_coef').value === '' ? 1 : +g('qty_coef').value;
+        if (it.custom) { row.custom = true; row.presets = it.presets || []; }
         return row;
       });
       if (rows.length) { const { error } = await sb.from('pricing_items').upsert(rows); if (error) throw error; }
@@ -243,6 +257,66 @@
       r = await sb.from('pricing_settings').delete().neq('key', ''); if (r.error) throw r.error;
       location.reload();
     } catch (e) { $('prix-msg').textContent = 'Réinitialisation impossible : ' + (e.message || e); }
+  });
+
+  /* ---------- sélection des ouvrages ---------- */
+  const ETATS = [['bon', 'Bon'], ['correct', 'Correct'], ['degrade', 'Dégradé'], ['total', 'À rénover entièrement']];
+  let rules = [];
+  const allItems = () => C.CATALOG.flatMap(l => l.items.filter(it => !it.inactive));
+  async function loadSelectionTab() {
+    if (!pricingLoaded) { await C.loadPricing(); pricingLoaded = true; }
+    rules = JSON.parse(JSON.stringify(C.RULES));
+    $('sel-msg').textContent = '';
+    $('preset-table').querySelector('tbody').innerHTML = C.CATALOG.map(l => `<tr class="lot"><td colspan="5">${esc(l.lot)}</td></tr>` + l.items.filter(it => !it.inactive).map(it => `<tr data-preset="${it.id}"><td>${esc(it.label)}</td>${ETATS.map(e => `<td><input type="checkbox" data-etat="${e[0]}"${(C.PRESET[e[0]] || []).includes(it.id) ? ' checked' : ''} aria-label="${esc(it.label)} : ${e[1]}"></td>`).join('')}</tr>`).join('')).join('');
+    renderRules();
+  }
+  const itemOptions = (sel) => allItems().map(it => `<option value="${it.id}"${(sel || []).includes(it.id) ? ' selected' : ''}>${esc(it.lotName)} · ${esc(it.label)}</option>`).join('');
+  function renderRules() {
+    $('rules').innerHTML = rules.map((r, i) => `<div class="rule" data-i="${i}">
+      <div class="rule-head"><input type="text" data-r="label" value="${esc(r.label || '')}" placeholder="Nom de la règle" class="wide"><label class="check"><input type="checkbox" data-r="enabled"${r.disabled ? '' : ' checked'}> active</label><button type="button" class="btn small" data-up="${i}" ${i === 0 ? 'disabled' : ''}>↑</button><button type="button" class="btn small" data-down="${i}" ${i === rules.length - 1 ? 'disabled' : ''}>↓</button><button type="button" class="btn small" data-rdel="${i}">Supprimer</button></div>
+      <div class="rule-when"><span class="eyebrow">Quand</span>${(r.when || []).map((c, j) => `<div class="cond" data-j="${j}"><select data-c="f">${Object.keys(C.RULE_FIELDS).map(f => `<option value="${f}"${c.f === f ? ' selected' : ''}>${C.RULE_FIELDS[f]}</option>`).join('')}</select><select data-c="op">${Object.keys(C.RULE_OPS).map(o => `<option value="${o}"${c.op === o ? ' selected' : ''}>${C.RULE_OPS[o]}</option>`).join('')}</select><input type="text" data-c="v" value="${esc(c.v == null ? '' : c.v)}" placeholder="valeur"><button type="button" class="btn small" data-cdel="${j}" aria-label="Retirer la condition">×</button></div>`).join('')}<button type="button" class="btn small" data-cadd="${i}">+ condition</button></div>
+      <div class="rule-then"><div class="field"><label>Ajouter</label><select multiple size="4" data-r="add">${itemOptions(r.add)}</select></div><div class="field"><label>Retirer</label><select multiple size="4" data-r="remove">${itemOptions(r.remove)}</select></div></div>
+    </div>`).join('') || '<p class="hint">Aucune règle : seule la liste de l\'état général s\'applique.</p>';
+  }
+  function readRules() {
+    return [...document.querySelectorAll('.rule')].map((el, i) => ({
+      id: rules[i].id || ('r_' + Date.now().toString(36) + i),
+      label: el.querySelector('[data-r="label"]').value.trim(),
+      disabled: !el.querySelector('[data-r="enabled"]').checked,
+      when: [...el.querySelectorAll('.cond')].map(c => ({ f: c.querySelector('[data-c="f"]').value, op: c.querySelector('[data-c="op"]').value, v: c.querySelector('[data-c="v"]').value.trim() })),
+      add: [...el.querySelector('[data-r="add"]').selectedOptions].map(o => o.value),
+      remove: [...el.querySelector('[data-r="remove"]').selectedOptions].map(o => o.value),
+    }));
+  }
+  $('rules').addEventListener('click', e => {
+    const t = e.target.closest('button'); if (!t) return;
+    rules = readRules();
+    if (t.dataset.rdel != null) rules.splice(+t.dataset.rdel, 1);
+    else if (t.dataset.up != null) { const i = +t.dataset.up; [rules[i - 1], rules[i]] = [rules[i], rules[i - 1]]; }
+    else if (t.dataset.down != null) { const i = +t.dataset.down; [rules[i + 1], rules[i]] = [rules[i], rules[i + 1]]; }
+    else if (t.dataset.cadd != null) rules[+t.dataset.cadd].when.push({ f: 'dpe', op: 'in', v: 'F,G' });
+    else if (t.dataset.cdel != null) { const r = t.closest('.rule'); rules[+r.dataset.i].when.splice(+t.dataset.cdel, 1); }
+    else return;
+    renderRules();
+  });
+  $('rule-add').addEventListener('click', () => { rules = readRules(); rules.push({ id: 'r_' + Date.now().toString(36), label: '', when: [{ f: 'dpe', op: 'in', v: 'F,G' }], add: [], remove: [] }); renderRules(); });
+  $('sel-save').addEventListener('click', async () => {
+    const btn = $('sel-save'); btn.disabled = true; $('sel-msg').textContent = 'Enregistrement…';
+    try {
+      const preset = {}; ETATS.forEach(e => { preset[e[0]] = [...document.querySelectorAll(`[data-preset] [data-etat="${e[0]}"]:checked`)].map(cb => cb.closest('tr').dataset.preset); });
+      const newRules = readRules().filter(r => r.when.length && (r.add.length || r.remove.length));
+      const { error } = await sb.from('pricing_settings').upsert([{ key: 'PRESET', value: preset, updated_at: new Date().toISOString() }, { key: 'RULES', value: newRules, updated_at: new Date().toISOString() }]);
+      if (error) throw error;
+      Object.keys(preset).forEach(k => { C.PRESET[k] = preset[k]; }); C.RULES.length = 0; newRules.forEach(r => C.RULES.push(r));
+      await loadSelectionTab(); $('sel-msg').textContent = 'Enregistré. Les prochaines estimations suivent ces règles.';
+    } catch (e) { $('sel-msg').textContent = 'Enregistrement impossible : ' + (e.message || e); }
+    btn.disabled = false;
+  });
+  $('sel-reset').addEventListener('click', async () => {
+    if (!confirm('Revenir aux règles de sélection par défaut ?')) return;
+    const { error } = await sb.from('pricing_settings').delete().in('key', ['PRESET', 'RULES']);
+    if (error) { $('sel-msg').textContent = 'Impossible : ' + error.message; return; }
+    location.reload();
   });
 
   /* ---------- administrateurs ---------- */

@@ -133,6 +133,7 @@
     const err = validate();
     if (err) { $('err').textContent = err; $('err').classList.remove('hidden'); return; }
     if (S.step === 'bien' && !S.worksTouched) S.works = C.preselect(S);
+    if (S.step === 'acquisition') { const added = C.lateRules(S, 'strat'); if (added.length) S.autoAdded = (S.autoAdded || []).concat(added.filter(id => !(S.autoAdded || []).includes(id))); }
     if (S.step === 'contact') {
       if (!(await ensureAccount())) return;
       ensureRef(); if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); } saveProject();
@@ -380,6 +381,7 @@
 
   function renderReport() {
     const R = C.compute(S), A = C.alerts(S, R), c = S.contact;
+    if (S.autoAdded && S.autoAdded.length) { const names = S.autoAdded.filter(id => S.works[id] && C.ITEMS[id]).map(id => C.ITEMS[id].label); if (names.length) A.push(['info', 'Ajouts liés à votre stratégie', 'Nous avons ajouté : ' + names.join(', ') + '. Retirez-les via « Modifier mes réponses » si vous ne les souhaitez pas.']); }
     const date = new Date(S.savedAt || Date.now()).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
     const typo = S.kind === 'immeuble' ? S.apts.length + ' appartements (' + S.apts.map(a => a.type.toUpperCase()).join(', ') + ')' : S.type.toUpperCase().replace('T1', 'Studio / T1');
     const etatSel = $('etat').querySelector(`option[value="${S.etat}"]`);

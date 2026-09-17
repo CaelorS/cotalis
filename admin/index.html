@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="../assets/css/site.css?v=202609171026">
+  <link rel="stylesheet" href="../assets/css/site.css?v=202609171038">
 </head>
 <body class="admin">
   <header class="top">
@@ -20,6 +20,7 @@
     <nav class="tabs" id="tabs">
       <button type="button" class="tab selected" data-tab="dossiers">Dossiers</button>
       <button type="button" class="tab" data-tab="prix">Prix</button>
+      <button type="button" class="tab" data-tab="selection">Sélection</button>
       <button type="button" class="tab" data-tab="admins">Administrateurs</button>
     </nav>
     <span class="spacer"></span>
@@ -37,8 +38,17 @@
         <input id="q" placeholder="Rechercher : nom, e-mail, ville, référence" aria-label="Rechercher">
         <select id="f-status" aria-label="Filtrer par statut"><option value="">Tous les statuts</option></select>
         <select id="f-assign" aria-label="Filtrer par responsable"><option value="">Toute l'équipe</option><option value="none">Non attribués</option></select>
-        
+        <select id="f-kind" aria-label="Type de bien"><option value="">Tous les biens</option><option value="appart">Appartements</option><option value="maison">Maisons</option><option value="immeuble">Immeubles</option></select>
+        <select id="f-fin" aria-label="Financement"><option value="">Financement : tous</option><option value="oui">Accompagnés</option><option value="non">Déjà financés</option></select>
+        <select id="f-stade" aria-label="Stade du projet"><option value="">Stade : tous</option><option value="etude">En étude</option><option value="compromis">Sous compromis</option><option value="acte">Acte signé</option></select>
+        <select id="f-type" aria-label="Type de demande"><option value="">Estimations et rappels</option><option value="estimation">Estimations</option><option value="rappel">Rappels</option></select>
         <span class="count" id="count"></span>
+      </div>
+      <div class="toolbar">
+        <input id="f-ville" placeholder="Ville" aria-label="Ville" style="flex:0 0 160px;min-width:0">
+        <label class="tlabel">Travaux de <input id="f-min" type="number" step="1000" placeholder="min" aria-label="Montant minimum"> à <input id="f-max" type="number" step="1000" placeholder="max" aria-label="Montant maximum"> €</label>
+        <label class="tlabel">Du <input id="f-from" type="date" aria-label="Date de début"> au <input id="f-to" type="date" aria-label="Date de fin"></label>
+        <button type="button" class="btn small" id="f-reset">Réinitialiser les filtres</button>
       </div>
       <div class="tablewrap"><table class="grid-table sortable" id="leads"><thead><tr><th data-sort="date">Date</th><th data-sort="contact">Contact</th><th data-sort="bien">Bien</th><th class="r" data-sort="ttc">Travaux TTC</th><th class="r" data-sort="marge">Marge est.</th><th data-sort="finance">Financement</th><th data-sort="status">Statut</th><th data-sort="assign">Responsable</th><th data-sort="next">Prochaine action</th><th></th></tr></thead><tbody></tbody></table></div>
     </section>
@@ -76,6 +86,21 @@
       </div>
     </section>
 
+    <section id="tab-selection" class="tabpane hidden">
+      <div class="panel">
+        <header><h2>Comment les ouvrages sont proposés</h2><span class="hint">Trois temps, dans cet ordre. 1 : la liste liée à l'état général déclaré. 2 : les règles complémentaires ci-dessous, appliquées de haut en bas, chacune ajoute ou retire des ouvrages quand toutes ses conditions sont vraies. 3 : le prospect corrige librement ; dès qu'il touche à la liste, l'algorithme ne la modifie plus. Les quantités proposées pour chaque ouvrage se règlent dans l'onglet Prix.</span></header>
+      </div>
+      <div class="panel">
+        <header><h2>1 · Ouvrages proposés selon l'état général</h2><span class="hint">Cochez les ouvrages proposés d'office pour chaque état. Sans état renseigné, la colonne « Correct » s'applique.</span></header>
+        <div class="tablewrap"><table class="grid-table" id="preset-table"><thead><tr><th>Ouvrage</th><th>Bon</th><th>Correct</th><th>Dégradé</th><th>À rénover entièrement</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="panel">
+        <header><h2>2 · Règles complémentaires</h2><span class="hint">Valeurs possibles : type de bien appart, maison, immeuble · état bon, correct, degrade, total · DPE A à G · stratégie nue, meuble, coloc, revente · finition eco, std, prem · zone paris, pc, gc, lyon, metro, moy, rural. Pour « est parmi », séparez les valeurs par des virgules. Une règle sur la stratégie locative s'applique après l'étape financement et ne fait qu'ajouter.</span></header>
+        <div class="body"><div id="rules" class="rules"></div><button type="button" class="btn" id="rule-add" style="margin-top:12px">Ajouter une règle</button></div>
+      </div>
+      <div class="savebar"><span id="sel-msg" class="hint"></span><button type="button" class="btn" id="sel-reset">Revenir aux règles par défaut</button><button type="button" class="btn primary" id="sel-save">Enregistrer les règles</button></div>
+    </section>
+
     <section id="tab-admins" class="tabpane hidden">
       <div class="panel">
         <header><h2>Administrateurs</h2><span class="hint">Un administrateur accède aux dossiers, aux prix et à cette liste. Le compte propriétaire ne peut pas être retiré.</span></header>
@@ -91,11 +116,11 @@
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../config.js?v=202609171026"></script>
-  <script src="../assets/js/catalog.js?v=202609171026"></script>
-  <script src="../assets/js/engine.js?v=202609171026"></script>
-  <script src="../assets/js/pricing.js?v=202609171026"></script>
-  <script src="../assets/js/auth.js?v=202609171026"></script>
-  <script src="../assets/js/admin.js?v=202609171026"></script>
+  <script src="../config.js?v=202609171038"></script>
+  <script src="../assets/js/catalog.js?v=202609171038"></script>
+  <script src="../assets/js/engine.js?v=202609171038"></script>
+  <script src="../assets/js/pricing.js?v=202609171038"></script>
+  <script src="../assets/js/auth.js?v=202609171038"></script>
+  <script src="../assets/js/admin.js?v=202609171038"></script>
 </body>
 </html>

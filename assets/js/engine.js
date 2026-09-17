@@ -110,15 +110,38 @@
     return R;
   }
 
+  function ruleValue(S, f) {
+    if (f === 'surface' || f === 'eau' || f === 'annee') return S[f] === '' || S[f] == null ? null : +S[f];
+    return S[f] == null ? '' : String(S[f]);
+  }
+  function condMatch(S, c) {
+    const v = ruleValue(S, c.f); if (v === null || v === '') return false;
+    const target = String(c.v == null ? '' : c.v).trim();
+    switch (c.op) {
+      case 'eq': return String(v).toLowerCase() === target.toLowerCase();
+      case 'ne': return String(v).toLowerCase() !== target.toLowerCase();
+      case 'in': return target.split(',').map(x => x.trim().toLowerCase()).includes(String(v).toLowerCase());
+      case 'lt': return +v < +target;
+      case 'gt': return +v > +target;
+    }
+    return false;
+  }
+  function ruleMatch(S, r) { return (r.when || []).length > 0 && r.when.every(c => condMatch(S, c)); }
   function preselect(S) {
-    const base = C.PRESET[S.etat] || C.PRESET.correct;
-    const set = new Set(base);
-    if (S.dpe === 'F' || S.dpe === 'G') { set.add('fen'); set.add('iti'); }
-    if (S.kind === 'maison' && (S.etat === 'total' || S.dpe === 'F' || S.dpe === 'G')) set.add('combles');
-    if (S.kind === 'immeuble') { set.delete('tableau'); set.add('elec'); }
+    const set = new Set(C.PRESET[S.etat] || C.PRESET.correct || []);
+    (C.RULES || []).forEach(r => { if (r.disabled || !ruleMatch(S, r)) return; (r.add || []).forEach(id => set.add(id)); (r.remove || []).forEach(id => set.delete(id)); });
     const works = {};
-    set.forEach(id => { works[id] = 1; });
+    set.forEach(id => { if (C.ITEMS[id] && !C.ITEMS[id].inactive) works[id] = 1; });
     return works;
+  }
+  // Règles qui dépendent d'informations saisies après l'étape travaux (stratégie locative) : on ajoute, on ne retire jamais.
+  function lateRules(S, field) {
+    const added = [];
+    (C.RULES || []).forEach(r => {
+      if (r.disabled || !(r.when || []).some(c => c.f === field) || !ruleMatch(S, r)) return;
+      (r.add || []).forEach(id => { if (C.ITEMS[id] && !C.ITEMS[id].inactive && !S.works[id]) { S.works[id] = 1; added.push(id); } });
+    });
+    return added;
   }
 
   function alerts(S, R) {
@@ -150,5 +173,5 @@
     return A;
   }
 
-  root.COTALIA = Object.assign(root.COTALIA, { compute, preselect, alerts, ctxOf, isAncien });
+  root.COTALIA = Object.assign(root.COTALIA, { compute, preselect, lateRules, ruleMatch, alerts, ctxOf, isAncien });
 })(window);
