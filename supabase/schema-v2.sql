@@ -28,7 +28,7 @@ create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare r text := 'client';
 begin
-  if lower(new.email) = 'wauquier.jeremy@gmail.com' then r := 'owner';
+  if lower(new.email) = 'cotalia.easel715@simplelogin.com' then r := 'owner';
   elsif exists (select 1 from public.admin_invites where lower(email) = lower(new.email)) then r := 'admin';
   end if;
   insert into public.profiles (id, email, prenom, nom, tel, role)
@@ -43,6 +43,7 @@ create trigger on_auth_user_created after insert on auth.users for each row exec
 create or replace function public.protect_profile_role()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
+  if session_user in ('postgres', 'supabase_admin') then return new; end if;   -- tableau de bord Supabase : libre
   if old.role = 'owner' and new.role <> 'owner' then raise exception 'Le compte propriétaire ne peut pas être modifié.'; end if;
   if new.role <> old.role then
     if not public.is_admin() then raise exception 'Réservé aux administrateurs.'; end if;

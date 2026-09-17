@@ -78,7 +78,7 @@ parcours sans friction, désactiver « Confirm email » ; sinon le prospect doit
 lien avant de pouvoir se connecter. Dans Authentication → URL Configuration, mettre
 `https://cotalia.fr` en Site URL et ajouter `https://cotalia.fr/*` aux Redirect URLs.
 
-- Le compte créé avec l'e-mail `wauquier.jeremy@gmail.com` devient propriétaire, non modifiable.
+- Le compte propriétaire (super-administrateur, non modifiable) est `cotalia.easel715@simplelogin.com` ; pour en changer, adapter et relancer `supabase/proprietaire.sql`.
 - Le back-office est sur `/admin/` (aucun lien depuis le site). Onglets : Dossiers (CRM),
   Prix (réglages généraux, prix par ouvrage, marge par défaut ou par ouvrage), Administrateurs.
 - Un administrateur ajoute un autre administrateur par e-mail : compte existant promu,
