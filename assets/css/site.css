@@ -566,3 +566,5 @@ body.admin { background: var(--bg); }
   .top .auth-slot .btn { max-width: 44vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; padding: 6px 10px; }
   .top .auth-drop { right: 0; left: auto; }
 }
+.mainnav a.nav-admin { color: var(--mark-ink, #8a6a1a); background: var(--mark-soft); }
+.mainnav a.nav-admin:hover { background: var(--mark); color: var(--ink); }

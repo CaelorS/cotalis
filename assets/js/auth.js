@@ -49,6 +49,9 @@
   /* ---------- bouton en haut à droite ---------- */
   function renderWidget() {
     const slot = document.getElementById('auth-slot');
+    // lien Back-office dans le menu principal pour les administrateurs
+    const nav = document.querySelector('.mainnav');
+    if (nav) { const old = nav.querySelector('.nav-admin'); if (old) old.remove(); if (A.isAdmin() && !location.pathname.includes('/admin/')) { const a = document.createElement('a'); a.href = ROOT + 'admin/'; a.className = 'nav-admin'; a.textContent = 'Back-office'; nav.appendChild(a); } }
     if (!slot) return;
     if (!sb) { slot.innerHTML = ''; return; }
     if (A.user) {
