@@ -525,3 +525,13 @@ body.admin { background: var(--bg); }
   .stepnav .err.hidden { display: none; }
   .stepnav #btn-next { grid-area: next; justify-self: end; }
 }
+
+/* ---------- illustrations des cartes ---------- */
+.choice svg.illus { width: 64px; height: 64px; margin-bottom: 6px; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; color: var(--ink); }
+.choice svg.illus .ink { stroke: var(--ink); }
+.choice svg.illus .acc { stroke: var(--accent); }
+.choice svg.illus .fa { fill: var(--accent-soft); }
+.choice svg.illus .fm { fill: var(--mark); }
+.choice svg.illus .fms { fill: var(--mark-soft); }
+.choice.selected svg.illus .fa { fill: #fff; }
+@media (max-width: 980px) { .choice svg.illus { width: 48px; height: 48px; } }

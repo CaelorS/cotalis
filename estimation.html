@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/site.css?v=202609171631">
+  <link rel="stylesheet" href="assets/css/site.css?v=202609171634">
 </head>
 <body>
   <header class="top">
@@ -36,15 +36,15 @@
         <div class="body">
           <div class="choices">
             <button type="button" class="choice" data-choice="kind" data-value="appart">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="3" width="16" height="18"/><path d="M8 7h3M13 7h3M8 11h3M13 11h3M8 15h3M13 15h3M10 21v-3h4v3"/></svg>
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><rect x="14" y="8" width="36" height="50" rx="2" class="ink fa"/><path d="M22 18h6M36 18h6M22 28h6M22 38h6M36 38h6M28 58V48h8v10" class="ink"/><rect x="36" y="26" width="6" height="6" class="fm" stroke="none"/><path d="M36 28h6M39 26v6" class="ink"/></svg>
               <span class="display">Appartement</span><small>Un lot dans un immeuble, en copropriété ou non.</small>
             </button>
             <button type="button" class="choice" data-choice="kind" data-value="maison">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 32 32 12l22 20" class="ink"/><path d="M16 28v28h32V28" class="ink fa"/><path d="M27 56V42h10v14" class="ink"/><rect x="38" y="14" width="5" height="9" class="ink fms"/><path d="M41 12c0-3 3-3 3-6s-3-3-3-6" class="acc"/><path d="M6 56h52" class="ink"/><path d="M52 50c-4 0-6-3-6-6 0-4 6-8 6-8s6 4 6 8c0 3-2 6-6 6z" class="acc"/></svg>
               <span class="display">Maison</span><small>Individuelle ou mitoyenne, avec ou sans combles.</small>
             </button>
             <button type="button" class="choice" data-choice="kind" data-value="immeuble">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="10" height="18"/><rect x="13" y="8" width="8" height="13"/><path d="M6 7h2M6 11h2M6 15h2M16 12h2M16 16h2"/></svg>
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="6" width="26" height="52" rx="2" class="ink fa"/><rect x="36" y="20" width="18" height="38" rx="2" class="ink fa"/><path d="M16 14h5M25 14h5M16 24h5M25 24h5M16 34h5M25 34h5M16 44h5M25 44h5M42 28h6M42 38h6M42 48h6" class="ink"/><rect x="25" y="32" width="5" height="4" class="fm" stroke="none"/><rect x="16" y="42" width="5" height="4" class="fm" stroke="none"/><rect x="42" y="46" width="6" height="4" class="fm" stroke="none"/><path d="M6 58h52" class="ink"/></svg>
               <span class="display">Immeuble</span><small>Plusieurs appartements, rénovés en une seule opération.</small>
             </button>
           </div>
@@ -121,27 +121,45 @@
           <h2>Ça reste entre nous : quel niveau de finition visez-vous ?</h2>
           <p class="hint">Il n'y a pas de mauvaise réponse. Le standard locatif est le choix de la plupart des investisseurs, et il se loue bien.</p>
           <div class="choices">
-            <button type="button" class="choice" data-choice="gamme" data-value="eco"><span class="display">Économique</span><small>Matériaux d'entrée de gamme, solides et sobres. Pour maximiser la rentabilité immédiate.</small></button>
-            <button type="button" class="choice" data-choice="gamme" data-value="std"><span class="display">Standard locatif</span><small>Le bon équilibre : durable, agréable à vivre, facile à louer et à entretenir.</small></button>
-            <button type="button" class="choice" data-choice="gamme" data-value="prem"><span class="display">Premium</span><small>Matériaux et équipements haut de gamme, pour une revente ou une cible exigeante.</small></button>
+            <button type="button" class="choice" data-choice="gamme" data-value="eco">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="12" width="30" height="14" rx="3" class="ink fa"/><path d="M40 19h8v10H30v8" class="ink"/><rect x="27" y="37" width="6" height="16" rx="1" class="ink"/><circle cx="50" cy="48" r="8" class="ink fms"/><path d="M50 44v8M47 46h6M47 50h6" class="ink"/></svg>
+              <span class="display">Économique</span><small>Matériaux d'entrée de gamme, solides et sobres. Pour maximiser la rentabilité immédiate.</small></button>
+            <button type="button" class="choice" data-choice="gamme" data-value="std">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><circle cx="20" cy="22" r="9" class="ink fa"/><circle cx="20" cy="22" r="3" class="ink"/><path d="M27 28l20 20M40 41l-4 4M45 46l-4 4" class="ink"/><rect x="34" y="8" width="22" height="14" rx="2" class="ink fms"/><path d="M38 15h14" class="ink"/><path d="M12 54l4 4 8-8" class="acc"/></svg>
+              <span class="display">Standard locatif</span><small>Le bon équilibre : durable, agréable à vivre, facile à louer et à entretenir.</small></button>
+            <button type="button" class="choice" data-choice="gamme" data-value="prem">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 8v10" class="ink"/><path d="M14 30c0-7 8-12 18-12s18 5 18 12H14z" class="ink fa"/><path d="M18 30v8M26 30v12M32 30v14M38 30v12M46 30v8" class="ink"/><circle cx="18" cy="40" r="2" class="fm" stroke="none"/><circle cx="26" cy="44" r="2" class="fm" stroke="none"/><circle cx="32" cy="46" r="2.5" class="fm" stroke="none"/><circle cx="38" cy="44" r="2" class="fm" stroke="none"/><circle cx="46" cy="40" r="2" class="fm" stroke="none"/><path d="M50 12l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" class="fm" stroke="none"/><path d="M12 52l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" class="fm" stroke="none"/></svg>
+              <span class="display">Premium</span><small>Matériaux et équipements haut de gamme, pour une revente ou une cible exigeante.</small></button>
           </div>
         </div>
         <div class="sub">
           <h2>Où en est votre projet ?</h2>
           <p class="hint">Chaque étape est un pas vers votre liberté.</p>
           <div class="choices">
-            <button type="button" class="choice" data-choice="stade" data-value="etude"><span class="display">En étude</span><small>Je compare des biens, je veux savoir ce que ça coûte avant de m'engager.</small></button>
-            <button type="button" class="choice" data-choice="stade" data-value="compromis"><span class="display">Sous compromis</span><small>Le bien est réservé, le chiffrage sert au financement et au calendrier.</small></button>
-            <button type="button" class="choice" data-choice="stade" data-value="acte"><span class="display">Acte authentique signé</span><small>Les clés sont à moi, les travaux peuvent être planifiés.</small></button>
+            <button type="button" class="choice" data-choice="stade" data-value="etude">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><circle cx="26" cy="26" r="16" class="ink fa"/><path d="M38 38l14 14" class="ink"/><path d="M17 30V22l9-7 9 7v8H17z" class="ink"/><path d="M24 30v-5h4v5" class="ink"/><path d="M10 10l2-2M14 6l1-1" class="acc"/><circle cx="52" cy="14" r="2" class="fm" stroke="none"/></svg>
+              <span class="display">En étude</span><small>Je compare des biens, je veux savoir ce que ça coûte avant de m'engager.</small></button>
+            <button type="button" class="choice" data-choice="stade" data-value="compromis">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 10h26l10 10v34H14z" class="ink fa"/><path d="M40 10v10h10" class="ink"/><path d="M20 30h20M20 36h14" class="ink"/><path d="M20 46c3-4 6 2 9-2s5 3 8-1 3 1 5 0" class="acc"/><path d="M46 48l6-14 4 2-6 14-5 1z" class="ink fms"/></svg>
+              <span class="display">Sous compromis</span><small>Le bien est réservé, le chiffrage sert au financement et au calendrier.</small></button>
+            <button type="button" class="choice" data-choice="stade" data-value="acte">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><circle cx="22" cy="24" r="11" class="ink fa"/><circle cx="22" cy="24" r="4" class="ink"/><path d="M30 32l20 20M44 46l-4 4M50 40l-4 4" class="ink"/><path d="M40 10l1 3 3 1-3 1-1 3-1-3-3-1 3-1z" class="fm" stroke="none"/><path d="M54 22l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" class="fm" stroke="none"/><path d="M10 50l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" class="fm" stroke="none"/></svg>
+              <span class="display">Acte authentique signé</span><small>Les clés sont à moi, les travaux peuvent être planifiés.</small></button>
           </div>
         </div>
         <div class="sub">
           <h2>Quand souhaitez-vous démarrer les travaux ?</h2>
           <p class="hint">Un démarrage pour hier n'est malheureusement plus possible.</p>
           <div class="choices">
-            <button type="button" class="choice" data-choice="demarrage" data-value="1"><span class="display">Dès que possible</span><small>Moins d'un mois. On cale la visite technique tout de suite.</small></button>
-            <button type="button" class="choice" data-choice="demarrage" data-value="3"><span class="display">Sous 3 mois</span><small>Le temps de boucler le financement et de préparer le chantier.</small></button>
-            <button type="button" class="choice" data-choice="demarrage" data-value="6"><span class="display">Sous 6 mois</span><small>Un projet anticipé, chiffré sereinement.</small></button>
+            <button type="button" class="choice" data-choice="demarrage" data-value="1">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><path d="M30 20l10-10 12 12-10 10z" class="ink fa"/><path d="M34 26 14 46c-2 2-2 4 0 6s4 2 6 0l20-20" class="ink"/><path d="M8 18h10M6 26h8M10 34h6" class="acc"/><path d="M50 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" class="fm" stroke="none"/></svg>
+              <span class="display">Dès que possible</span><small>Moins d'un mois. On cale la visite technique tout de suite.</small></button>
+            <button type="button" class="choice" data-choice="demarrage" data-value="3">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="14" width="44" height="40" rx="3" class="ink fa"/><path d="M10 24h44M20 10v8M44 10v8" class="ink"/><text x="32" y="46" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="22" fill="#2457A6" stroke="none">3</text><rect x="14" y="28" width="6" height="5" class="fm" stroke="none"/><rect x="22" y="28" width="6" height="5" class="fms" stroke="none"/><rect x="30" y="28" width="6" height="5" class="fms" stroke="none"/></svg>
+              <span class="display">Sous 3 mois</span><small>Le temps de boucler le financement et de préparer le chantier.</small></button>
+            <button type="button" class="choice" data-choice="demarrage" data-value="6">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="14" width="40" height="40" rx="3" class="ink fa"/><path d="M10 24h40M20 10v8M40 10v8" class="ink"/><text x="30" y="46" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="22" fill="#2457A6" stroke="none">6</text><path d="M54 54V40" class="ink"/><path d="M54 46c-4 0-7-3-7-7 4 0 7 3 7 7zM54 42c4 0 7-3 7-7-4 0-7 3-7 7z" class="acc fms"/></svg>
+              <span class="display">Sous 6 mois</span><small>Un projet anticipé, chiffré sereinement.</small></button>
           </div>
         </div>
       </section>
@@ -160,8 +178,12 @@
         <header><h2>On vous accompagne aussi pour le financement ?</h2><span class="hint">Nos courtiers montent le dossier avec vous et le présentent aux banques. Sinon, on passe directement à votre estimation.</span></header>
         <div class="body">
           <div class="choices">
-            <button type="button" class="choice" data-choice="finance" data-value="oui"><span class="display">Oui, accompagnez-moi</span><small>On calcule la rentabilité complète et on prépare la synthèse pour la banque.</small></button>
-            <button type="button" class="choice" data-choice="finance" data-value="non"><span class="display">J'ai déjà mon financement</span><small>Direction l'estimation, sans question supplémentaire.</small></button>
+            <button type="button" class="choice" data-choice="finance" data-value="oui">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 24 32 12l24 12" class="ink"/><path d="M12 24h40" class="ink"/><path d="M16 26v18M26 26v18M38 26v18M48 26v18" class="ink"/><path d="M10 48h44" class="ink"/><rect x="10" y="44" width="44" height="4" class="fa" stroke="none"/><path d="M40 6h16a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-8l-5 4v-4h-3a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3z" class="acc fms"/><text x="48" y="17" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="11" fill="#17212B" stroke="none">€</text><path d="M14 56c4-6 12-6 16 0" class="acc"/></svg>
+              <span class="display">Oui, accompagnez-moi</span><small>On calcule la rentabilité complète et on prépare la synthèse pour la banque.</small></button>
+            <button type="button" class="choice" data-choice="finance" data-value="non">
+              <svg class="illus" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="18" width="40" height="30" rx="4" class="ink fa"/><path d="M10 26h40" class="ink"/><rect x="36" y="30" width="12" height="10" rx="2" class="ink fms"/><circle cx="42" cy="35" r="1.5" class="fm" stroke="none"/><path d="M14 14h30" class="acc"/><circle cx="52" cy="48" r="8" class="ink" style="fill:#fff"/><path d="M48 48l3 3 5-6" class="acc"/></svg>
+              <span class="display">J'ai déjà mon financement</span><small>Direction l'estimation, sans question supplémentaire.</small></button>
           </div>
         </div>
       </section>
@@ -258,11 +280,11 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="config.js?v=202609171631"></script>
-  <script src="assets/js/catalog.js?v=202609171631"></script>
-  <script src="assets/js/engine.js?v=202609171631"></script>
-  <script src="assets/js/pricing.js?v=202609171631"></script>
-  <script src="assets/js/auth.js?v=202609171631"></script>
-  <script src="assets/js/tunnel.js?v=202609171631"></script>
+  <script src="config.js?v=202609171634"></script>
+  <script src="assets/js/catalog.js?v=202609171634"></script>
+  <script src="assets/js/engine.js?v=202609171634"></script>
+  <script src="assets/js/pricing.js?v=202609171634"></script>
+  <script src="assets/js/auth.js?v=202609171634"></script>
+  <script src="assets/js/tunnel.js?v=202609171634"></script>
 </body>
 </html>
