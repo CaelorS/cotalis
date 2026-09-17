@@ -434,6 +434,43 @@
     SC = JSON.parse(JSON.stringify(SC_DEFAULT)); renderBareme(); renderScoring(); $('sc-msg').textContent = 'Barème par défaut rétabli.';
   });
 
+  /* ---------- identités anonymes : un nom d'animal par IP, une couleur, la ville ---------- */
+  const ANIMAUX = ['Blaireau', 'Castor', 'Loutre', 'Hérisson', 'Renard', 'Marmotte', 'Pingouin', 'Koala', 'Paresseux', 'Chouette', 'Tatou', 'Lama', 'Wombat', 'Pélican', 'Écureuil', 'Flamant', 'Hibou', 'Mouflon', 'Otarie', 'Panda', 'Raton', 'Sanglier', 'Tortue', 'Zèbre', 'Alpaga', 'Bison', 'Caméléon', 'Dauphin', 'Élan', 'Fennec', 'Girafe', 'Manchot'];
+  const ADJ = ['farceur', 'distrait', 'pressé', 'gourmand', 'rêveur', 'malin', 'prudent', 'bavard', 'zen', 'curieux', 'grognon', 'élégant', 'matinal', 'nocturne', 'timide', 'audacieux', 'joufflu', 'agile', 'philosophe', 'bricoleur', 'romantique', 'sceptique', 'enthousiaste', 'flâneur'];
+  const hashStr = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; };
+  function ipIdentity(ip) {
+    const h = hashStr(String(ip));
+    return { name: ANIMAUX[h % ANIMAUX.length] + ' ' + ADJ[Math.floor(h / 97) % ADJ.length], hue: h % 360 };
+  }
+  const chipStyle = hue => `background:hsl(${hue} 70% 92%);color:hsl(${hue} 55% 30%);border:1px solid hsl(${hue} 50% 78%)`;
+  let geoCache = {}; try { geoCache = JSON.parse(localStorage.getItem('cotalia-geo') || '{}'); } catch (e) {}
+  let geoQueue = [], geoBusy = false;
+  function geoCity(ip) {
+    if (!ip) return '';
+    if (geoCache[ip] !== undefined) return geoCache[ip];
+    if (!geoQueue.includes(ip)) { geoQueue.push(ip); geoPump(); }
+    return null;
+  }
+  async function geoPump() {
+    if (geoBusy || !geoQueue.length) return;
+    geoBusy = true;
+    const ip = geoQueue.shift();
+    try {
+      const r = await fetch('https://ipapi.co/' + encodeURIComponent(ip) + '/json/');
+      const j = r.ok ? await r.json() : {};
+      geoCache[ip] = j && j.city ? j.city + (j.country_code && j.country_code !== 'FR' ? ' (' + j.country_code + ')' : '') : '';
+    } catch (e) { geoCache[ip] = ''; }
+    try { localStorage.setItem('cotalia-geo', JSON.stringify(geoCache)); } catch (e) {}
+    document.querySelectorAll(`[data-geo="${CSS.escape(ip)}"]`).forEach(el => { el.textContent = geoCache[ip] ? ' · ' + geoCache[ip] : ''; });
+    geoBusy = false;
+    setTimeout(geoPump, 700);   // ipapi.co tolère une trentaine d'appels par minute
+  }
+  function ipChip(ip) {
+    if (!ip) return '';
+    const id = ipIdentity(ip), city = geoCity(ip);
+    return `<span class="ipchip" style="${chipStyle(id.hue)}" title="IP ${esc(ip)}">${esc(id.name)}<span data-geo="${esc(ip)}">${city ? ' · ' + esc(city) : ''}</span></span>`;
+  }
+
   /* ---------- analyse du tunnel ---------- */
   const T_STEPS = [['kind', 'Bien'], ['bien', 'Descriptif'], ['finition', 'Finition'], ['travaux', 'Travaux'], ['financeQ', 'Financement'], ['acquisition', 'Acquisition'], ['situation', 'Situation'], ['contact', 'Coordonnées'], ['resultat', 'Estimation']];
   const T_LABEL = Object.fromEntries(T_STEPS);
@@ -495,7 +532,7 @@
       <td class="r num">${dur(sessionDuration(x))}</td>
       <td class="r num">${x.ttc ? eur(x.ttc) : '—'}</td>
       <td>${esc(FIN[x.finance] || '—')}</td>
-      <td>${l ? `<button type="button" class="btn small" data-open="${l.id}">${esc(l.prenom)} ${esc(l.nom)}</button>` : (x.user_id ? '<small>compte connecté</small>' : '')}${x.ip ? `<small class="num">IP ${esc(x.ip)}</small>` : (l || x.user_id ? '' : '—')}</td>
+      <td>${l ? `<button type="button" class="btn small" data-open="${l.id}">${esc(l.prenom)} ${esc(l.nom)}</button>` : (x.user_id ? '<small>compte connecté</small>' : '')}${x.ip ? ipChip(x.ip) : (l || x.user_id ? '' : '—')}</td>
     </tr>`; }).join('') || '<tr><td colspan="9" class="empty">Aucun parcours sur la période.</td></tr>';
   }
   ['t-device', 't-state'].forEach(id => $(id).addEventListener('input', renderTunnel));
