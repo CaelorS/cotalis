@@ -431,7 +431,7 @@
     const devisRows = C.CATALOG.map(l => {
       const rows = R.lines.filter(x => x.on && x.it.lotName === l.lot && x.amount > 0);
       if (!rows.length) return '';
-      return `<tr class="lot"><td colspan="4">${esc(l.lot)}</td><td class="r num">${eur(R.lots[l.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}${x.it.sub ? `<small>${esc(x.it.sub)}</small>` : ''}</td><td class="r num">${fmt(x.q)}</td><td>${x.it.unit}</td><td class="r num">${eur(x.unitPrice)}</td><td class="r num">${eur(x.amount)}</td></tr>`).join('');
+      return `<tr class="lot"><td colspan="3">${esc(l.lot)}</td><td class="r num">${eur(R.lots[l.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}${x.it.sub ? `<small>${esc(x.it.sub)}</small>` : ''}</td><td class="r num">${fmt(x.q)}&nbsp;${x.it.unit}</td><td class="r num">${eur(x.unitPrice)}${x.it.unit === 'forfait' ? '' : '/' + x.it.unit}</td><td class="r num">${eur(x.amount)}</td></tr>`).join('');
     }).join('');
     const fin = (S.finance === 'oui' || S.finance === 'renta') && R.total > 0;
     const bank = fin ? [
@@ -481,7 +481,7 @@
           </table>
         </div>
       </div>
-      <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Qté</th><th>Unité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody></table></div><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Montants HT hors provision pour aléas. Le total ci-dessus inclut frais généraux, pilotage, marge, aléas et TVA.</p></div>
+      <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Quantité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody></table></div><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Montants HT hors provision pour aléas. Le total ci-dessus inclut frais généraux, pilotage, marge, aléas et TVA.</p></div>
       ${fin ? `<div class="box"><h3>${S.finance === 'oui' ? 'Synthèse pour la banque' : 'Synthèse du projet'}</h3><table class="kv">${bank.map(b => `<tr${b[2] ? ' class="total"' : ''}><td>${esc(b[0])}</td><td class="num">${esc(b[1])}</td></tr>`).join('')}</table><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">${S.finance === 'oui' ? 'Estimation indicative à distinguer du devis contractuel. Un courtier Cotalia reprend contact pour instruire le dossier.' : 'Estimation indicative à distinguer du devis contractuel. Vous pouvez la joindre à votre dossier de financement.'}</p></div>` : ''}
       <div class="two">
         <div class="box"><h3>Points de vigilance</h3><div class="alerts">${A.length ? A.map(a => `<div class="alert ${a[0]}"><i></i><div><b><span class="k">${{ crit: 'Bloquant', warn: 'À vérifier', info: 'Information', good: 'Avantage' }[a[0]]}</span>${esc(a[1])}</b>${esc(a[2])}</div></div>`).join('') : '<p style="color:var(--ink-3);margin:0">Aucune incohérence détectée.</p>'}</div></div>
