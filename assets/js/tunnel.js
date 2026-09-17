@@ -150,7 +150,16 @@
       ensureRef(); if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); } saveProject();
     }
     const list = stepList();
-    S.step = list[Math.min(list.length - 1, list.indexOf(S.step) + 1)];
+    let next = list[Math.min(list.length - 1, list.indexOf(S.step) + 1)];
+    // Compte connecté avec un profil complet : l'étape coordonnées est sautée, on passe droit à l'estimation.
+    if (next === 'contact' && C.auth && C.auth.user && C.auth.profile && C.auth.profile.prenom && C.auth.profile.nom && String(C.auth.profile.tel || '').replace(/\D/g, '').length >= 9) {
+      const p = C.auth.profile;
+      S.contact = { prenom: p.prenom, nom: p.nom, tel: p.tel, email: C.auth.user.email || p.email || '', consent: true, password: '' };
+      S.stepsAt = S.stepsAt || {}; S.stepsAt.contact = S.stepsAt.contact || new Date().toISOString();
+      ensureRef(); if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); } saveProject();
+      next = 'resultat';
+    }
+    S.step = next;
     save(); showStep();
   }
   function goPrev() {
