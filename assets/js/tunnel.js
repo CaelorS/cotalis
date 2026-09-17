@@ -130,7 +130,7 @@
         return null;
       case 'contact':
         if (!c.prenom.trim() || !c.nom.trim()) return 'Un prénom et un nom : « Cher inconnu » fait mauvais effet en tête d\'une estimation.';
-        if (!(C.auth && C.auth.user) && C.auth && C.auth.sb && !$('pw-field').classList.contains('hidden') && String(c.password || '').length < 8) return 'Huit caractères minimum pour le mot de passe. « 1234 » est populaire, mais pas chez nous.';
+        if (!(C.auth && C.auth.user) && C.auth && C.auth.sb && !$('pw-field').classList.contains('hidden') && String(c.password || '').length < 8) return 'Mot de passe trop court : huit caractères minimum. « 1234 » est populaire, mais pas chez nous.';
         if (String(c.tel).replace(/\D/g, '').length < 9) return 'Ce numéro de téléphone a l\'air incomplet. On préfère vous appeler, vous, plutôt qu\'un inconnu.';
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c.email)) return 'Cette adresse e-mail ne ressemble pas à une adresse e-mail. Le PDF n\'arrivera jamais.';
         if (!c.consent) return 'La petite case, juste en dessous : sans elle, on n\'a pas le droit de vous rappeler, même pour une bonne nouvelle.';
@@ -297,7 +297,7 @@
     for (const file of files) {
       if (S.files.length >= MAX_FILES) { flashErr('Douze fichiers, c\'est déjà un beau dossier. On s\'arrête là.'); break; }
       if (!OK_TYPES.includes(file.type) && !/\.(jpe?g|png|webp|heic|pdf)$/i.test(file.name)) { flashErr(file.name + ' : ce format nous résiste. JPG, PNG, WEBP, HEIC ou PDF, et tout ira bien.'); continue; }
-      if (file.size > MAX_SIZE) { flashErr(file.name + ' pèse plus de 15 Mo. Même nos chiffreurs ne le soulèveraient pas.'); continue; }
+      if (file.size > MAX_SIZE) { flashErr('Fichier trop lourd : ' + file.name + ' dépasse 15 Mo. Même nos chiffreurs ne le soulèveraient pas.'); continue; }
       const entry = { name: file.name, size: file.size, type: file.type, pending: hasDb(), local: !hasDb() };
       S.files.push(entry); renderFiles(); save(); renderPanel();
       if (hasDb()) {
