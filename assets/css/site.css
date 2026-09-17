@@ -515,3 +515,13 @@ body.admin { background: var(--bg); }
   .item .u { grid-column: 3; }
   .item .tot { grid-column: 4; font-size: 15px; }
 }
+
+@media (max-width: 980px) {
+  /* message d'erreur sur sa propre ligne, boutons en dessous */
+  .stepnav { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "err err" "prev next"; gap: 8px 10px; align-items: center; }
+  .stepnav .right:first-child { grid-area: prev; }
+  .stepnav .right:last-child { display: contents; }
+  .stepnav .err { grid-area: err; margin: 0; text-align: left; }
+  .stepnav .err.hidden { display: none; }
+  .stepnav #btn-next { grid-area: next; justify-self: end; }
+}

@@ -130,7 +130,7 @@
         return null;
       case 'contact':
         if (!c.prenom.trim() || !c.nom.trim()) return 'Prénom et nom, pour personnaliser votre estimation.';
-        if (!(C.auth && C.auth.user) && C.auth && C.auth.sb && String(c.password || '').length < 8) return 'Choisissez un mot de passe d\'au moins 8 caractères : il vous permettra de retrouver vos estimations.';
+        if (!(C.auth && C.auth.user) && C.auth && C.auth.sb && !$('pw-field').classList.contains('hidden') && String(c.password || '').length < 8) return 'Choisissez un mot de passe d\'au moins 8 caractères : il vous permettra de retrouver vos estimations.';
         if (String(c.tel).replace(/\D/g, '').length < 9) return 'Un numéro de téléphone valide, pour vous rappeler si besoin.';
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c.email)) return 'Une adresse e-mail valide, pour vous envoyer le PDF.';
         if (!c.consent) return 'Cochez la case pour que nous puissions vous recontacter.';
@@ -573,7 +573,8 @@
   }
   function applyProfile(A) {
     const p = A.profile, u = A.user;
-    if (!u) { $('pw-field').classList.remove('hidden'); $('contact-logged').classList.add('hidden'); return; }
+    if (!u) { $('pw-field').classList.remove('hidden'); $('contact-logged').classList.add('hidden'); $('contact-login').classList.remove('hidden'); return; }
+    $('contact-login').classList.add('hidden');
     if (!S.contact.email) S.contact.email = u.email || '';
     if (p) { if (!S.contact.prenom) S.contact.prenom = p.prenom || ''; if (!S.contact.nom) S.contact.nom = p.nom || ''; if (!S.contact.tel) S.contact.tel = p.tel || ''; }
     $('pw-field').classList.add('hidden'); $('contact-logged').classList.remove('hidden');
