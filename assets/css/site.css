@@ -821,3 +821,9 @@ tr.lot td .loticon { width: 18px; height: 18px; vertical-align: -4px; }
 .cf-pos { color: var(--good); } .cf-neg { color: var(--bad, #B3261E); }
 .grid-table td.c { text-align: center; }
 .muted { color: var(--ink-3); }
+
+/* chevron d'invitation au survol des boutons d'étape du tunnel (même geste que le bouton d'accueil) */
+.btn.chev { position: relative; transition: padding-right .25s ease; }
+.btn.chev::before { content: "›"; position: absolute; right: 14px; top: 50%; transform: translate(-8px, -52%); font-size: 24px; line-height: 1; opacity: 0; transition: opacity .25s ease, transform .25s ease; }
+.btn.chev:hover:not([disabled]) { padding-right: 40px; }
+.btn.chev:hover:not([disabled])::before { opacity: 1; transform: translate(0, -52%); }
