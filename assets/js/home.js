@@ -53,7 +53,7 @@
     const knobX = v => X0 + (v - LO) / (HI - LO) * W;
     const finish = () => { renta.textContent = fmtPct(9.1); trav.textContent = fmtEur(FINAL); knob.setAttribute('cx', knobX(FINAL)); cf.textContent = '+185 €/mois'; if (line && lineLen) line.setAttribute('stroke-dashoffset', 0); if (dot) dot.setAttribute('r', 4); checks.forEach(c => { if (c) c.textContent = '✓' + c.textContent.slice(1); }); };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
-    const D = 10000, t0 = performance.now();
+    const D = 7000, t0 = performance.now();
     const ease = t => 1 - Math.pow(1 - t, 2);
     function frame(now) {
       const t = Math.min(1, (now - t0) / D), e = ease(t);

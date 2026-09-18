@@ -604,7 +604,7 @@ body.admin { background: var(--bg); }
 .hero2 h2 { font-size: 42px; text-wrap: balance; }
 .hero2 p { font-size: 18px; }
 .heroillu { width: 100%; height: auto; overflow: visible; }
-.heroillu .illu-scan { animation: scan 10s ease-in-out 1 forwards; }
+.heroillu .illu-scan { animation: scan 7s ease-in-out 1 forwards; }
 .heroillu .illu-card { animation: floatA 6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .heroillu .illu-line { animation: draw 6s ease-in-out infinite; }
 .heroillu .illu-dot { animation: twinkle 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
