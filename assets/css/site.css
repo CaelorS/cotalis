@@ -400,7 +400,8 @@ body.admin { background: var(--bg); }
 .mainnav a { text-decoration: none; color: var(--ink-2); font-weight: 600; padding: 8px 12px; border-radius: 4px; font-size: 14.5px; }
 .mainnav a:hover { background: var(--surface-2); color: var(--ink); }
 .mainnav a[aria-current="page"] { color: var(--accent); }
-.mainnav a.cta { color: var(--accent); }
+.mainnav a.cta { color: var(--accent); background: var(--accent-soft); margin-right: 4px; }
+.mainnav a.cta:hover { background: var(--accent); color: #fff; }
 @media (max-width: 700px) { .mainnav a.cta { display: none; } .mainnav { margin-left: 4px; } .mainnav a { padding: 8px 8px; } }
 
 /* ---------- page À propos ---------- */
@@ -568,7 +569,7 @@ body.admin { background: var(--bg); }
   .top .auth-drop { right: 0; left: auto; }
 }
 .auth-slot { display: flex; align-items: center; gap: 8px; }
-.auth-slot .nav-admin { color: var(--accent); background: var(--accent-soft); border-color: transparent; text-decoration: none; }
+.auth-slot .nav-admin { color: var(--accent); background: transparent; border: 1px solid var(--accent); text-decoration: none; }
 .auth-slot .nav-admin:hover { background: var(--accent); color: #fff; }
 @media (max-width: 980px) { .auth-slot .nav-admin { padding: 6px 8px; font-size: 13px; } .top .auth-slot .btn { max-width: 36vw; } }
 

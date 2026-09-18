@@ -60,7 +60,7 @@
       document.addEventListener('click', e => { if (menu.classList.contains('open') && !menu.contains(e.target) && !btn.contains(e.target)) { menu.classList.remove('open'); btn.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); document.body.classList.remove('menu-open'); } });
     }
     const here = location.pathname;
-    const links = [['/team/', 'À propos'], ['/estimation/?new=1', 'Obtenir mon estimation']];
+    const links = [['/estimation/?new=1', 'Obtenir mon estimation'], ['/team/', 'À propos']];
     let html = '';
     const tabs = document.querySelectorAll('#tabs .tab');
     if (tabs.length && A.isAdmin()) { html += '<div class="who">Back-office</div>' + [...tabs].map(t => `<button type="button" data-mtab="${t.dataset.tab}"${t.classList.contains('selected') ? ' aria-current="page"' : ''}>${t.textContent}</button>`).join('') + '<div class="sep"></div>'; }
