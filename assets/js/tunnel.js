@@ -180,18 +180,20 @@
       next = 'resultat';
     }
     S.step = next;
-    save(); showStep();
+    save(); pushStep(); showStep();
   }
   function goPrev() {
     const list = stepList();
     S.step = list[Math.max(0, list.indexOf(S.step) - 1)];
-    save(); showStep();
+    save(); pushStep(); showStep();
   }
   function goTo(step) {
     if (LABEL[step] > (S.maxIdx || 0)) return;
     if (step === 'resultat' && S.maxIdx < 6) return;
-    S.step = step; save(); showStep();
+    S.step = step; save(); pushStep(); showStep();
   }
+  function pushStep() { try { history.pushState({ step: S.step }, '', location.pathname + location.search); } catch (e) {} }
+  window.addEventListener('popstate', e => { const st = e.state && e.state.step; if (!st || viewer) return; if (!stepList().includes(st)) return; if (LABEL[st] > (S.maxIdx || 0)) return; S.step = st; save(); showStep(); });
 
   /* ---------- formulaire ---------- */
   function fillForm() {
@@ -294,7 +296,7 @@
 
   /* ---------- adresse (Base Adresse Nationale, gratuite, sans clé) ---------- */
   let acTimer = null, acAbort = null;
-  function hideSuggest() { $('suggest').classList.add('hidden'); $('suggest').innerHTML = ''; }
+  function hideSuggest() { $('suggest').classList.add('hidden'); $('suggest').innerHTML = ''; acIndex = -1; }
   async function fetchAddr(q) {
     if (q.trim().length < 4) { hideSuggest(); return; }
     try {
@@ -305,9 +307,24 @@
       const f = (j.features || []).filter(x => x.properties && x.properties.label);
       if (!f.length) { hideSuggest(); return; }
       $('suggest').innerHTML = f.map(x => `<li role="option" data-label="${esc(x.properties.label)}" data-cp="${esc(x.properties.postcode || '')}" data-city="${esc(x.properties.city || '')}">${esc(x.properties.label)}</li>`).join('');
-      $('suggest').classList.remove('hidden');
+      $('suggest').classList.remove('hidden'); acIndex = -1;
     } catch (e) { if (e.name !== 'AbortError') hideSuggest(); }
   }
+  let acIndex = -1;
+  function acHighlight(i) {
+    const lis = [...$('suggest').querySelectorAll('li')]; if (!lis.length) return;
+    acIndex = (i + lis.length) % lis.length;
+    lis.forEach((li, k) => li.classList.toggle('active', k === acIndex));
+    lis[acIndex].scrollIntoView({ block: 'nearest' });
+  }
+  $('adresse').addEventListener('keydown', e => {
+    const open = !$('suggest').classList.contains('hidden'), lis = $('suggest').querySelectorAll('li');
+    if (!open || !lis.length) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); acHighlight(acIndex + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); acHighlight(acIndex - 1); }
+    else if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); pickAddr(lis[acIndex >= 0 ? acIndex : 0]); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hideSuggest(); }
+  });
   function pickAddr(li) {
     S.adresse = li.dataset.label; S.cp = li.dataset.cp; S.ville = li.dataset.city;
     if (S.zoneAuto) { S.zone = C.zoneFromAddress(S.cp, S.ville); $('zone').value = S.zone; }
@@ -745,7 +762,7 @@
   const params = new URLSearchParams(location.search);
   if (params.has('new')) { S = newState(); save(); history.replaceState(null, '', location.pathname); }
   fillForm();
-  if (params.get('p')) { openProject(params.get('p')); } else { showStep(); }
+  if (params.get('p')) { openProject(params.get('p')); } else { showStep(); try { history.replaceState({ step: S.step }, '', location.pathname + location.search); } catch (e) {} }
   if (C.loadPricing) C.loadPricing().then(ok => { if (!ok) return; lotsBuilt = false; if (!S.worksTouched && S.kind) S.works = C.preselect(S); renderPanel(); if (S.step === 'travaux') renderLots(); if (S.step === 'resultat' && !viewer) renderReport(); });
   if (C.auth) C.auth.onChange(A => { if (!viewer) applyProfile(A); });
 })();
