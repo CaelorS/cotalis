@@ -755,3 +755,16 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
   .rule-head { gap: 6px; }
   .rule-head input.wide { min-width: 0; width: 100%; }
 }
+/* règles complémentaires sur mobile */
+@media (max-width: 980px) {
+  .rule { min-width: 0; overflow: hidden; }
+  .rule-head { display: grid; grid-template-columns: auto 1fr auto auto auto; gap: 6px; align-items: center; }
+  .rule-head input.wide { grid-column: 1 / -1; width: 100%; }
+  .cond { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px; gap: 6px; }
+  .cond select:first-child { grid-column: 1 / 3; }
+  .cond button { grid-column: 3; grid-row: 1 / 3; align-self: stretch; height: auto; }
+  .rule-then { grid-template-columns: 1fr; }
+  .rule-then .field { min-width: 0; }
+  .rule-then select[multiple] { width: 100%; max-width: 100%; box-sizing: border-box; }
+  .rule-then select[multiple] option { white-space: normal; padding: 6px 4px; }
+}
