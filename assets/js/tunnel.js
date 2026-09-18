@@ -138,6 +138,7 @@
       case 'bien':
         if (!S.adresse.trim()) return 'Sans adresse, on ne sait pas si vos artisans viennent de Lyon ou de Lozère. Même approximative, elle fixe la zone de prix.';
         if (!(+S.surface > 0)) return 'Sans surface, il va être difficile de vous faire un devis ! Même à 5 m² près, ça nous aide.';
+        if (!S.etat) return 'L\'état général, c\'est lui qui décide des travaux à proposer. Bon, correct, dégradé ou à rénover : à vous de juger, on affine ensuite.';
         if (S.kind === 'immeuble' && !(+S.nbapts >= 2)) return 'Un immeuble avec un seul appartement, on appelle ça une maison. Indiquez au moins deux logements.';
         if (S.files.some(f => f.pending)) return 'Un fichier est encore en route vers nos serveurs. Deux secondes, il arrive.';
         return null;
