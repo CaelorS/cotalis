@@ -60,7 +60,24 @@
   }
   const margeOf = l => (l.payload && l.payload.interne && l.payload.interne.marge) || 0;
   const filesOf = l => (l.payload && l.payload.files) || [];
-  const photoBadge = l => filesOf(l).length ? `<span class="photos" title="${filesOf(l).length} fichier(s) déposé(s)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg><i>✓</i><small>${filesOf(l).length}</small></span>` : '';
+  const photoBadge = l => filesOf(l).length ? `<button type="button" class="photos" data-photos="${l.id}" title="Voir les ${filesOf(l).length} fichier(s) déposé(s)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg><i>✓</i><small>${filesOf(l).length}</small></button>` : '';
+  const pct1 = v => (v * 100).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
+  const cfHtml = v => v == null ? '' : `<span class="${v >= 0 ? 'cf-pos' : 'cf-neg'}">${v >= 0 ? '+' : '−'}${eur(Math.abs(v))}/mois</span>`;
+  /* chiffres du projet complet : stockés à l'envoi depuis septembre 2026, recalculés pour les dossiers plus anciens */
+  function finOf(l) {
+    if (!(l.finance === 'oui' || l.finance === 'renta') || !l.prix) return null;
+    const i = (l.payload && l.payload.interne) || {};
+    if (i.total) return { total: i.total, brut: i.brut, cf: l.strat === 'revente' ? null : i.cf };
+    const p = l.payload || {}, acq = p.acquisition || {};
+    const prix = +l.prix, ttc = +l.estimation_ttc || 0, meubles = ((C.AMEUBLEMENT || {})[l.strat] || 0) * (+l.surface || 0);
+    const total = prix + prix * (C.NOTAIRE || 0.075) + ttc + meubles;
+    const apport = Math.min(total, +acq.apport || 0), emprunt = total - apport;
+    const r = (+acq.taux || 0) / 100 / 12, n = (+acq.duree || 20) * 12;
+    const mens = r ? emprunt * r / (1 - Math.pow(1 + r, -n)) : emprunt / n;
+    const loyer = +l.loyer || 0;
+    return { total: Math.round(total), brut: total ? loyer * 12 / total : 0, cf: l.strat === 'revente' ? null : Math.round(loyer - mens - (+acq.charges || 0) / 12) };
+  }
+  const finCell = l => { const f = finOf(l); if (!f) return ''; return `<span class="fin-sub">projet ${eur(f.total)}</span><span class="fin-sub">renta ${pct1(f.brut)}${f.cf != null ? ' · ' + cfHtml(f.cf) : ''}</span>`; };
   let sortKey = 'date', sortDir = -1;   // -1 décroissant, 1 croissant
   const STATUS_RANK = Object.fromEntries(STATUS.map((s, i) => [s[0], i]));
   const adminName = id => { const a = admins.find(x => x.id === id); return a ? (a.prenom || a.email) : ''; };
@@ -75,6 +92,7 @@
     assign: l => adminName(l.assigned_to).toLowerCase(),
     next: l => l.next_action || (sortDir === 1 ? '9999' : ''),
     score: l => scoreLead(l).total,
+    photos: l => filesOf(l).length,
   };
   function renderLeads() {
     const q = $('q').value.trim().toLowerCase(), fs = $('f-status').value, fa = $('f-assign').value;
@@ -105,12 +123,13 @@
       <td class="r num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</td>
       <td class="r num">${margeOf(l) ? eur(margeOf(l)) : '—'}</td>
       <td>${scoreBadge(scoreLead(l))}</td>
-      <td>${esc(FIN[l.finance] || '—')}${l.prix ? '<small>' + eur(l.prix) + ' d\'achat</small>' : ''}</td>
+      <td>${esc(FIN[l.finance] || '—')}${l.prix ? '<small>' + eur(l.prix) + ' d\'achat</small>' : ''}${finCell(l)}</td>
       <td><select data-f="status" class="inline">${STATUS.map(s => `<option value="${s[0]}"${(l.status || 'nouveau') === s[0] ? ' selected' : ''}>${s[1]}</option>`).join('')}</select></td>
       <td><select data-f="assigned_to" class="inline"><option value="">—</option>${admins.map(a => `<option value="${a.id}"${l.assigned_to === a.id ? ' selected' : ''}>${esc(a.prenom || a.email)}</option>`).join('')}</select></td>
       <td><input type="date" data-f="next_action" class="inline" value="${l.next_action || ''}"></td>
-      <td class="nowrap">${photoBadge(l)}<button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
-    </tr>`).join('') || '<tr><td colspan="11" class="empty">Aucun dossier.</td></tr>';
+      <td class="c">${photoBadge(l) || '<span class="muted">—</span>'}</td>
+      <td class="nowrap"><button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
+    </tr>`).join('') || '<tr><td colspan="12" class="empty">Aucun dossier.</td></tr>';
     $('leads-cards').innerHTML = rows.map(l => `<div class="mcard" data-open="${l.id}" role="button">
       <div class="mrow"><b>${esc(l.prenom)} ${esc(l.nom)}</b><span class="mrow" style="gap:6px">${photoBadge(l)}${scoreBadge(scoreLead(l))}</span></div>
       <div class="msub">${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}${l.ville ? ' · ' + esc(l.ville) : ''}</div>
@@ -118,7 +137,7 @@
       <div class="msub">${dt(l.created_at)}${l.assigned_to ? ' · ' + esc(adminName(l.assigned_to)) : ''}${l.next_action ? ' · prochaine action ' + esc(l.next_action) : ''}</div>
     </div>`).join('') || '<p class="empty">Aucun dossier.</p>';
   }
-  $('leads-cards').addEventListener('click', e => { const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });
+  $('leads-cards').addEventListener('click', e => { const ph = e.target.closest('[data-photos]'); if (ph) { e.stopPropagation(); openPhotos(+ph.dataset.photos); return; } const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });
   const FILTER_IDS = ['q', 'f-status', 'f-assign', 'f-kind', 'f-fin', 'f-stade', 'f-type', 'f-ville', 'f-min', 'f-max', 'f-from', 'f-to'];
   FILTER_IDS.forEach(id => $(id).addEventListener('input', renderLeads));
   $('f-reset').addEventListener('click', () => { FILTER_IDS.forEach(id => { $(id).value = ''; }); renderLeads(); });
@@ -135,7 +154,29 @@
     const l = leads.find(x => x.id === id); if (l) l[f] = v;
     if (f === 'next_action') renderLeads();
   });
-  $('leads').addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) openLead(+b.dataset.open); });
+  $('leads').addEventListener('click', e => { const ph = e.target.closest('[data-photos]'); if (ph) { openPhotos(+ph.dataset.photos); return; } const b = e.target.closest('[data-open]'); if (b) openLead(+b.dataset.open); });
+
+  /* ---------- visionneuse : toutes les photos du dossier, à faire défiler ---------- */
+  const IMG_EXT = /\.(jpe?g|png|gif|webp|avif|bmp|svg)$/i;
+  async function signedUrl(f) { try { const { data } = await sb.storage.from('plans').createSignedUrl(f, 60 * 60 * 24 * 365); return data && data.signedUrl; } catch (e) { return null; } }
+  async function openPhotos(id) {
+    const l = leads.find(x => x.id === id); if (!l) return;
+    const files = filesOf(l);
+    $('lb-title').textContent = (l.prenom || '') + ' ' + (l.nom || '') + ' · ' + files.length + ' fichier' + (files.length > 1 ? 's' : '');
+    $('lb-body').innerHTML = '<p class="empty">Chargement…</p>';
+    $('lightbox').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+    const urls = await Promise.all(files.map(signedUrl));
+    $('lb-body').innerHTML = files.map((f, k) => { const name = esc(f.split('/').pop()), u = urls[k];
+      if (!u) return `<div class="lb-file">${name}<br><small>lien indisponible</small></div>`;
+      if (IMG_EXT.test(f)) return `<figure><img src="${u}" alt="${name}" loading="lazy"><figcaption>${k + 1} / ${files.length} · ${name} · <a href="${u}" target="_blank" rel="noopener">ouvrir en grand</a></figcaption></figure>`;
+      return `<div class="lb-file"><a href="${u}" target="_blank" rel="noopener">${name}</a><br><small>document, s'ouvre dans un nouvel onglet</small></div>`;
+    }).join('') || '<p class="empty">Aucun fichier.</p>';
+    $('lb-body').scrollTop = 0;
+  }
+  function closePhotos() { $('lightbox').classList.add('hidden'); $('lb-body').innerHTML = ''; document.body.style.overflow = ''; }
+  $('lb-close').addEventListener('click', closePhotos);
+  $('lightbox').addEventListener('click', e => { if (e.target === $('lightbox') || e.target === $('lb-body')) closePhotos(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('lightbox').classList.contains('hidden')) closePhotos(); });
 
   async function openLead(id) {
     const l = leads.find(x => x.id === id); if (!l) return;
@@ -166,13 +207,13 @@
         </table></div>
         <div class="box"><h3>Financement</h3><table class="kv">
           <tr><td>Accompagnement</td><td>${esc(FIN[l.finance] || '—')}</td></tr><tr><td>Prix d'achat</td><td class="num">${l.prix ? eur(l.prix) : '—'}</td></tr><tr><td>Stratégie / loyer</td><td>${esc(l.strat || '')} · ${l.loyer ? eur(l.loyer) + ' / mois' : '—'}</td></tr>
-          <tr><td>Apport / taux / durée</td><td class="num">${p.acquisition ? eur(p.acquisition.apport) + ' · ' + (p.acquisition.taux || '?') + ' % · ' + (p.acquisition.duree || '?') + ' ans' : '—'}</td></tr>
+          ${(() => { const f = finOf(l); return f ? `<tr class="total"><td>Coût total du projet</td><td class="num">${eur(f.total)}</td></tr><tr><td>Rentabilité brute</td><td class="num">${pct1(f.brut)}</td></tr><tr><td>Cash-flow mensuel</td><td class="num">${f.cf != null ? cfHtml(f.cf) : '—'}</td></tr>` : ''; })()}<tr><td>Apport / taux / durée</td><td class="num">${p.acquisition ? eur(p.acquisition.apport) + ' · ' + (p.acquisition.taux || '?') + ' % · ' + (p.acquisition.duree || '?') + ' ans' : '—'}</td></tr>
           <tr><td>Situation</td><td>${esc(s.statut || '—')} · revenus ${s.revenus ? eur(s.revenus) : '?'} · crédits ${s.credits ? eur(s.credits) : '0 €'} · apport dispo ${s.apportDispo ? eur(s.apportDispo) : '?'} · ${esc(s.proprietaire || '')}</td></tr>
         </table></div>
       </div>
       <div class="two">
         <div class="box"><h3>Travaux retenus</h3><ul class="plain">${works.map(w => `<li>${esc(w)}</li>`).join('') || '<li>—</li>'}</ul></div>
-        <div class="box"><h3>Plans et photos</h3><ul class="plain">${fileLinks.join('') || '<li>aucun fichier</li>'}</ul><p class="hint" style="margin:8px 0 0">Fichiers conservés avec le dossier, sans limite de durée. Liens valables un an.</p></div>
+        <div class="box"><h3>Plans et photos ${files.length ? `<button type="button" class="btn small" data-photos="${l.id}" style="margin-left:8px">Voir les photos</button>` : ''}</h3><ul class="plain">${fileLinks.join('') || '<li>aucun fichier</li>'}</ul><p class="hint" style="margin:8px 0 0">Fichiers conservés avec le dossier, sans limite de durée. Liens valables un an.</p></div>
       </div>
       ${(() => { const sc = scoreLead(l); return `<div class="box"><h3>Score ${scoreBadge(sc)}</h3><div class="gauges">${['valeur', 'maturite', 'engagement'].map(k => `<div class="gauge"><div class="eyebrow">${{ valeur: 'Valeur du dossier', maturite: 'Maturité', engagement: 'Engagement' }[k]} · ${sc[k]} / 100</div><div class="track"><i style="width:${sc[k]}%"></i></div><ul class="plain">${sc.why[k].map(w => `<li>${esc(w)}</li>`).join('') || '<li>aucun signal</li>'}</ul></div>`).join('')}</div>${sc.rule ? `<p class="hint" style="margin:8px 0 0">Règle appliquée : ${esc(sc.rule)}</p>` : ''}</div>`; })()}
       <div class="box"><h3>Suivi</h3>
@@ -185,6 +226,7 @@
         <div class="savebar"><span class="hint" id="d-msg">Dernière modification : ${l.updated_at ? new Date(l.updated_at).toLocaleString('fr-FR') : '—'}</span><button type="button" class="btn primary" id="d-save">Enregistrer</button></div>
       </div>`;
     $('drawer').classList.remove('hidden');
+    $('d-body').querySelectorAll('[data-photos]').forEach(b => b.addEventListener('click', () => openPhotos(+b.dataset.photos)));
     $('d-save').addEventListener('click', async () => {
       const upd = { status: $('d-status').value, assigned_to: $('d-assign').value || null, next_action: $('d-next').value || null, notes: $('d-notes').value };
       const { error } = await sb.from('leads').update(upd).eq('id', id);
@@ -578,7 +620,7 @@
     });
     $('t-funnel').querySelector('tbody').innerHTML = lossRows.map(r => `<tr class="${r.i === worst ? 'late' : ''}"><td><b>${r.label}</b>${['acquisition', 'situation'].includes(r.k) ? '<small>étape optionnelle, selon le choix de financement</small>' : ''}</td><td class="r num">${r.n}</td><td class="r num">${started ? Math.round(r.n / started * 100) + ' %' : '—'}</td><td class="r num">${r.i && r.prev ? '−' + Math.round(r.loss * 100) + ' %' : '—'}</td><td class="r num">${exits[r.i] || 0}</td><td class="r num">${dur(times[r.i])}</td><td class="r num">${reach[r.i].filter(x => x.device === 'mobile').length}</td><td class="r num">${reach[r.i].filter(x => x.device === 'ordinateur').length}</td></tr>`).join('');
     // parcours
-    const key = { date: x => x.started_at || '', device: x => x.device || '', bien: x => (KIND[x.kind] || '') + (x.surface || ''), step: x => x.max_step || 0, done: x => x.completed_at ? 1 : 0, duration: x => sessionDuration(x) || 0, ttc: x => +x.ttc || 0, finance: x => x.finance || '' }[tSortKey];
+    const key = { date: x => x.started_at || '', device: x => x.device || '', bien: x => (KIND[x.kind] || '') + (x.surface || ''), step: x => x.max_step || 0, done: x => x.completed_at ? 1 : 0, duration: x => sessionDuration(x) || 0, ttc: x => +x.ttc || 0, total: x => +((x.data || {}).total) || 0, renta: x => +((x.data || {}).brut) || 0, finance: x => x.finance || '' }[tSortKey];
     rows.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'fr')) * tSortDir; });
     document.querySelectorAll('#t-sessions th[data-sort]').forEach(th => { th.classList.toggle('asc', th.dataset.sort === tSortKey && tSortDir === 1); th.classList.toggle('desc', th.dataset.sort === tSortKey && tSortDir === -1); });
     const leadByRef = Object.fromEntries(leads.map(l => [l.project_id, l]));
@@ -590,13 +632,16 @@
       <td>${x.completed_at ? '<span class="pill" style="background:var(--good-soft);color:var(--good)">complet</span>' : '<span class="pill">incomplet</span>'}</td>
       <td class="r num">${dur(sessionDuration(x))}</td>
       <td class="r num">${x.ttc ? eur(x.ttc) : '—'}</td>
+      <td class="r num">${x.data && x.data.total ? eur(x.data.total) : '—'}</td>
       <td>${esc(FIN[x.finance] || '—')}</td>
+      <td class="r num">${x.data && x.data.total ? pct1(x.data.brut || 0) + (x.data.cf != null ? '<small>' + cfHtml(x.data.cf) + '</small>' : '') : '—'}</td>
       <td>${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip, l.id) : x.user_id ? accountChip(x) : x.ip ? ipChip(x.ip) : '—'}</td>
-    </tr>`; }).join('') || '<tr><td colspan="9" class="empty">Aucun parcours sur la période.</td></tr>';
+    </tr>`; }).join('') || '<tr><td colspan="11" class="empty">Aucun parcours sur la période.</td></tr>';
     $('t-cards').innerHTML = rows.map(x => { const l = leadByRef[x.id]; return `<div class="mcard"${l ? ` data-open="${l.id}" role="button"` : ''}>
       <div class="mrow">${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip) : x.user_id ? accountChip(x) : x.ip ? ipChip(x.ip) : '<span class="msub">anonyme</span>'}${x.completed_at ? '<span class="pill" style="background:var(--good-soft);color:var(--good)">complet</span>' : '<span class="pill">incomplet</span>'}</div>
       <div class="msub">${new Date(x.started_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · ${esc(x.device || '')} · ${esc(KIND[x.kind] || '')}${x.surface ? ' ' + x.surface + ' m²' : ''}</div>
       <div class="mrow"><span>${esc(T_LABEL[x.last_step] || x.last_step || '—')} · ${dur(sessionDuration(x))}</span><span class="num">${x.ttc ? eur(x.ttc) : ''}</span></div>
+      ${x.data && x.data.total ? `<div class="msub">projet ${eur(x.data.total)} · renta ${pct1(x.data.brut || 0)}${x.data.cf != null ? ' · ' + cfHtml(x.data.cf) : ''}</div>` : ''}
     </div>`; }).join('') || '<p class="empty">Aucun parcours sur la période.</p>';
   }
   $('t-cards').addEventListener('click', e => { const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });

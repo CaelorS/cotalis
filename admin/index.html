@@ -8,9 +8,10 @@
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/css/site.css?v=202609181032">
+  <link rel="stylesheet" href="/assets/css/site.css?v=202609181046">
 </head>
 <body class="admin">
+  <div class="stick">
   <header class="top">
     <a class="brand" href="/">
       <svg class="logo" viewBox="0 0 100 100" width="32" height="32" aria-hidden="true"><rect x="4" y="8" width="92" height="13" fill="#7FA8E8" opacity="0.28"/><rect x="79" y="21" width="13" height="72" fill="#7FA8E8" opacity="0.28"/><rect x="56" y="8" width="36" height="4" fill="var(--mark)"/><rect x="88" y="58" width="4" height="35" fill="var(--mark)"/><path d="M65,32.7 A30,30 0 1 0 65,71.3" fill="none" stroke="currentColor" stroke-width="18"/></svg>
@@ -27,6 +28,7 @@
     <span class="spacer"></span>
     <div id="auth-slot" class="auth-slot"></div>
   </header>
+  </div>
 
   <main class="admin-main">
     <section id="gate" class="panel gate">
@@ -51,7 +53,7 @@
         <label class="tlabel">Du <input id="f-from" type="date" aria-label="Date de début"> au <input id="f-to" type="date" aria-label="Date de fin"></label>
         <button type="button" class="btn small" id="f-reset">Réinitialiser les filtres</button>
       </div>
-      <div class="tablewrap desk"><table class="grid-table sortable" id="leads"><thead><tr><th data-sort="date">Date</th><th data-sort="contact">Contact</th><th data-sort="bien">Bien</th><th class="r" data-sort="ttc">Travaux TTC</th><th class="r" data-sort="marge">Marge est.</th><th data-sort="score">Score</th><th data-sort="finance">Financement</th><th data-sort="status">Statut</th><th data-sort="assign">Responsable</th><th data-sort="next">Prochaine action</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="tablewrap desk"><table class="grid-table sortable" id="leads"><thead><tr><th data-sort="date">Date</th><th data-sort="contact">Contact</th><th data-sort="bien">Bien</th><th class="r" data-sort="ttc">Travaux TTC</th><th class="r" data-sort="marge">Marge est.</th><th data-sort="score">Score</th><th data-sort="finance">Financement</th><th data-sort="status">Statut</th><th data-sort="assign">Responsable</th><th data-sort="next">Prochaine action</th><th data-sort="photos">Photos</th><th></th></tr></thead><tbody></tbody></table></div>
       <div class="mcards" id="leads-cards"></div>
     </section>
 
@@ -133,7 +135,7 @@
       </div>
       <div class="panel">
         <header><h2>Parcours</h2><span class="hint">Un parcours par estimation commencée, complète ou non. Le nom apparaît quand les coordonnées ont été validées ; sinon un pseudonyme d'animal, propre à chaque adresse IP, avec la ville d'où elle est vue (l'IP exacte au survol, effacée après 90 jours).</span></header>
-        <div class="tablewrap desk"><table class="grid-table sortable" id="t-sessions"><thead><tr><th data-sort="date">Début</th><th data-sort="device">Appareil</th><th data-sort="bien">Bien</th><th data-sort="step">Dernière étape</th><th data-sort="done">État</th><th class="r" data-sort="duration">Durée</th><th class="r" data-sort="ttc">Estimation</th><th data-sort="finance">Financement</th><th>Contact</th></tr></thead><tbody></tbody></table></div>
+        <div class="tablewrap desk"><table class="grid-table sortable" id="t-sessions"><thead><tr><th data-sort="date">Début</th><th data-sort="device">Appareil</th><th data-sort="bien">Bien</th><th data-sort="step">Dernière étape</th><th data-sort="done">État</th><th class="r" data-sort="duration">Durée</th><th class="r" data-sort="ttc">Travaux</th><th class="r" data-sort="total">Coût total</th><th data-sort="finance">Financement</th><th class="r" data-sort="renta">Renta · cash-flow</th><th>Contact</th></tr></thead><tbody></tbody></table></div>
         <div class="mcards" id="t-cards"></div>
       </div>
     </section>
@@ -150,14 +152,15 @@
     </section>
   </main>
 
+  <div class="lightbox hidden" id="lightbox"><div class="lb-head"><span id="lb-title"></span><button type="button" class="btn small" id="lb-close">Fermer</button></div><div class="lb-body" id="lb-body"></div></div>
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/config.js?v=202609181032"></script>
-  <script src="/assets/js/catalog.js?v=202609181032"></script>
-  <script src="/assets/js/engine.js?v=202609181032"></script>
-  <script src="/assets/js/pricing.js?v=202609181032"></script>
-  <script src="/assets/js/auth.js?v=202609181032"></script>
-  <script src="/assets/js/admin.js?v=202609181032"></script>
+  <script src="/config.js?v=202609181046"></script>
+  <script src="/assets/js/catalog.js?v=202609181046"></script>
+  <script src="/assets/js/engine.js?v=202609181046"></script>
+  <script src="/assets/js/pricing.js?v=202609181046"></script>
+  <script src="/assets/js/auth.js?v=202609181046"></script>
+  <script src="/assets/js/admin.js?v=202609181046"></script>
 </body>
 </html>

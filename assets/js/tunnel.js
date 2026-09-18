@@ -733,7 +733,8 @@
       const patch = { started_at: S.startedAt, completed_at: S.completedAt || null, last_step: S.step, max_step: Math.max.apply(null, Object.keys(S.stepsAt).map(k => STEP_RANK[k] || 0)), steps: S.stepsAt,
         kind: S.kind, surface: +S.surface || null, finance: S.finance, ttc: R ? Math.round(R.ttc) : null, ref: S.ref || null,
         device: window.matchMedia('(max-width: 980px)').matches ? 'mobile' : 'ordinateur', ua: navigator.userAgent, referrer: document.referrer || null,
-        data: { etat: S.etat, gamme: S.gamme, stade: S.stade, demarrage: S.demarrage, zone: S.zone, works: Object.keys(S.works).filter(k => S.works[k]).length, files: S.files.length, worksTouched: S.worksTouched, shared: !!S.sharedFlag, reopened: !!S.reopenedFlag } };
+        data: { etat: S.etat, gamme: S.gamme, stade: S.stade, demarrage: S.demarrage, zone: S.zone, works: Object.keys(S.works).filter(k => S.works[k]).length, files: S.files.length, worksTouched: S.worksTouched, shared: !!S.sharedFlag, reopened: !!S.reopenedFlag,
+          total: R && R.total > 0 ? Math.round(R.total) : null, brut: R && R.total > 0 ? R.brut : null, cf: R && R.total > 0 && S.strat !== 'revente' ? Math.round(R.cf) : null } };
       fetch(BASE + '/rest/v1/rpc/track_session', { method: 'POST', headers: hdr(), body: JSON.stringify({ p_id: S.pid, p_patch: patch }), keepalive: true }).catch(() => {});
     }, 400);
   }
@@ -751,7 +752,8 @@
         works: S.works, qty: S.qty, files: S.files.filter(f => f.path).map(f => f.path),
         bien: { type: S.type, apts: S.apts, eau: S.eau, etage: S.etage, niveaux: S.niveaux, annee: S.annee, dpe: S.dpe, etat: S.etat, zone: S.zone, ascenseur: S.ascenseur, copro: S.copro, occupe: S.occupe, acces: S.acces, visite: S.visite },
         acquisition: { apport: S.apport, taux: S.taux, duree: S.duree, charges: S.charges },
-        interne: { direct: Math.round(R.direct), fg: Math.round(R.fg), marge: Math.round(R.marge), alea: R.alea, aleaAmt: Math.round(R.aleaAmt), ht: Math.round(R.ht), tva: Math.round(R.tva), ttc: Math.round(R.ttc), weeks: R.weeks, cReg: R.cReg, cGamme: R.cGamme, cCx: R.cCx },
+        interne: { direct: Math.round(R.direct), fg: Math.round(R.fg), marge: Math.round(R.marge), alea: R.alea, aleaAmt: Math.round(R.aleaAmt), ht: Math.round(R.ht), tva: Math.round(R.tva), ttc: Math.round(R.ttc), weeks: R.weeks, cReg: R.cReg, cGamme: R.cGamme, cCx: R.cCx,
+          total: R.total > 0 ? Math.round(R.total) : null, notaire: R.total > 0 ? Math.round(R.notaire) : null, meubles: R.total > 0 ? Math.round(R.meubles) : null, mens: R.total > 0 ? Math.round(R.mens) : null, brut: R.total > 0 ? R.brut : null, net: R.total > 0 ? R.net : null, cf: R.total > 0 ? Math.round(R.cf) : null },
       },
       user_agent: navigator.userAgent, page: location.href, user_id: (C.auth && C.auth.user) ? C.auth.user.id : null,
     };
@@ -765,6 +767,10 @@
       if (r.ok) { S.leadSent = true; save(); } else console.warn('Cotalia : envoi refusé', r.status);
     } catch (e) { console.warn('Cotalia : envoi impossible', e); }
   }
+
+  /* ---------- hauteur de l'en-tête fixe, pour caler le panneau d'estimation ---------- */
+  function stickH() { const st = document.querySelector('.stick'); if (st) document.documentElement.style.setProperty('--stick-h', st.offsetHeight + 'px'); }
+  window.addEventListener('resize', stickH); window.addEventListener('load', stickH); stickH();
 
   /* ---------- démarrage ---------- */
   const form = $('tunnel');

@@ -152,7 +152,7 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 .tva55 { display: inline-block; font-size: 10.5px; padding: 0 5px; border-radius: 2px; background: var(--good-soft); color: var(--good); font-weight: 600; margin-left: 6px; vertical-align: 1px; }
 
 /* ---------- encadré estimation ---------- */
-.result { position: sticky; top: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow); overflow: hidden; }
+.result { position: sticky; top: calc(var(--stick-h, 0px) + 16px); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow); overflow: hidden; }
 .result .head { padding: 16px 20px 14px; border-bottom: 1px solid var(--line-2); }
 .result .head .eyebrow { margin-bottom: 4px; }
 .result .empty { padding: 22px 20px; color: var(--ink-2); font-size: 14.5px; text-wrap: pretty; }
@@ -489,7 +489,7 @@ body.admin { background: var(--bg); }
 @media (max-width: 980px) {
   /* iOS zoome sur les champs de moins de 16 px et laisse la page élargie : on l'évite */
   input, select, textarea, .seg button, .choice { font-size: 16px; }
-  html, body { overflow-x: hidden; max-width: 100%; }
+  html { overflow-x: hidden; } body { max-width: 100%; }
   .wb, .tunnel, .result, .report { max-width: 100%; }
 }
 
@@ -771,7 +771,8 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
 }
 
 /* indicateur de photos déposées */
-.photos { display: inline-flex; align-items: center; gap: 2px; color: var(--ink-2); margin-right: 8px; vertical-align: middle; position: relative; }
+.photos { display: inline-flex; align-items: center; gap: 2px; color: var(--accent); vertical-align: middle; position: relative; border: 0; background: none; padding: 4px 6px; border-radius: 4px; cursor: pointer; font: inherit; }
+.photos:hover { background: var(--accent-soft); }
 .photos i { font-style: normal; color: var(--good); font-weight: 700; font-size: 12px; }
 .photos small { color: var(--ink-3); font-size: 11px; }
 td.nowrap { white-space: nowrap; }
@@ -798,3 +799,25 @@ tr.lot td .loticon { width: 18px; height: 18px; vertical-align: -4px; }
 .okmsg { color: var(--good); font-size: 13.5px; margin: 0; padding: 9px 12px; border: 1px solid var(--good); background: rgba(47, 133, 90, .08); border-radius: 6px; opacity: 1; transition: opacity .4s ease, transform .4s ease; }
 .okmsg.leaving { opacity: 0; transform: translateY(-4px); }
 @media (max-width: 980px) { .stepnav .okmsg { grid-area: err; margin: 0; } .stepnav .okmsg.hidden { display: none; } }
+
+/* en-tête et fil d'Ariane fixes : ils restent visibles quand on défile */
+.stick { position: sticky; top: 0; z-index: 35; }
+.stick .top { position: relative; }
+/* visionneuse des photos d'un dossier : les images s'enchaînent verticalement */
+.lightbox { position: fixed; inset: 0; z-index: 55; background: rgba(23,33,43,.96); display: flex; flex-direction: column; }
+.lightbox.hidden { display: none; }
+.lb-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; color: #fff; font-weight: 600; flex-shrink: 0; }
+.lb-head .btn { color: var(--ink); }
+.lb-body { flex: 1; overflow: auto; padding: 0 20px 40px; display: flex; flex-direction: column; align-items: center; gap: 22px; -webkit-overflow-scrolling: touch; }
+.lb-body figure { margin: 0; max-width: min(1100px, 100%); text-align: center; }
+.lb-body img { max-width: 100%; max-height: 88vh; border-radius: 6px; background: #fff; display: block; margin: 0 auto; }
+.lb-body figcaption { color: rgba(255,255,255,.7); font-size: 13px; margin-top: 8px; }
+.lb-body figcaption a { color: #fff; }
+.lb-body .lb-file { background: var(--surface); border-radius: 6px; padding: 14px 18px; width: min(560px, 100%); }
+.lb-body .lb-file a { font-weight: 600; }
+.lb-body .empty { color: rgba(255,255,255,.7); }
+@media (max-width: 980px) { .lb-head { padding: 10px 12px; } .lb-body { padding: 0 8px 40px; } }
+.fin-sub { display: block; font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+.cf-pos { color: var(--good); } .cf-neg { color: var(--bad, #B3261E); }
+.grid-table td.c { text-align: center; }
+.muted { color: var(--ink-3); }
