@@ -533,8 +533,13 @@
     const { data, error } = await sb.from('funnel_sessions').select('*').gte('started_at', since).order('started_at', { ascending: false }).limit(5000);
     if (error) { $('t-count').textContent = 'Lecture impossible : ' + error.message + (error.code === '42P01' ? ' (exécutez supabase/schema-v4.sql)' : ''); return; }
     sessions = data || [];
+    // profils des parcours faits par un compte connecté, pour afficher le vrai nom
+    const ids = [...new Set(sessions.map(x => x.user_id).filter(id => id && !profilesById[id]))];
+    if (ids.length) { try { const { data: pr } = await sb.from('profiles').select('id,prenom,nom,email').in('id', ids.slice(0, 500)); (pr || []).forEach(x => { profilesById[x.id] = x; }); } catch (e) {} }
     renderTunnel();
   }
+  const profilesById = {};
+  const accountChip = (x) => { const p = profilesById[x.user_id]; const name = p ? [p.prenom, p.nom].filter(Boolean).join(' ') || p.email : ''; return name ? namedChip(name, p.email || x.user_id, x.ip) : namedChip('Compte connecté', x.user_id, x.ip); };
   function sessionDuration(x) {
     const t = Object.values(x.steps || {}).map(v => Date.parse(v)).filter(isFinite);
     if (t.length < 2) return x.completed_at ? Date.parse(x.completed_at) - Date.parse(x.started_at) : null;
@@ -582,10 +587,10 @@
       <td class="r num">${dur(sessionDuration(x))}</td>
       <td class="r num">${x.ttc ? eur(x.ttc) : '—'}</td>
       <td>${esc(FIN[x.finance] || '—')}</td>
-      <td>${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip, l.id) : x.user_id ? namedChip('Compte connecté', x.user_id, x.ip) : x.ip ? ipChip(x.ip) : '—'}</td>
+      <td>${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip, l.id) : x.user_id ? accountChip(x) : x.ip ? ipChip(x.ip) : '—'}</td>
     </tr>`; }).join('') || '<tr><td colspan="9" class="empty">Aucun parcours sur la période.</td></tr>';
     $('t-cards').innerHTML = rows.map(x => { const l = leadByRef[x.id]; return `<div class="mcard"${l ? ` data-open="${l.id}" role="button"` : ''}>
-      <div class="mrow">${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip) : x.user_id ? namedChip('Compte connecté', x.user_id, x.ip) : x.ip ? ipChip(x.ip) : '<span class="msub">anonyme</span>'}${x.completed_at ? '<span class="pill" style="background:var(--good-soft);color:var(--good)">complet</span>' : '<span class="pill">incomplet</span>'}</div>
+      <div class="mrow">${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip) : x.user_id ? accountChip(x) : x.ip ? ipChip(x.ip) : '<span class="msub">anonyme</span>'}${x.completed_at ? '<span class="pill" style="background:var(--good-soft);color:var(--good)">complet</span>' : '<span class="pill">incomplet</span>'}</div>
       <div class="msub">${new Date(x.started_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · ${esc(x.device || '')} · ${esc(KIND[x.kind] || '')}${x.surface ? ' ' + x.surface + ' m²' : ''}</div>
       <div class="mrow"><span>${esc(T_LABEL[x.last_step] || x.last_step || '—')} · ${dur(sessionDuration(x))}</span><span class="num">${x.ttc ? eur(x.ttc) : ''}</span></div>
     </div>`; }).join('') || '<p class="empty">Aucun parcours sur la période.</p>';
