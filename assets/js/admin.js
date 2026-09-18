@@ -10,7 +10,7 @@
   const STATUS = [['nouveau', 'Nouveau'], ['contacte', 'Contacté'], ['relance', 'Relancé'], ['visite', 'Visite planifiée'], ['devis', 'Devis envoyé'], ['signe', 'Signé'], ['perdu', 'Perdu']];
   const STATUS_LABEL = Object.fromEntries(STATUS);
   const FIN = { oui: 'Accompagné', renta: 'Rentabilité seule', non: 'Sans rentabilité' };
-  const EPOQUE = { '1930': 'avant 1948', '1960': '1948-1974', '1982': '1975-1989', '2000': '1990-2011', '2016': '2012 et après', '2025': 'neuf' };
+  const EPOQUE = { '1930': 'avant 1948', '1960': '1948-1974', '1982': '1975 et après', '2000': '1975 et après', '2016': '1975 et après', '2025': 'neuf' };
   const epoque = a => EPOQUE[String(a)] || (a ? String(a) : '?');
   const DEM = { '1': 'dès que possible', '3': 'sous 3 mois', '6': 'sous 6 mois', later: 'travaux non planifiés' };
   const demLabel = d => DEM[String(d || '')] || '';

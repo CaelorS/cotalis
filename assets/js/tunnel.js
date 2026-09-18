@@ -98,7 +98,7 @@
     $('progress-wrap').classList.toggle('hidden', viewer);
     $('btn-prev').classList.toggle('hidden', idx === 0);
     $('btn-next').textContent = NEXT_LABEL[S.step] || 'Continuer';
-    $('err').classList.add('hidden');
+    hideErr(true);
     $('panel').classList.toggle('hidden', S.step === 'resultat' || viewer);
 
     if (S.step === 'acquisition') proposeAcquisition();
@@ -111,6 +111,26 @@
     if (first && window.matchMedia('(min-width: 981px)').matches) first.focus({ preventScroll: true });
   }
 
+  /* ---------- messages d'erreur : encadré, disparition animée dès correction ---------- */
+  let errTimer = null, errKind = null;
+  function showErr(msg, kind) {
+    const el = $('err'); clearTimeout(errTimer);
+    el.innerHTML = msg; errKind = kind || 'validate';
+    el.classList.remove('leaving'); el.classList.remove('hidden');
+    if (errKind === 'flash') errTimer = setTimeout(hideErr, 6000);
+  }
+  function hideErr(immediate) {
+    const el = $('err'); clearTimeout(errTimer);
+    if (el.classList.contains('hidden')) return;
+    if (immediate) { el.classList.add('hidden'); el.classList.remove('leaving'); return; }
+    el.classList.add('leaving');
+    errTimer = setTimeout(() => { el.classList.add('hidden'); el.classList.remove('leaving'); }, 420);
+  }
+  function refreshErr() {   // l'erreur affichée s'efface d'elle-même dès que la saisie la corrige
+    const el = $('err'); if (el.classList.contains('hidden') || errKind !== 'validate') return;
+    const err = validate();
+    if (!err) hideErr(); else if (el.textContent !== err) el.textContent = err;
+  }
   function validate() {
     const c = S.contact;
     switch (S.step) {
@@ -141,7 +161,7 @@
 
   async function goNext() {
     const err = validate();
-    if (err) { $('err').textContent = err; $('err').classList.remove('hidden'); return; }
+    if (err) { showErr(esc(err)); return; }
     if (S.step === 'bien' && !S.worksTouched) S.works = C.preselect(S);
     if (S.step === 'finition') { if (!S.gamme) S.gamme = 'std'; if (!S.stade) S.stade = 'etude'; fillForm(); }
     if (S.step === 'acquisition') { const added = C.lateRules(S, 'strat'); if (added.length) S.autoAdded = (S.autoAdded || []).concat(added.filter(id => !(S.autoAdded || []).includes(id))); }
@@ -231,6 +251,7 @@
     } else return;
     save(); renderPanel();
     if (S.step === 'travaux') updateLots();
+    refreshErr();
   }
 
   function onClick(e) {
@@ -255,7 +276,7 @@
       if (!S.worksTouched) S.works = C.preselect(S);
       fillForm();
     }
-    save(); renderPanel();
+    save(); renderPanel(); refreshErr();
     if (k === 'kind' || k === 'finance') setTimeout(goNext, 220);
   }
 
@@ -308,7 +329,7 @@
       if (!OK_TYPES.includes(file.type) && !/\.(jpe?g|png|webp|heic|pdf)$/i.test(file.name)) { flashErr(file.name + ' : ce format nous résiste. JPG, PNG, WEBP, HEIC ou PDF, et tout ira bien.'); continue; }
       if (file.size > MAX_SIZE) { flashErr('Fichier trop lourd : ' + file.name + ' dépasse 15 Mo. Même nos chiffreurs ne le soulèveraient pas.'); continue; }
       const entry = { name: file.name, size: file.size, type: file.type, pending: hasDb(), local: !hasDb() };
-      S.files.push(entry); renderFiles(); save(); renderPanel();
+      S.files.push(entry); renderFiles(); save(); renderPanel(); refreshErr();
       if (hasDb()) {
         try {
           const safe = file.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-80);
@@ -321,7 +342,7 @@
       }
     }
   }
-  function flashErr(msg) { $('err').textContent = msg; $('err').classList.remove('hidden'); }
+  function flashErr(msg) { showErr(esc(msg), 'flash'); }
 
   /* ---------- tableau des travaux ---------- */
   let lotsBuilt = false;
@@ -596,8 +617,8 @@
       return true;
     } catch (ex) {
       const msg = A.message(ex);
-      if (/existe déjà/.test(msg)) { $('err').innerHTML = 'Un compte existe déjà avec cet e-mail. <button type="button" class="linkbtn" id="err-login">Connectez-vous</button> pour continuer.'; $('err').classList.remove('hidden'); $('err-login').addEventListener('click', () => A.open('login')); }
-      else { $('err').textContent = msg; $('err').classList.remove('hidden'); }
+      if (/existe déjà/.test(msg)) { showErr('Un compte existe déjà avec cet e-mail. <button type="button" class="linkbtn" id="err-login">Connectez-vous</button> pour continuer.', 'flash'); $('err-login').addEventListener('click', () => A.open('login')); }
+      else showErr(esc(msg), 'flash');
       return false;
     } finally { btn.disabled = false; }
   }
