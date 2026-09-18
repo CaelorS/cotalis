@@ -61,7 +61,10 @@
     }
     const here = location.pathname;
     const links = [['/', 'Accueil'], ['/team/', 'À propos'], ['/estimation/?new=1', 'Obtenir mon estimation']];
-    let html = links.map(l => `<a href="${l[0]}"${here === l[0].split('?')[0] ? ' aria-current="page"' : ''}>${l[1]}</a>`).join('');
+    let html = '';
+    const tabs = document.querySelectorAll('#tabs .tab');
+    if (tabs.length && A.isAdmin()) { html += '<div class="who">Back-office</div>' + [...tabs].map(t => `<button type="button" data-mtab="${t.dataset.tab}"${t.classList.contains('selected') ? ' aria-current="page"' : ''}>${t.textContent}</button>`).join('') + '<div class="sep"></div>'; }
+    html += links.map(l => `<a href="${l[0]}"${here === l[0].split('?')[0] ? ' aria-current="page"' : ''}>${l[1]}</a>`).join('');
     if (A.isAdmin()) html += `<a href="${ROOT}admin/" class="nav-admin">Back-office</a>`;
     html += '<div class="sep"></div>';
     if (sb && A.user) {
@@ -71,6 +74,7 @@
       html += '<button type="button" id="mm-in">Se connecter</button>';
     }
     menu.innerHTML = html;
+    menu.querySelectorAll('[data-mtab]').forEach(b => b.addEventListener('click', () => { const t = document.querySelector(`#tabs .tab[data-tab="${b.dataset.mtab}"]`); if (t) t.click(); menu.classList.remove('open'); btn.classList.remove('open'); document.body.classList.remove('menu-open'); renderBurger(); }));
     const out = document.getElementById('mm-out'); if (out) out.addEventListener('click', async () => { await A.signOut(); location.href = ROOT; });
     const inn = document.getElementById('mm-in'); if (inn) inn.addEventListener('click', () => { menu.classList.remove('open'); btn.classList.remove('open'); document.body.classList.remove('menu-open'); openModal('login'); });
   }

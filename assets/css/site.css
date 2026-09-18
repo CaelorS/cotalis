@@ -714,3 +714,44 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
 .btn.shine:hover { padding-right: 48px; }
 .btn.shine:hover::before { opacity: 1; transform: translate(0, -52%); }
 @media (max-width: 980px) { .top.slim .brand .sub { display: inline; } }
+
+/* ---------- back-office sur mobile ---------- */
+.mcards { display: none; }
+#preset-table th .s { display: none; }
+@media (max-width: 980px) {
+  .hero2 .brandline { display: none; }
+  .admin .tabs { display: none !important; }
+  .admin-main { padding: 12px 12px 40px; }
+  .admin .tablewrap.desk { display: none; }
+  .mcards { display: flex; flex-direction: column; gap: 8px; }
+  .mlot { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; margin: 10px 2px 0; }
+  .mcard { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+  .mcard[role="button"] { cursor: pointer; }
+  .mcard.off { opacity: .55; }
+  .mcard .mrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .mcard .mrow b { font-size: 15px; }
+  .mcard .msub { font-size: 12.5px; color: var(--ink-3); }
+  .mcard .pill { margin-left: 0; }
+  .mcard .btn.small { flex-shrink: 0; }
+  .admin .toolbar { gap: 8px; }
+  .admin .toolbar > select, .admin .toolbar > input { flex: 1 1 46%; min-width: 0; }
+  .admin .toolbar .count { width: 100%; margin-left: 0; }
+  .admin .tlabel { width: 100%; flex-wrap: wrap; }
+  .admin .tlabel input { flex: 1; min-width: 0; }
+  .admin .kpis { grid-template-columns: 1fr 1fr; }
+  .admin .kpis .tile .v { font-size: 22px; }
+  .admin .panel { margin-top: 12px; }
+  .drawer-box { padding: 14px 12px 40px; }
+  .drawer .box { padding: 12px; }
+  .admin .body { padding: 14px 12px; }
+  /* grille des états : tout tient sans défilement */
+  #preset-table th .l { display: none; } #preset-table th .s { display: inline; }
+  #preset-table th, #preset-table td { padding: 6px 4px; font-size: 12.5px; }
+  #preset-table td:first-child { max-width: 42vw; white-space: normal; }
+  #preset-table th:first-child { white-space: normal; }
+  /* entonnoir : colonnes secondaires masquées */
+  #t-funnel th:nth-child(5), #t-funnel td:nth-child(5), #t-funnel th:nth-child(7), #t-funnel td:nth-child(7), #t-funnel th:nth-child(8), #t-funnel td:nth-child(8) { display: none; }
+  #t-funnel th, #t-funnel td { padding: 6px 6px; font-size: 12.5px; white-space: normal; }
+  .rule-head { gap: 6px; }
+  .rule-head input.wide { min-width: 0; width: 100%; }
+}

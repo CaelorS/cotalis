@@ -107,7 +107,14 @@
       <td><input type="date" data-f="next_action" class="inline" value="${l.next_action || ''}"></td>
       <td><button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
     </tr>`).join('') || '<tr><td colspan="11" class="empty">Aucun dossier.</td></tr>';
+    $('leads-cards').innerHTML = rows.map(l => `<div class="mcard" data-open="${l.id}" role="button">
+      <div class="mrow"><b>${esc(l.prenom)} ${esc(l.nom)}</b>${scoreBadge(scoreLead(l))}</div>
+      <div class="msub">${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}${l.ville ? ' · ' + esc(l.ville) : ''}</div>
+      <div class="mrow"><span class="num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</span><span class="pill">${STATUS_LABEL[l.status || 'nouveau']}</span></div>
+      <div class="msub">${dt(l.created_at)}${l.assigned_to ? ' · ' + esc(adminName(l.assigned_to)) : ''}${l.next_action ? ' · prochaine action ' + esc(l.next_action) : ''}</div>
+    </div>`).join('') || '<p class="empty">Aucun dossier.</p>';
   }
+  $('leads-cards').addEventListener('click', e => { const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });
   const FILTER_IDS = ['q', 'f-status', 'f-assign', 'f-kind', 'f-fin', 'f-stade', 'f-type', 'f-ville', 'f-min', 'f-max', 'f-from', 'f-to'];
   FILTER_IDS.forEach(id => $(id).addEventListener('input', renderLeads));
   $('f-reset').addEventListener('click', () => { FILTER_IDS.forEach(id => { $(id).value = ''; }); renderLeads(); });
@@ -208,6 +215,11 @@
       <td class="qtycell"><select data-f="qty_mode" class="inline">${Object.keys(C.QTY_MODES).map(k => `<option value="${k}"${it.qm === k ? ' selected' : ''}>${C.QTY_MODES[k]}</option>`).join('')}</select> <input type="number" step="0.01" data-f="qty_coef" value="${it.qc == null ? 1 : it.qc}" style="width:72px" aria-label="Coefficient">${d.qm ? `<small>défaut : ${esc(C.QTY_MODES[d.qm])} ${d.qc}</small>` : ''}</td>
       <td>${it.custom ? `<button type="button" class="btn small" data-del="${it.id}">Supprimer</button>` : ''}</td>
     </tr>`; }).join('')).join('');
+    $('items-cards').innerHTML = C.CATALOG.map(l => `<div class="mlot">${esc(l.lot)}</div>` + l.items.map(it => `<div class="mcard${it.inactive ? ' off' : ''}">
+      <div class="mrow"><b>${esc(it.label)}</b><button type="button" class="btn small" data-edit="${it.id}" aria-label="Modifier ${esc(it.label)}">✎</button></div>
+      <div class="msub">${esc(it.sub || '')}</div>
+      <div class="mrow"><span class="num">${eur(it.pu)}${it.unit === 'forfait' ? '' : '/' + it.unit} HT</span><span>${it.inactive ? 'inactif' : 'MO ' + Math.round(it.lab * 100) + ' % · TVA ' + (it.tva === 5.5 ? '5,5' : '10') + ' % · marge ' + (it.marge == null ? 'défaut' : Math.round(it.marge * 100) + ' %')}</span></div>
+    </div>`).join('')).join('');
     const lots = $('ni-lot'); lots.innerHTML = C.CATALOG.map(l => `<option value="${esc(l.lot)}">${esc(l.lot)}</option>`).join('') + '<option value="__new">Nouveau lot…</option>';
     $('ni-qmode').innerHTML = Object.keys(C.QTY_MODES).map(k => `<option value="${k}">${C.QTY_MODES[k]}</option>`).join('');
   }
@@ -225,6 +237,33 @@
     if (error) { $('ni-msg').textContent = 'Création impossible : ' + error.message; return; }
     C.addCustomItem(row); $('new-item').reset(); $('ni-newlot-field').classList.add('hidden'); $('ni-msg').textContent = 'Ouvrage créé : il est visible dans le tunnel.'; await loadPricingTab(); $('ni-msg').textContent = 'Ouvrage « ' + label + ' » créé.';
   });
+  // Éditeur plein écran d'un ouvrage (mobile)
+  function openItemEditor(id) {
+    const it = C.ITEMS[id]; if (!it) return;
+    const d = C.DEFAULTS.items[it.id] || {};
+    $('d-title').textContent = it.label;
+    $('d-body').innerHTML = `<div class="box"><h3>${esc(it.lotName)}</h3><div class="grid">
+      <div class="field wide"><label>Nom</label><input id="ie-label" value="${esc(it.label)}"></div>
+      <div class="field wide"><label>Précision</label><input id="ie-sub" value="${esc(it.sub || '')}"></div>
+      <div class="field"><label>Prix HT (${esc(it.unit)})${d.pu != null ? ` <span class="optsub">défaut ${d.pu}</span>` : ''}</label><input id="ie-pu" type="number" step="1" value="${it.pu}"></div>
+      <div class="field"><label>Part main-d'œuvre %</label><input id="ie-lab" type="number" step="5" min="0" max="100" value="${Math.round(it.lab * 100)}"></div>
+      <div class="field"><label>TVA</label><select id="ie-tva"><option value="10"${it.tva === 5.5 ? '' : ' selected'}>10 %</option><option value="5.5"${it.tva === 5.5 ? ' selected' : ''}>5,5 %</option></select></div>
+      <div class="field"><label>Marge % <span class="optsub">vide : défaut</span></label><input id="ie-marge" type="number" step="0.5" min="0" max="60" value="${it.marge == null ? '' : +(it.marge * 100).toFixed(2)}" placeholder="défaut"></div>
+      <div class="field"><label>Quantité proposée</label><select id="ie-qm">${Object.keys(C.QTY_MODES).map(k => `<option value="${k}"${it.qm === k ? ' selected' : ''}>${C.QTY_MODES[k]}</option>`).join('')}</select></div>
+      <div class="field"><label>Coefficient</label><input id="ie-qc" type="number" step="0.01" value="${it.qc == null ? 1 : it.qc}"></div>
+      <div class="field wide"><label class="check"><input type="checkbox" id="ie-active"${it.inactive ? '' : ' checked'}> Actif dans le tunnel</label></div>
+    </div><div class="savebar"><span class="hint" id="ie-msg"></span><button type="button" class="btn primary" id="ie-save">Enregistrer</button></div></div>`;
+    $('drawer').classList.remove('hidden');
+    $('ie-save').addEventListener('click', async () => {
+      const g = i => document.getElementById(i);
+      const row = { id: it.id, lot: it.lotName, label: g('ie-label').value.trim() || it.label, sub: g('ie-sub').value.trim(), unit: it.unit, pu: +g('ie-pu').value, lab: Math.min(1, Math.max(0, +g('ie-lab').value / 100)), tva: +g('ie-tva').value, marge: g('ie-marge').value === '' ? null : +g('ie-marge').value / 100, active: g('ie-active').checked, qty_mode: g('ie-qm').value, qty_coef: g('ie-qc').value === '' ? 1 : +g('ie-qc').value, updated_by: A.user.id, updated_at: new Date().toISOString() };
+      if (it.custom) { row.custom = true; row.presets = it.presets || []; }
+      const { error } = await sb.from('pricing_items').upsert(row);
+      if (error) { $('ie-msg').textContent = 'Enregistrement impossible : ' + error.message; return; }
+      C.applyPricing([row], []); pricingLoaded = false; await loadPricingTab(); $('drawer').classList.add('hidden');
+    });
+  }
+  $('items-cards').addEventListener('click', e => { const b = e.target.closest('[data-edit]'); if (b) openItemEditor(b.dataset.edit); });
   $('items').addEventListener('click', async e => {
     const b = e.target.closest('[data-del]'); if (!b) return;
     if (!confirm('Supprimer cet ouvrage ? Les estimations déjà faites ne sont pas modifiées.')) return;
@@ -419,7 +458,13 @@
       <td>${STATUS_LABEL[l.status || 'nouveau']}</td>
       <td><button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
     </tr>`).join('') || '<tr><td colspan="9" class="empty">Aucun dossier.</td></tr>';
+    $('sc-cards').innerHTML = list.map(({ l, sc }) => `<div class="mcard" data-open="${l.id}" role="button">
+      <div class="mrow"><b>${esc(l.prenom)} ${esc(l.nom)}</b>${scoreBadge(sc)}</div>
+      <div class="msub">${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}${l.ville ? ' · ' + esc(l.ville) : ''} · ${esc(l.stade || '')}</div>
+      <div class="mrow"><span class="num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</span><span class="msub">V ${sc.valeur} · M ${sc.maturite} · E ${sc.engagement}</span></div>
+    </div>`).join('') || '<p class="empty">Aucun dossier.</p>';
   }
+  $('sc-cards').addEventListener('click', e => { const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });
   ['sc-letter', 'sc-status'].forEach(id => $(id).addEventListener('input', renderScoring));
   $('sc-table').querySelector('thead').addEventListener('click', e => { const th = e.target.closest('th[data-sort]'); if (!th) return; if (scSortKey === th.dataset.sort) scSortDir = -scSortDir; else { scSortKey = th.dataset.sort; scSortDir = -1; } renderScoring(); });
   $('sc-table').addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) openLead(+b.dataset.open); });
@@ -539,7 +584,13 @@
       <td>${esc(FIN[x.finance] || '—')}</td>
       <td>${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip, l.id) : x.user_id ? namedChip('Compte connecté', x.user_id, x.ip) : x.ip ? ipChip(x.ip) : '—'}</td>
     </tr>`; }).join('') || '<tr><td colspan="9" class="empty">Aucun parcours sur la période.</td></tr>';
+    $('t-cards').innerHTML = rows.map(x => { const l = leadByRef[x.id]; return `<div class="mcard"${l ? ` data-open="${l.id}" role="button"` : ''}>
+      <div class="mrow">${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip) : x.user_id ? namedChip('Compte connecté', x.user_id, x.ip) : x.ip ? ipChip(x.ip) : '<span class="msub">anonyme</span>'}${x.completed_at ? '<span class="pill" style="background:var(--good-soft);color:var(--good)">complet</span>' : '<span class="pill">incomplet</span>'}</div>
+      <div class="msub">${new Date(x.started_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · ${esc(x.device || '')} · ${esc(KIND[x.kind] || '')}${x.surface ? ' ' + x.surface + ' m²' : ''}</div>
+      <div class="mrow"><span>${esc(T_LABEL[x.last_step] || x.last_step || '—')} · ${dur(sessionDuration(x))}</span><span class="num">${x.ttc ? eur(x.ttc) : ''}</span></div>
+    </div>`; }).join('') || '<p class="empty">Aucun parcours sur la période.</p>';
   }
+  $('t-cards').addEventListener('click', e => { const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });
   ['t-device', 't-state'].forEach(id => $(id).addEventListener('input', renderTunnel));
   $('t-period').addEventListener('input', loadTunnel);
   $('t-sessions').querySelector('thead').addEventListener('click', e => { const th = e.target.closest('th[data-sort]'); if (!th) return; if (tSortKey === th.dataset.sort) tSortDir = -tSortDir; else { tSortKey = th.dataset.sort; tSortDir = -1; } renderTunnel(); });
