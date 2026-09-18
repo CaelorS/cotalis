@@ -98,7 +98,7 @@
     $('progress-wrap').classList.toggle('hidden', viewer);
     $('btn-prev').classList.toggle('hidden', idx === 0);
     $('btn-next').textContent = NEXT_LABEL[S.step] || 'Continuer';
-    hideErr(true); hideOk();
+    hideErr(true); hideOk(); pendingOk = null;
     $('panel').classList.toggle('hidden', S.step === 'resultat' || viewer);
 
     if (S.step === 'acquisition') proposeAcquisition();
@@ -150,7 +150,7 @@
     }
     return 'C\'est bon, on peut continuer.';
   }
-  let okTimer = null;
+  let okTimer = null, pendingOk = null;
   function showOk(msg) {
     const el = $('okmsg'); if (!el) return; clearTimeout(okTimer);
     el.innerHTML = msg; el.classList.remove('leaving'); el.classList.remove('hidden');
@@ -160,7 +160,12 @@
   function refreshErr() {   // l'erreur affichée s'efface d'elle-même dès que la saisie la corrige, et laisse place à un encouragement
     const el = $('err'); if (el.classList.contains('hidden') || errKind !== 'validate') return;
     const err = validate();
-    if (!err) { const key = errKey(el.textContent); hideErr(); setTimeout(() => showOk(okFor(key)), 200); }
+    if (!err) {
+      const key = errKey(el.textContent); hideErr();
+      // l'adresse n'est « bonne » qu'une fois choisie dans les suggestions : le vert attend ce moment
+      if (key === 'adresse' && !S.ville) { pendingOk = 'adresse'; return; }
+      setTimeout(() => showOk(okFor(key)), 200);
+    }
     else if (el.textContent !== err) el.textContent = err;
   }
   function validate() {
@@ -365,6 +370,7 @@
     $('adresse').value = S.adresse;
     $('zone-hint').textContent = S.zoneAuto ? 'déduite de ' + S.ville : 'choisie manuellement';
     hideSuggest(); save(); renderPanel();
+    if (pendingOk === 'adresse') { pendingOk = null; showOk(okFor('adresse')); }
   }
 
   /* ---------- plans et photos ---------- */
