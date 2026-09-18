@@ -38,7 +38,7 @@
     const lines = [], lots = {};
     let direct = 0, direct55 = 0, labor = 0, sell = 0;
     C.CATALOG.forEach(l => l.items.forEach(it => {
-      if (it.inactive) return;
+      if (it.inactive || (it.only && !it.only.includes(S.kind))) return;
       const on = !!S.works[it.id];
       const q = S.qty[it.id] != null ? +S.qty[it.id] : it.qty(ctx);
       const unitPrice = it.pu * (it.lab * cReg * cx.c + (1 - it.lab) * cGamme);
@@ -131,7 +131,7 @@
     const set = new Set(C.PRESET[S.etat] || C.PRESET.correct || []);
     (C.RULES || []).forEach(r => { if (r.disabled || !ruleMatch(S, r)) return; (r.add || []).forEach(id => set.add(id)); (r.remove || []).forEach(id => set.delete(id)); });
     const works = {};
-    set.forEach(id => { if (C.ITEMS[id] && !C.ITEMS[id].inactive) works[id] = 1; });
+    set.forEach(id => { const it = C.ITEMS[id]; if (it && !it.inactive && (!it.only || it.only.includes(S.kind))) works[id] = 1; });
     return works;
   }
   // Règles qui dépendent d'informations saisies après l'étape travaux (stratégie locative) : on ajoute, on ne retire jamais.
@@ -139,7 +139,7 @@
     const added = [];
     (C.RULES || []).forEach(r => {
       if (r.disabled || !(r.when || []).some(c => c.f === field) || !ruleMatch(S, r)) return;
-      (r.add || []).forEach(id => { if (C.ITEMS[id] && !C.ITEMS[id].inactive && !S.works[id]) { S.works[id] = 1; added.push(id); } });
+      (r.add || []).forEach(id => { const it = C.ITEMS[id]; if (it && !it.inactive && (!it.only || it.only.includes(S.kind)) && !S.works[id]) { S.works[id] = 1; added.push(id); } });
     });
     return added;
   }

@@ -344,7 +344,7 @@
       const rec = C.preselect(S);
       const main = [], more = [];
       C.CATALOG.forEach(l => {
-        const items = l.items.filter(it => !it.inactive);
+        const items = l.items.filter(it => !it.inactive && (!it.only || it.only.includes(S.kind)));
         const a = items.filter(it => rec[it.id] || S.works[it.id]), b = items.filter(it => !(rec[it.id] || S.works[it.id]));
         if (a.length) main.push(lotHtml(l, a, true));
         if (b.length) more.push(lotHtml(l, b, false));

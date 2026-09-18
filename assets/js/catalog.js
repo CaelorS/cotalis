@@ -21,6 +21,11 @@
       { id: 'elec', label: 'Mise en conformité complète', sub: 'tableau, circuits, prises, luminaires', unit: 'm²', pu: 95, lab: 0.6, qm: 'surface', qc: 1 },
       { id: 'tableau', label: 'Mise en sécurité seule', sub: 'tableau, terre, différentiels', unit: 'forfait', pu: 1400, lab: 0.55, qm: 'units', qc: 1 },
     ]},
+    { lot: 'Parties communes et réseaux', only: ['immeuble'], items: [
+      { id: 'colonne_elec', label: 'Colonne montante électrique', sub: 'gaine, câbles, coupe-circuits par niveau', unit: 'niveau', pu: 1900, lab: 0.65, qm: 'niveaux', qc: 1 },
+      { id: 'colonne_plomb', label: 'Colonne montante plomberie', sub: 'eau froide, eau chaude, évacuation par niveau', unit: 'niveau', pu: 1700, lab: 0.7, qm: 'niveaux', qc: 1 },
+      { id: 'tableaux_apt', label: 'Tableau électrique par appartement', sub: 'tableau divisionnaire, différentiels, terre', unit: 'u', pu: 950, lab: 0.55, qm: 'units', qc: 1 },
+    ] },
     { lot: 'Plomberie et chauffage', items: [
       { id: 'plomb', label: 'Réseau eau et évacuations à neuf', sub: 'par pièce d\'eau et cuisine', unit: 'u', pu: 2400, lab: 0.65, qm: 'eau_units', qc: 1 },
       { id: 'ballon', label: 'Chauffe-eau électrique', unit: 'u', pu: 690, lab: 0.35, qm: 'units', qc: 1 },
@@ -35,6 +40,12 @@
       { id: 'combles', label: 'Isolation des combles', unit: 'm²', pu: 32, lab: 0.45, qm: 'surface_per_level', qc: 1 },
       { id: 'porte', label: 'Porte palière blindée', unit: 'u', pu: 2200, lab: 0.3, qm: 'units', qc: 1 },
     ]},
+    { lot: 'Extérieurs et toiture', only: ['maison', 'immeuble'], items: [
+      { id: 'ravalement', label: 'Ravalement de façade', sub: 'nettoyage, reprise d\'enduit, peinture, échafaudage', unit: 'm²', pu: 85, lab: 0.7, qm: 'facade', qc: 1 },
+      { id: 'ite', label: 'Isolation par l\'extérieur', sub: 'option au ravalement : isolant, enduit de finition', unit: 'm²', pu: 165, lab: 0.55, tva: 5.5, qm: 'facade', qc: 1 },
+      { id: 'toit_rep', label: 'Réparation de toiture', sub: 'reprise partielle, tuiles ou ardoises, zinguerie', unit: 'm²', pu: 60, lab: 0.75, qm: 'toiture', qc: 0.3 },
+      { id: 'toit_neuf', label: 'Réfection complète de toiture', sub: 'dépose, écran, liteaux, couverture, zinguerie', unit: 'm²', pu: 210, lab: 0.6, qm: 'toiture', qc: 1 },
+    ] },
     { lot: 'Salle de bain et WC', items: [
       { id: 'sdb', label: 'Salle de bain complète', sub: 'douche à l\'italienne, meuble vasque, faïence, WC', unit: 'forfait', pu: 7800, lab: 0.55, qm: 'units', qc: 1 },
       { id: 'wc', label: 'WC séparé', sub: 'cuvette suspendue, lave-mains, faïence', unit: 'forfait', pu: 1600, lab: 0.55, qm: 'eau_minus_units', qc: 1 },
@@ -67,12 +78,15 @@
     units_half:       (s, k) => Math.ceil(s.units / 2) * k,
     surface_per_level:(s, k) => Math.round(s.surface / Math.max(1, s.niveaux || 1) * k),
     fixed:            (s, k) => Math.round(k),
+    niveaux:          (s, k) => Math.max(1, Math.round((s.niveaux || 1) * k)),
+    facade:           (s, k) => Math.round(Math.sqrt(s.surface / Math.max(1, s.niveaux || 1)) * 4 * 2.7 * Math.max(1, s.niveaux || 1) * 0.7 * k),   // périmètre × hauteur, 30 % d'ouvertures
+    toiture:          (s, k) => Math.round(s.surface / Math.max(1, s.niveaux || 1) * 1.25 * k),                                               // emprise au sol × pente
   };
-  const QTY_MODES = { surface: 'surface × coef.', units: 'logements × coef.', pieces_units: '(pièces + logements) × coef.', eau: 'pièces d\'eau × coef.', eau_units: '(pièces d\'eau + logements) × coef.', eau_minus_units: '(pièces d\'eau − logements) × coef., 1 minimum', units_half: 'logements ÷ 2 arrondi sup. × coef.', surface_per_level: 'surface ÷ niveaux × coef.', fixed: 'quantité fixe' };
+  const QTY_MODES = { surface: 'surface × coef.', units: 'logements × coef.', pieces_units: '(pièces + logements) × coef.', eau: 'pièces d\'eau × coef.', eau_units: '(pièces d\'eau + logements) × coef.', eau_minus_units: '(pièces d\'eau − logements) × coef., 1 minimum', units_half: 'logements ÷ 2 arrondi sup. × coef.', surface_per_level: 'surface ÷ niveaux × coef.', fixed: 'quantité fixe', niveaux: 'nombre de niveaux × coef.', facade: 'surface de façade estimée × coef.', toiture: 'surface de toiture estimée × coef.' };
   function qtyFn(mode, coef) { const f = QTY[mode] || QTY.units; const k = (coef == null || coef === '') ? 1 : +coef; return s => f(s, k); }
 
   const ITEMS = {};
-  CATALOG.forEach(l => l.items.forEach(i => { i.lotName = l.lot; i.qty = qtyFn(i.qm, i.qc); ITEMS[i.id] = i; }));
+  CATALOG.forEach(l => l.items.forEach(i => { i.lotName = l.lot; if (l.only && !i.only) i.only = l.only; i.qty = qtyFn(i.qm, i.qc); ITEMS[i.id] = i; }));
 
   // Règles complémentaires de sélection, appliquées dans l'ordre après la liste de l'état général.
   // when : toutes les conditions doivent être vraies. Champs : kind, etat, dpe, annee, surface, eau, zone, gamme, strat.
@@ -81,7 +95,9 @@
     { id: 'avant_1975', label: 'Bâti antérieur à 1975, sans isolation d\'origine', when: [{ f: 'annee', op: 'lt', v: '1975' }], add: ['iti', 'fen'], remove: [] },
     { id: 'maison_total', label: 'Maison à rénover entièrement', when: [{ f: 'kind', op: 'eq', v: 'maison' }, { f: 'etat', op: 'eq', v: 'total' }], add: ['combles'], remove: [] },
     { id: 'maison_fg', label: 'Maison en passoire thermique', when: [{ f: 'kind', op: 'eq', v: 'maison' }, { f: 'dpe', op: 'in', v: 'F,G' }], add: ['combles'], remove: [] },
-    { id: 'immeuble_elec', label: 'Immeuble : conformité électrique complète', when: [{ f: 'kind', op: 'eq', v: 'immeuble' }], add: ['elec'], remove: ['tableau'] },
+    { id: 'immeuble_elec', label: 'Immeuble : conformité électrique complète et tableaux par appartement', when: [{ f: 'kind', op: 'eq', v: 'immeuble' }], add: ['elec', 'tableaux_apt'], remove: ['tableau'] },
+    { id: 'immeuble_colonnes', label: 'Immeuble dégradé ou à rénover : colonnes montantes', when: [{ f: 'kind', op: 'eq', v: 'immeuble' }, { f: 'etat', op: 'in', v: 'degrade,total' }], add: ['colonne_elec', 'colonne_plomb'], remove: [] },
+    { id: 'ext_total', label: 'Maison ou immeuble à rénover entièrement : ravalement et reprise de toiture', when: [{ f: 'kind', op: 'in', v: 'maison,immeuble' }, { f: 'etat', op: 'eq', v: 'total' }], add: ['ravalement', 'toit_rep'], remove: [] },
     { id: 'coloc', label: 'Colocation : cloisons et salle d\'eau supplémentaire', when: [{ f: 'strat', op: 'eq', v: 'coloc' }], add: ['cloison', 'sdb'], remove: [] },
   ];
   const RULE_FIELDS = { kind: 'Type de bien', etat: 'État général', dpe: 'DPE', annee: 'Année de construction', surface: 'Surface', eau: 'Pièces d\'eau', zone: 'Zone de prix', gamme: 'Finition', strat: 'Stratégie locative' };
