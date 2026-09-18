@@ -867,3 +867,13 @@ select.st { padding: 4px 26px 4px 10px; border-width: 1px; }
 .st-devis { background: #DFF1E6; color: #2F855A; border-color: #A9D8BC; }
 .st-signe { background: #2F855A; color: #FFFFFF; border-color: #256B48; }
 .st-perdu { background: #F8E1E1; color: #A3262A; border-color: #EBB4B4; }
+
+/* menu de statut coloré */
+.stbtn { border: 1px solid; cursor: pointer; font: inherit; font-size: 13px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.stbtn i { font-style: normal; font-size: 10px; opacity: .7; }
+.stbtn:hover { filter: brightness(.96); }
+.stlist { position: fixed; z-index: 48; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 30px rgba(23,33,43,.18); padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 170px; }
+.stlist.hidden { display: none; }
+.stlist .pill { border: 1px solid; cursor: pointer; font: inherit; font-size: 13px; padding: 6px 12px; text-align: left; }
+.stlist .pill:hover { filter: brightness(.95); }
+.stlist .pill.cur { outline: 2px solid var(--ink); outline-offset: 1px; }

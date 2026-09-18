@@ -124,7 +124,7 @@
       <td class="r num">${margeOf(l) ? eur(margeOf(l)) : '—'}</td>
       <td>${scoreBadge(scoreLead(l))}</td>
       <td>${esc(FIN[l.finance] || '—')}${l.prix ? '<small>' + eur(l.prix) + ' d\'achat</small>' : ''}${finCell(l)}</td>
-      <td><select data-f="status" class="inline st st-${l.status || 'nouveau'}">${STATUS.map(s => `<option value="${s[0]}"${(l.status || 'nouveau') === s[0] ? ' selected' : ''}>${s[1]}</option>`).join('')}</select></td>
+      <td><button type="button" class="pill st st-${l.status || 'nouveau'} stbtn" data-stbtn="${l.id}">${STATUS_LABEL[l.status || 'nouveau']}<i>▾</i></button></td>
       <td><select data-f="assigned_to" class="inline"><option value="">—</option>${admins.map(a => `<option value="${a.id}"${l.assigned_to === a.id ? ' selected' : ''}>${esc(a.prenom || a.email)}</option>`).join('')}</select></td>
       <td><input type="date" data-f="next_action" class="inline" value="${l.next_action || ''}"></td>
       <td class="c">${photoBadge(l) || '<span class="muted">—</span>'}</td>
@@ -152,10 +152,34 @@
     const { error } = await sb.from('leads').update({ [f]: v }).eq('id', id);
     if (error) { alert('Enregistrement impossible : ' + error.message); return; }
     const l = leads.find(x => x.id === id); if (l) l[f] = v;
-    if (f === 'status') el.className = 'inline st st-' + (v || 'nouveau');
     if (f === 'next_action') renderLeads();
   });
-  $('leads').addEventListener('click', e => { const ph = e.target.closest('[data-photos]'); if (ph) { openPhotos(+ph.dataset.photos); return; } const b = e.target.closest('[data-open]'); if (b) openLead(+b.dataset.open); });
+  /* menu de statut : les choix s'affichent avec leur couleur, au-dessus du tableau */
+  const stlist = document.createElement('div'); stlist.className = 'stlist hidden'; document.body.appendChild(stlist);
+  let stOpenFor = null;
+  function openStatusMenu(btn) {
+    const id = +btn.dataset.stbtn, l = leads.find(x => x.id === id); if (!l) return;
+    if (stOpenFor === id) { closeStatusMenu(); return; }
+    stOpenFor = id;
+    stlist.innerHTML = STATUS.map(st => `<button type="button" class="pill st st-${st[0]}${(l.status || 'nouveau') === st[0] ? ' cur' : ''}" data-stpick="${st[0]}">${st[1]}</button>`).join('');
+    stlist.classList.remove('hidden');
+    const r = btn.getBoundingClientRect(), h = stlist.offsetHeight, below = r.bottom + 6 + h <= innerHeight;
+    stlist.style.left = Math.min(r.left, innerWidth - stlist.offsetWidth - 8) + 'px';
+    stlist.style.top = (below ? r.bottom + 6 : Math.max(8, r.top - 6 - h)) + 'px';
+  }
+  function closeStatusMenu() { stlist.classList.add('hidden'); stOpenFor = null; }
+  stlist.addEventListener('click', async e => {
+    const b = e.target.closest('[data-stpick]'); if (!b || stOpenFor == null) return;
+    const id = stOpenFor, v = b.dataset.stpick; closeStatusMenu();
+    const { error } = await sb.from('leads').update({ status: v }).eq('id', id);
+    if (error) { alert('Enregistrement impossible : ' + error.message); return; }
+    const l = leads.find(x => x.id === id); if (l) l.status = v;
+    const btn = document.querySelector(`[data-stbtn="${id}"]`); if (btn) { btn.className = 'pill st st-' + v + ' stbtn'; btn.innerHTML = STATUS_LABEL[v] + '<i>▾</i>'; }
+  });
+  document.addEventListener('click', e => { if (stOpenFor != null && !e.target.closest('.stlist') && !e.target.closest('[data-stbtn]')) closeStatusMenu(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeStatusMenu(); });
+  window.addEventListener('scroll', closeStatusMenu, true); window.addEventListener('resize', closeStatusMenu);
+  $('leads').addEventListener('click', e => { const sb2 = e.target.closest('[data-stbtn]'); if (sb2) { openStatusMenu(sb2); return; } const ph = e.target.closest('[data-photos]'); if (ph) { openPhotos(+ph.dataset.photos); return; } const b = e.target.closest('[data-open]'); if (b) openLead(+b.dataset.open); });
 
   /* ---------- visionneuse : toutes les photos du dossier, à faire défiler ---------- */
   const IMG_EXT = /\.(jpe?g|png|gif|webp|avif|bmp|svg)$/i;
