@@ -329,7 +329,7 @@
 
   /* ---------- adresse (Base Adresse Nationale, gratuite, sans clé) ---------- */
   let acTimer = null, acAbort = null;
-  function hideSuggest() { $('suggest').classList.add('hidden'); $('suggest').innerHTML = ''; acIndex = -1; }
+  function hideSuggest() { $('suggest').classList.add('hidden'); $('suggest').classList.remove('kb'); $('suggest').innerHTML = ''; acIndex = -1; }
   async function fetchAddr(q) {
     if (q.trim().length < 4) { hideSuggest(); return; }
     try {
@@ -347,6 +347,7 @@
   function acHighlight(i) {
     const lis = [...$('suggest').querySelectorAll('li')]; if (!lis.length) return;
     acIndex = (i + lis.length) % lis.length;
+    $('suggest').classList.add('kb');   // au clavier, le survol de la souris ne surligne plus
     lis.forEach((li, k) => li.classList.toggle('active', k === acIndex));
     lis[acIndex].scrollIntoView({ block: 'nearest' });
   }
@@ -775,6 +776,7 @@
   $('btn-prev').addEventListener('click', goPrev);
   $('panel-toggle').addEventListener('click', () => { const p = $('panel'); p.classList.toggle('open'); $('panel-toggle').textContent = p.classList.contains('open') ? 'Réduire' : 'Voir le détail'; });
   $('adresse').addEventListener('input', e => { clearTimeout(acTimer); acTimer = setTimeout(() => fetchAddr(e.target.value), 250); });
+  $('suggest').addEventListener('mousemove', () => { const ul = $('suggest'); if (ul.classList.contains('kb')) { ul.classList.remove('kb'); ul.querySelectorAll('li.active').forEach(li => li.classList.remove('active')); acIndex = -1; } });
   $('suggest').addEventListener('mousedown', e => { const li = e.target.closest('li'); if (li) { e.preventDefault(); pickAddr(li); } });
   $('adresse').addEventListener('blur', () => setTimeout(hideSuggest, 150));
   const drop = $('drop'), fileInput = $('file-input');

@@ -120,7 +120,7 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 .addr { position: relative; }
 .suggest { position: absolute; z-index: 5; left: 0; right: 0; top: 100%; margin: 4px 0 0; padding: 4px; list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; box-shadow: var(--shadow); max-height: 240px; overflow: auto; }
 .suggest li { padding: 8px 10px; cursor: pointer; border-radius: 3px; font-size: 14px; }
-.suggest li:hover, .suggest li.hl { background: var(--accent-soft); }
+.suggest:not(.kb) li:hover, .suggest li.hl { background: var(--accent-soft); }
 .zone { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13.5px; color: var(--ink-2); margin-top: 12px; }
 .zone select { min-height: 32px; padding: 4px 8px; font-size: 13.5px; }
 
