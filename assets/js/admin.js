@@ -124,7 +124,7 @@
       <td class="r num">${margeOf(l) ? eur(margeOf(l)) : '—'}</td>
       <td>${scoreBadge(scoreLead(l))}</td>
       <td>${esc(FIN[l.finance] || '—')}${l.prix ? '<small>' + eur(l.prix) + ' d\'achat</small>' : ''}${finCell(l)}</td>
-      <td><select data-f="status" class="inline">${STATUS.map(s => `<option value="${s[0]}"${(l.status || 'nouveau') === s[0] ? ' selected' : ''}>${s[1]}</option>`).join('')}</select></td>
+      <td><select data-f="status" class="inline st st-${l.status || 'nouveau'}">${STATUS.map(s => `<option value="${s[0]}"${(l.status || 'nouveau') === s[0] ? ' selected' : ''}>${s[1]}</option>`).join('')}</select></td>
       <td><select data-f="assigned_to" class="inline"><option value="">—</option>${admins.map(a => `<option value="${a.id}"${l.assigned_to === a.id ? ' selected' : ''}>${esc(a.prenom || a.email)}</option>`).join('')}</select></td>
       <td><input type="date" data-f="next_action" class="inline" value="${l.next_action || ''}"></td>
       <td class="c">${photoBadge(l) || '<span class="muted">—</span>'}</td>
@@ -133,7 +133,7 @@
     $('leads-cards').innerHTML = rows.map(l => `<div class="mcard" data-open="${l.id}" role="button">
       <div class="mrow"><b>${esc(l.prenom)} ${esc(l.nom)}</b><span class="mrow" style="gap:6px">${photoBadge(l)}${scoreBadge(scoreLead(l))}</span></div>
       <div class="msub">${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}${l.ville ? ' · ' + esc(l.ville) : ''}</div>
-      <div class="mrow"><span class="num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</span><span class="pill">${STATUS_LABEL[l.status || 'nouveau']}</span></div>
+      <div class="mrow"><span class="num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</span><span class="pill st st-${l.status || 'nouveau'}">${STATUS_LABEL[l.status || 'nouveau']}</span></div>
       <div class="msub">${dt(l.created_at)}${l.assigned_to ? ' · ' + esc(adminName(l.assigned_to)) : ''}${l.next_action ? ' · prochaine action ' + esc(l.next_action) : ''}</div>
     </div>`).join('') || '<p class="empty">Aucun dossier.</p>';
   }
@@ -152,6 +152,7 @@
     const { error } = await sb.from('leads').update({ [f]: v }).eq('id', id);
     if (error) { alert('Enregistrement impossible : ' + error.message); return; }
     const l = leads.find(x => x.id === id); if (l) l[f] = v;
+    if (f === 'status') el.className = 'inline st st-' + (v || 'nouveau');
     if (f === 'next_action') renderLeads();
   });
   $('leads').addEventListener('click', e => { const ph = e.target.closest('[data-photos]'); if (ph) { openPhotos(+ph.dataset.photos); return; } const b = e.target.closest('[data-open]'); if (b) openLead(+b.dataset.open); });
@@ -501,7 +502,7 @@
       <td>${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}<small>${esc(l.ville || l.adresse || '')}</small></td>
       <td class="r num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</td>
       <td class="r num">${sc.valeur}</td><td class="r num">${sc.maturite}</td><td class="r num">${sc.engagement}</td>
-      <td>${STATUS_LABEL[l.status || 'nouveau']}</td>
+      <td><span class="pill st st-${l.status || 'nouveau'}">${STATUS_LABEL[l.status || 'nouveau']}</span></td>
       <td><button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
     </tr>`).join('') || '<tr><td colspan="9" class="empty">Aucun dossier.</td></tr>';
     $('sc-cards').innerHTML = list.map(({ l, sc }) => `<div class="mcard" data-open="${l.id}" role="button">

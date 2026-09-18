@@ -856,3 +856,14 @@ tr.lot td .loticon { width: 18px; height: 18px; vertical-align: -4px; }
   .progress li.reset a svg { width: 18px; height: 18px; }
   .progress li.reset a span { display: none; }
 }
+
+/* statut d'un dossier : une couleur par degré d'avancement, du gris du nouveau au vert du signé */
+.st { font-weight: 600; border-radius: 999px; }
+select.st { padding: 4px 26px 4px 10px; border-width: 1px; }
+.st-nouveau { background: #EEF1F5; color: #4A5866; border-color: #D3DAE1; }
+.st-contacte { background: #E3ECF9; color: #2457A6; border-color: #B9CCEA; }
+.st-relance { background: #FBF1D3; color: #8A6410; border-color: #EBD48F; }
+.st-visite { background: #E6E4F7; color: #4B3FA6; border-color: #C9C4EC; }
+.st-devis { background: #FCE7D6; color: #A5501B; border-color: #F2C7A6; }
+.st-signe { background: #DFF1E6; color: #2F855A; border-color: #A9D8BC; }
+.st-perdu { background: #F8E1E1; color: #A3262A; border-color: #EBB4B4; }
