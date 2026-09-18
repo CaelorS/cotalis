@@ -64,7 +64,7 @@
   }
   const margeOf = l => (l.payload && l.payload.interne && l.payload.interne.marge) || 0;
   const filesOf = l => (l.payload && l.payload.files) || [];
-  const photoBadge = l => filesOf(l).length ? `<button type="button" class="photos" data-photos="${l.id}" title="Voir les ${filesOf(l).length} fichier(s) déposé(s)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg><i>✓</i><small>${filesOf(l).length}</small></button>` : '';
+  const photoBadge = l => filesOf(l).length ? `<button type="button" class="photos" data-photos="${l.id}" title="Voir les ${filesOf(l).length} fichier(s) déposé(s)"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg><small>${filesOf(l).length}</small></button>` : '';
   const pct1 = v => (v * 100).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
   const cfHtml = v => v == null ? '' : `<span class="${v >= 0 ? 'cf-pos' : 'cf-neg'}">${v >= 0 ? '+' : '−'}${eur(Math.abs(v))}/mois</span>`;
   /* chiffres du projet complet : stockés à l'envoi depuis septembre 2026, recalculés pour les dossiers plus anciens */
