@@ -85,6 +85,46 @@
   const QTY_MODES = { surface: 'surface × coef.', units: 'logements × coef.', pieces_units: '(pièces + logements) × coef.', eau: 'pièces d\'eau × coef.', eau_units: '(pièces d\'eau + logements) × coef.', eau_minus_units: '(pièces d\'eau − logements) × coef., 1 minimum', units_half: 'logements ÷ 2 arrondi sup. × coef.', surface_per_level: 'surface ÷ niveaux × coef.', fixed: 'quantité fixe', niveaux: 'nombre de niveaux × coef.', facade: 'surface de façade estimée × coef.', toiture: 'surface de toiture estimée × coef.' };
   function qtyFn(mode, coef) { const f = QTY[mode] || QTY.units; const k = (coef == null || coef === '') ? 1 : +coef; return s => f(s, k); }
 
+  // Pourquoi cet ouvrage ? Explications en langage détendu, affichées au survol dans l'étape Travaux.
+  const WHY = {
+    dep_rev: "On enlève l'ancien avant de poser le neuf : vieux sols, faïence fatiguée, papiers peints d'une autre époque. Sans ça, le beau carrelage neuf se pose sur du bancal.",
+    dep_eq: "La cuisine et la salle de bain d'origine partent à la benne. C'est le préalable à toute pièce d'eau refaite, et ça libère la place pour les réseaux.",
+    benne: "Tout ce qu'on démonte doit partir quelque part, proprement et légalement. La benne, le transport et la déchetterie sont dedans, personne ne les voit mais tout le monde en a besoin.",
+    mur_np: "Ouvrir une cloison pour agrandir un séjour ou relier la cuisine : le geste qui change le plus la sensation d'espace, pour un prix raisonnable.",
+    mur_p: "Ouvrir un mur qui porte la maison demande une poutre, un bureau d'études et des mains sûres. Cher, mais parfois c'est ce qui rend le plan possible.",
+    cloison: "Créer une pièce, isoler une chambre, fermer un coin bureau : les cloisons redessinent le plan. Indispensable pour une colocation ou un T2 tiré d'un grand T1.",
+    plafond: "Un faux plafond cache les réseaux, isole du bruit du dessus et permet des spots encastrés. Utile quand le plafond d'origine est irrécupérable.",
+    elec: "Tableau, circuits, prises, luminaires : tout à neuf, aux normes. C'est ce que l'assureur, le locataire et le diagnostiqueur regardent en premier.",
+    tableau: "Le minimum vital quand l'installation est saine mais vieillotte : un tableau neuf, la terre, des différentiels. Ça sécurise sans tout refaire.",
+    colonne_elec: "Dans un immeuble, l'électricité monte par une colonne commune. Si elle date d'avant votre naissance, on la refait avant de brancher quoi que ce soit.",
+    colonne_plomb: "Même logique pour l'eau : une colonne montante neuve évite les fuites entre étages et les dégâts des eaux qui pourrissent une copropriété.",
+    tableaux_apt: "Un tableau par appartement, avec ses propres protections. Chaque locataire coupe chez lui sans plonger l'immeuble dans le noir.",
+    plomb: "Réseaux d'eau et d'évacuation refaits : fini les tuyaux en plomb, les fuites lentes et les pressions bizarres. On le fait pendant que les murs sont ouverts.",
+    ballon: "Un chauffe-eau électrique simple, fiable, pas cher. Le bon choix pour un petit logement ou un budget serré.",
+    thermo: "Le chauffe-eau thermodynamique consomme trois fois moins que l'électrique classique. Plus cher à l'achat, gagnant sur la facture et sur le DPE.",
+    radia: "Des radiateurs à inertie chauffent doucement et coûtent moins à l'usage que les vieux convecteurs. Vos locataires vous en seront reconnaissants en janvier.",
+    chaud: "Une chaudière gaz à condensation, pour les logements déjà raccordés au gaz : efficace, et souvent la solution la moins chère à faire tourner.",
+    vmc: "La ventilation évite la buée, les moisissures et l'air lourd. Obligatoire dans le neuf, et franchement recommandée partout où on refait une salle de bain.",
+    fen: "Des fenêtres double vitrage : moins de bruit, moins de froid, un DPE qui grimpe. L'un des postes les plus rentables sur la valeur du bien.",
+    iti: "Isoler les murs par l'intérieur, c'est perdre quelques centimètres et gagner beaucoup de confort. Le passage obligé pour sortir un logement de la catégorie passoire.",
+    combles: "La chaleur s'échappe par le toit. Isoler les combles est l'euro le mieux placé de toute la rénovation énergétique.",
+    porte: "Une porte d'entrée neuve : sécurité, isolation, et la première impression du locataire en visite.",
+    ravalement: "Une façade propre, c'est un immeuble qui se loue et se revend mieux, et une obligation légale tous les dix ans dans beaucoup de villes.",
+    ite: "Isoler par l'extérieur pendant qu'on ravale : même échafaudage, deux résultats. Le DPE fait un bond, et on ne perd pas un centimètre dedans.",
+    toit_rep: "Reprendre les tuiles cassées, les faîtages et la zinguerie avant que l'eau ne rentre. Une petite réparation aujourd'hui évite un plafond effondré demain.",
+    toit_neuf: "Quand la toiture est en fin de vie, on refait tout : écran, liteaux, couverture. Gros poste, mais tranquillité pour trente ans.",
+    sdb: "Douche à l'italienne, meuble vasque, faïence : la pièce qui fait basculer une visite. Une salle de bain propre loue plus vite et plus cher.",
+    wc: "Un WC séparé de la salle de bain est très apprécié, surtout en colocation ou en famille. Petit espace, gros confort.",
+    cuis: "Une cuisine équipée avec électroménager : pour un meublé, c'est ce que le locataire paie sans discuter. Et ça photographie bien dans l'annonce.",
+    ragr: "Avant un sol neuf, on met l'ancien à niveau. Sans ragréage, le parquet grince et le carrelage se fend.",
+    parq: "Du parquet dans les pièces de vie : chaleureux, durable, valorisant. Le contrecollé donne le rendu du massif pour moins cher.",
+    strat: "Le stratifié imite le bois, se pose vite et résiste bien. Le choix malin pour un budget serré ou une location qui tourne beaucoup.",
+    carr: "Du carrelage dans les pièces humides : cuisine, salle de bain, entrée. Il ne craint ni l'eau ni les années.",
+    peint: "Préparation et deux couches de peinture, murs et plafonds : le poste qui transforme visuellement le logement pour le moins cher. On ne s'en passe jamais.",
+    portes: "Des portes intérieures neuves, alignées et qui ferment : le détail qui fait sérieux et cohérent avec le reste des finitions.",
+    placard: "Des rangements sur mesure : les locataires les cherchent, les annonces les vantent, et ça évite les armoires bancales.",
+    nett: "Le chantier finit par un vrai nettoyage, vitres comprises. Vous récupérez un logement prêt à photographier et à louer.",
+  };
   const ITEMS = {};
   CATALOG.forEach(l => l.items.forEach(i => { i.lotName = l.lot; if (l.only && !i.only) i.only = l.only; i.qty = qtyFn(i.qm, i.qc); ITEMS[i.id] = i; }));
 
@@ -146,7 +186,7 @@
   const EAU_DEFAULT = { t1: 1, t2: 1, t3: 1, t4: 2, t5: 2, t6: 2 };
 
   root.COTALIA = Object.assign(root.COTALIA || {}, {
-    CATALOG, ITEMS, PRESET, RULES, RULE_FIELDS, RULE_OPS, QTY, QTY_MODES, qtyFn, REGION, GAMME, PIECES, EAU_DEFAULT, zoneFromAddress,
+    CATALOG, ITEMS, WHY, PRESET, RULES, RULE_FIELDS, RULE_OPS, QTY, QTY_MODES, qtyFn, REGION, GAMME, PIECES, EAU_DEFAULT, zoneFromAddress,
     MARGE: 0.18,      // marge brute sur le prix HT hors aléas
     PILOTAGE: 0.03,   // pilotage de chantier, sur les coûts directs
     FG: 0.08,         // frais généraux, sur les coûts directs

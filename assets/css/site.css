@@ -775,3 +775,11 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
 .photos i { font-style: normal; color: var(--good); font-weight: 700; font-size: 12px; }
 .photos small { color: var(--ink-3); font-size: 11px; }
 td.nowrap { white-space: nowrap; }
+
+/* ---------- infobulle des ouvrages ---------- */
+.whybtn { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-left: 6px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink-3); font-size: 11px; font-weight: 700; line-height: 1; vertical-align: 1px; cursor: help; padding: 0; }
+.whybtn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.tip { position: fixed; z-index: 60; background: var(--ink); color: #fff; padding: 12px 14px; border-radius: 8px; font-size: 13.5px; line-height: 1.5; box-shadow: 0 10px 30px rgba(23,33,43,.25); opacity: 0; transform: translateY(4px); pointer-events: none; transition: opacity .18s ease, transform .18s ease; }
+.tip.show { opacity: 1; transform: none; pointer-events: auto; }
+.tip b { display: block; font-family: "Barlow Condensed", sans-serif; font-size: 16px; letter-spacing: .02em; margin-bottom: 4px; color: var(--mark); }
+@media (max-width: 980px) { .whybtn { width: 22px; height: 22px; font-size: 12px; } }

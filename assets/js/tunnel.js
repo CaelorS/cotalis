@@ -353,7 +353,7 @@
           ${items.map(it => `
             <div class="item" data-item="${it.id}">
               <input type="checkbox" id="w-${it.id}" data-w="${it.id}">
-              <label class="lbl" for="w-${it.id}">${esc(it.label)}${it.tva === 5.5 ? '<span class="tva55">TVA 5,5 %</span>' : ''}<small>${it.sub ? esc(it.sub) + ' · ' : ''}<span class="pu num" data-pu="${it.id}"></span></small></label>
+              <label class="lbl" for="w-${it.id}" data-why="${it.id}">${esc(it.label)}${it.tva === 5.5 ? '<span class="tva55">TVA 5,5 %</span>' : ''}${C.WHY && C.WHY[it.id] ? `<button type="button" class="whybtn" data-whybtn="${it.id}" aria-label="À quoi ça sert ?">?</button>` : ''}<small>${it.sub ? esc(it.sub) + ' · ' : ''}<span class="pu num" data-pu="${it.id}"></span></small></label>
               <input type="number" min="0" step="1" data-q="${it.id}" inputmode="numeric" aria-label="Quantité ${esc(it.label)}">
               <span class="u">${it.unit}</span>
               <span class="tot num" data-tot="${it.id}"></span>
@@ -391,6 +391,38 @@
     });
     document.querySelectorAll('[data-lotsum]').forEach(el => { el.textContent = eur(R.lots[el.dataset.lotsum] || 0); });
   }
+
+  /* ---------- infobulle « à quoi ça sert ? » sur les ouvrages ---------- */
+  let tip = null, tipFor = null, tipTimer = null;
+  function showTip(id, anchor, sticky) {
+    const txt = C.WHY && C.WHY[id]; if (!txt) return;
+    if (!tip) { tip = document.createElement('div'); tip.className = 'tip'; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); }
+    clearTimeout(tipTimer);
+    tip.innerHTML = `<b>${esc(C.ITEMS[id].label)}</b>${esc(txt)}`;
+    tip.classList.add('show'); tip.dataset.sticky = sticky ? '1' : ''; tipFor = id;
+    const r = anchor.getBoundingClientRect(), w = Math.min(340, window.innerWidth - 24);
+    tip.style.width = w + 'px';
+    let left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12));
+    let top = r.bottom + 8;
+    if (top + tip.offsetHeight > window.innerHeight - 12) top = Math.max(12, r.top - tip.offsetHeight - 8);
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+  }
+  function hideTip(force) { if (!tip || (!force && tip.dataset.sticky === '1')) return; tip.classList.remove('show'); tipFor = null; }
+  $('tunnel').addEventListener('mouseover', e => {
+    const b = e.target.closest('[data-whybtn]'); const l = b ? null : e.target.closest('label[data-why]');
+    const id = b ? b.dataset.whybtn : (l ? l.dataset.why : null);
+    if (!id || !window.matchMedia('(hover: hover)').matches) return;
+    clearTimeout(tipTimer); tipTimer = setTimeout(() => showTip(id, b || l, false), 250);
+  });
+  $('tunnel').addEventListener('mouseout', e => { if (e.target.closest('[data-why], [data-whybtn]')) { clearTimeout(tipTimer); tipTimer = setTimeout(() => hideTip(false), 150); } });
+  $('tunnel').addEventListener('click', e => {
+    const b = e.target.closest('[data-whybtn]'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    if (tip && tip.classList.contains('show') && tipFor === b.dataset.whybtn && tip.dataset.sticky === '1') { hideTip(true); return; }
+    showTip(b.dataset.whybtn, b, true);
+  }, true);
+  document.addEventListener('click', e => { if (tip && !e.target.closest('.tip') && !e.target.closest('[data-whybtn]')) hideTip(true); });
+  window.addEventListener('scroll', () => hideTip(true), { passive: true });
 
   /* ---------- encadré d'estimation ---------- */
   function ready() { return S.kind && +S.surface > 0 && Object.keys(S.works).some(k => S.works[k]); }
