@@ -68,7 +68,7 @@
   const LABEL = { kind: 0, bien: 1, finition: 2, travaux: 3, financeQ: 4, acquisition: 4, situation: 4, contact: 5, resultat: 6 };
   const NEXT_LABEL = { kind: 'Continuer', bien: 'Continuer', finition: 'Voir mes travaux', travaux: 'Valider mes travaux', financeQ: 'Continuer', acquisition: 'Continuer', situation: 'Continuer', contact: 'Voir mon estimation' };
   const KIND = { appart: 'Appartement', maison: 'Maison', immeuble: 'Immeuble' };
-  const STADE = { etude: 'en étude', compromis: 'sous compromis', acte: 'acte signé' };
+  const STADE = { etude: 'en étude', compromis: 'sous compromis', acte: 'acte signé', proprio: 'déjà propriétaire' };
   const STRAT = { nue: 'location nue', meuble: 'meublé (LMNP)', coloc: 'colocation meublée', revente: 'revente après travaux' };
   const TRI = { oui: 'oui', non: 'non', '': 'non renseigné', plan: 'à planifier' };
 

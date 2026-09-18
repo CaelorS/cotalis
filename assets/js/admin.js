@@ -12,6 +12,8 @@
   const FIN = { oui: 'Accompagné', renta: 'Rentabilité seule', non: 'Sans rentabilité' };
   const EPOQUE = { '1930': 'avant 1948', '1960': '1948-1974', '1982': '1975 et après', '2000': '1975 et après', '2016': '1975 et après', '2025': 'neuf' };
   const epoque = a => EPOQUE[String(a)] || (a ? String(a) : '?');
+  const STADE_LABEL = { etude: 'en étude', compromis: 'sous compromis', acte: 'acte signé', proprio: 'déjà propriétaire' };
+  const stadeLabel = v => STADE_LABEL[v] || v || '';
   const DEM = { '1': 'dès que possible', '3': 'sous 3 mois', '6': 'sous 6 mois', later: 'travaux non planifiés' };
   const demLabel = d => DEM[String(d || '')] || '';
   let sb = null, leads = [], admins = [], pricingLoaded = false, dirty = new Set();
@@ -257,7 +259,7 @@
         <div class="box"><h3>Contact</h3><table class="kv">
           <tr><td>E-mail</td><td><a href="mailto:${esc(l.email)}">${esc(l.email)}</a></td></tr><tr><td>Téléphone</td><td><a href="tel:${esc(l.tel)}">${esc(l.tel)}</a></td></tr>
           <tr><td>Demande</td><td>${l.kind === 'rappel' ? 'Rappel pour visite technique' : 'Estimation'} · ${dt(l.created_at)}</td></tr>
-          <tr><td>Stade</td><td>${esc(l.stade || '')} · ${esc(demLabel(l.demarrage) || 'démarrage non précisé')}</td></tr>
+          <tr><td>Stade</td><td>${esc(stadeLabel(l.stade))} · ${esc(demLabel(l.demarrage) || 'démarrage non précisé')}</td></tr>
           <tr><td>Projet partagé</td><td>${l.project_id ? `<a href="/estimation/?p=${encodeURIComponent(l.project_id)}" target="_blank" rel="noopener">ouvrir l'estimation</a>` : '—'}</td></tr>
         </table></div>
         <div class="box"><h3>Bien</h3><table class="kv">
@@ -483,7 +485,7 @@
   const SC_DEFAULT = {
     poids: { valeur: 40, maturite: 35, engagement: 25 },
     valeur: { ttc_15k: 10, ttc_40k: 25, ttc_80k: 40, ttc_plus: 50, marge_3k: 5, marge_8k: 15, marge_plus: 25, finance_oui: 15, bien_entier: 10 },
-    maturite: { stade_etude: 10, stade_compromis: 35, stade_acte: 50, dem_6: 10, dem_3: 20, dem_1: 30, finance_ok: 20, adresse_precise: 10 },
+    maturite: { stade_etude: 10, stade_compromis: 35, stade_acte: 50, stade_proprio: 45, dem_6: 10, dem_3: 20, dem_1: 30, finance_ok: 20, adresse_precise: 10 },
     engagement: { rappel: 30, fichiers: 20, travaux_modifies: 15, partage: 15, compte: 10, session_unique: 10 },
     paliers: { A: 70, B: 50, C: 30 },
     regles: { acte_immediat_A: 1, plancher_ttc_C: 5000 },
@@ -491,7 +493,7 @@
   const SC_LABELS = {
     poids: ['Pondération de la note globale (%)', { valeur: 'Valeur', maturite: 'Maturité', engagement: 'Engagement' }],
     valeur: ['Valeur du dossier', { ttc_15k: 'Travaux < 15 k€', ttc_40k: 'Travaux 15 à 40 k€', ttc_80k: 'Travaux 40 à 80 k€', ttc_plus: 'Travaux > 80 k€', marge_3k: 'Marge < 3 k€', marge_8k: 'Marge 3 à 8 k€', marge_plus: 'Marge > 8 k€', finance_oui: 'Accompagnement financement demandé', bien_entier: 'Maison ou immeuble' }],
-    maturite: ['Maturité', { stade_etude: 'En étude', stade_compromis: 'Sous compromis', stade_acte: 'Acte signé', dem_6: 'Démarrage sous 6 mois', dem_3: 'Démarrage sous 3 mois', dem_1: 'Démarrage dès que possible', finance_ok: 'Financement acquis ou accompagné', adresse_precise: 'Adresse précise choisie dans la liste' }],
+    maturite: ['Maturité', { stade_etude: 'En étude', stade_compromis: 'Sous compromis', stade_acte: 'Acte signé', stade_proprio: 'Déjà propriétaire', dem_6: 'Démarrage sous 6 mois', dem_3: 'Démarrage sous 3 mois', dem_1: 'Démarrage dès que possible', finance_ok: 'Financement acquis ou accompagné', adresse_precise: 'Adresse précise choisie dans la liste' }],
     engagement: ['Engagement', { rappel: 'Rappel visite technique demandé', fichiers: 'Plans ou photos déposés', travaux_modifies: 'Travaux modifiés à la main', partage: 'Estimation partagée ou rouverte', compte: 'Compte créé, téléphone valide', session_unique: 'Parcours complet d\'une traite' }],
     paliers: ['Paliers (note globale minimale)', { A: 'Lettre A à partir de', B: 'Lettre B à partir de', C: 'Lettre C à partir de' }],
     regles: ['Règles prioritaires', { acte_immediat_A: 'Acte signé + démarrage immédiat ⇒ A (1 = oui, 0 = non)', plancher_ttc_C: 'Travaux sous ce montant ⇒ plafonné à C (€)' }],
@@ -510,7 +512,7 @@
     if (marge) { const pts = marge < 3000 ? V.marge_3k : marge < 8000 ? V.marge_8k : V.marge_plus; v += pts; why.valeur.push('Marge ' + eur(marge) + ' : +' + pts); }
     if (l.finance === 'oui') { v += V.finance_oui; why.valeur.push('Accompagnement financement : +' + V.finance_oui); }
     if (l.type_bien === 'maison' || l.type_bien === 'immeuble') { v += V.bien_entier; why.valeur.push((KIND[l.type_bien]) + ' : +' + V.bien_entier); }
-    const st = { etude: M.stade_etude, compromis: M.stade_compromis, acte: M.stade_acte }[l.stade]; if (st != null) { m += st; why.maturite.push('Stade ' + l.stade + ' : +' + st); }
+    const st = { etude: M.stade_etude, compromis: M.stade_compromis, acte: M.stade_acte, proprio: M.stade_proprio == null ? M.stade_acte : M.stade_proprio }[l.stade]; if (st != null) { m += st; why.maturite.push('Stade ' + stadeLabel(l.stade) + ' : +' + st); }
     const dm = { '6': M.dem_6, '3': M.dem_3, '1': M.dem_1 }[String(l.demarrage || '')]; if (dm != null) { m += dm; why.maturite.push('Démarrage sous ' + l.demarrage + ' mois : +' + dm); }
     if (l.finance === 'oui' || l.finance === 'renta') { m += M.finance_ok; why.maturite.push('Financement ' + (l.finance === 'oui' ? 'accompagné' : 'acquis') + ' : +' + M.finance_ok); }
     if (l.cp && l.ville) { m += M.adresse_precise; why.maturite.push('Adresse précise : +' + M.adresse_precise); }
@@ -524,7 +526,7 @@
     const w = SC.poids, tw = (w.valeur + w.maturite + w.engagement) || 100;
     let total = Math.round((v * w.valeur + m * w.maturite + e * w.engagement) / tw);
     let letter = total >= SC.paliers.A ? 'A' : total >= SC.paliers.B ? 'B' : total >= SC.paliers.C ? 'C' : 'D', rule = '';
-    if (SC.regles.acte_immediat_A && l.stade === 'acte' && String(l.demarrage) === '1') { letter = 'A'; rule = 'acte signé et démarrage immédiat, passé en A'; }
+    if (SC.regles.acte_immediat_A && (l.stade === 'acte' || l.stade === 'proprio') && String(l.demarrage) === '1') { letter = 'A'; rule = 'acte signé et démarrage immédiat, passé en A'; }
     if (SC.regles.plancher_ttc_C && ttc && ttc < SC.regles.plancher_ttc_C && letter < 'C') { letter = 'C'; rule = 'travaux sous ' + eur(SC.regles.plancher_ttc_C) + ', plafonné à C'; }
     return { total, letter, valeur: v, maturite: m, engagement: e, why, rule };
   }
@@ -564,7 +566,7 @@
     $('sc-count').textContent = list.length + ' dossier' + (list.length > 1 ? 's' : '');
     $('sc-table').querySelector('tbody').innerHTML = list.map(({ l, sc }) => `<tr data-id="${l.id}">
       <td>${scoreBadge(sc)}</td>
-      <td><b>${esc(l.prenom)} ${esc(l.nom)}</b><small>${dt(l.created_at)} · ${esc(l.stade || '')}${demLabel(l.demarrage) ? ' · ' + esc(demLabel(l.demarrage)) : ''}</small></td>
+      <td><b>${esc(l.prenom)} ${esc(l.nom)}</b><small>${dt(l.created_at)} · ${esc(stadeLabel(l.stade))}${demLabel(l.demarrage) ? ' · ' + esc(demLabel(l.demarrage)) : ''}</small></td>
       <td>${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}<small>${esc(l.ville || l.adresse || '')}</small></td>
       <td class="r num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</td>
       <td class="r num">${sc.valeur}</td><td class="r num">${sc.maturite}</td><td class="r num">${sc.engagement}</td>
@@ -573,7 +575,7 @@
     </tr>`).join('') || '<tr><td colspan="9" class="empty">Aucun dossier.</td></tr>';
     $('sc-cards').innerHTML = list.map(({ l, sc }) => `<div class="mcard" data-open="${l.id}" role="button">
       <div class="mrow"><b>${esc(l.prenom)} ${esc(l.nom)}</b>${scoreBadge(sc)}</div>
-      <div class="msub">${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}${l.ville ? ' · ' + esc(l.ville) : ''} · ${esc(l.stade || '')}</div>
+      <div class="msub">${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}${l.ville ? ' · ' + esc(l.ville) : ''} · ${esc(stadeLabel(l.stade))}</div>
       <div class="mrow"><span class="num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</span><span class="msub">V ${sc.valeur} · M ${sc.maturite} · E ${sc.engagement}</span></div>
     </div>`).join('') || '<p class="empty">Aucun dossier.</p>';
   }
