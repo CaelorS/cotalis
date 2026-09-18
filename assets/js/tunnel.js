@@ -98,7 +98,7 @@
     $('progress-wrap').classList.toggle('hidden', viewer);
     $('btn-prev').classList.toggle('hidden', idx === 0);
     $('btn-next').textContent = NEXT_LABEL[S.step] || 'Continuer';
-    hideErr(true);
+    hideErr(true); hideOk();
     $('panel').classList.toggle('hidden', S.step === 'resultat' || viewer);
 
     if (S.step === 'acquisition') proposeAcquisition();
@@ -126,10 +126,42 @@
     el.classList.add('leaving');
     errTimer = setTimeout(() => { el.classList.add('hidden'); el.classList.remove('leaving'); }, 420);
   }
-  function refreshErr() {   // l'erreur affichée s'efface d'elle-même dès que la saisie la corrige
+  // Quelle erreur était affichée ? On en déduit l'encouragement à montrer une fois corrigée.
+  const ERR_KEYS = [[/type de bien/i, 'kind'], [/adresse/i, 'adresse'], [/surface/i, 'surface'], [/état général/i, 'etat'], [/deux logements/i, 'nbapts'], [/fichier/i, 'files'], [/ouvrage/i, 'works'], [/trois options/i, 'finance'], [/prix d'achat/i, 'prix'], [/loyer/i, 'loyer'], [/prénom/i, 'nom'], [/téléphone/i, 'tel'], [/e-mail/i, 'email'], [/petite case/i, 'consent'], [/mot de passe/i, 'password']];
+  function errKey(msg) { const f = ERR_KEYS.find(x => x[0].test(msg)); return f ? f[1] : ''; }
+  function okFor(key) {
+    const etatSel = $('etat').querySelector(`option[value="${S.etat}"]`);
+    const n = Object.keys(S.works).filter(k => S.works[k]).length;
+    switch (key) {
+      case 'adresse': return `Adresse notée${S.ville ? ' : ' + esc(S.ville) : ''}. On sait où envoyer les artisans.`;
+      case 'surface': return `${fmt(S.surface)} m², c'est noté. Là, on peut chiffrer.`;
+      case 'etat': return `« ${esc(etatSel ? etatSel.textContent : S.etat)} », parfait : les travaux vont se pré-remplir en conséquence.`;
+      case 'nbapts': return `${fmt(S.nbapts)} appartements : on tient un immeuble.`;
+      case 'files': return 'Fichier reçu, merci. Il resserrera la fourchette.';
+      case 'works': return `${n} ouvrage${n > 1 ? 's' : ''} retenu${n > 1 ? 's' : ''}, le chantier prend forme.`;
+      case 'finance': return 'Bien noté, on continue.';
+      case 'prix': return `${eur(+S.prix)} d'achat : la rentabilité peut se calculer.`;
+      case 'loyer': return `${eur(+S.loyer)} de loyer visé, on a tout pour la renta.`;
+      case 'nom': return `Enchantés, ${esc(S.contact.prenom.trim())} ! Il ne manque plus grand-chose.`;
+      case 'tel': return 'Numéro noté. On n\'appelle qu\'avec une bonne raison.';
+      case 'email': return `E-mail noté : le PDF arrivera chez ${esc(S.contact.email)}.`;
+      case 'consent': return 'Merci ! Tout est prêt, place à votre estimation.';
+      case 'password': return 'Mot de passe solide. Vos estimations vous attendront ici.';
+    }
+    return 'C\'est bon, on peut continuer.';
+  }
+  let okTimer = null;
+  function showOk(msg) {
+    const el = $('okmsg'); if (!el) return; clearTimeout(okTimer);
+    el.innerHTML = msg; el.classList.remove('leaving'); el.classList.remove('hidden');
+    okTimer = setTimeout(() => { el.classList.add('leaving'); okTimer = setTimeout(() => { el.classList.add('hidden'); el.classList.remove('leaving'); }, 420); }, 4500);
+  }
+  function hideOk() { const el = $('okmsg'); if (!el) return; clearTimeout(okTimer); el.classList.add('hidden'); el.classList.remove('leaving'); }
+  function refreshErr() {   // l'erreur affichée s'efface d'elle-même dès que la saisie la corrige, et laisse place à un encouragement
     const el = $('err'); if (el.classList.contains('hidden') || errKind !== 'validate') return;
     const err = validate();
-    if (!err) hideErr(); else if (el.textContent !== err) el.textContent = err;
+    if (!err) { const key = errKey(el.textContent); hideErr(); setTimeout(() => showOk(okFor(key)), 200); }
+    else if (el.textContent !== err) el.textContent = err;
   }
   function validate() {
     const c = S.contact;
