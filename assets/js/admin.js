@@ -16,6 +16,10 @@
   const demLabel = d => DEM[String(d || '')] || '';
   let sb = null, leads = [], admins = [], pricingLoaded = false, dirty = new Set();
 
+  /* ---------- hauteur de l'en-tête fixe, pour caler la barre d'actions ---------- */
+  function stickH() { const st = document.querySelector('.stick'); if (st) document.documentElement.style.setProperty('--stick-h', st.offsetHeight + 'px'); }
+  window.addEventListener('resize', stickH); window.addEventListener('load', stickH); stickH();
+
   /* ---------- accès ---------- */
   A.onChange(a => {
     sb = a.sb;
@@ -79,6 +83,7 @@
   }
   const finCell = l => { const f = finOf(l); if (!f) return ''; return `<span class="fin-sub">projet ${eur(f.total)}</span><span class="fin-sub">renta ${pct1(f.brut)}${f.cf != null ? ' · ' + cfHtml(f.cf) : ''}</span>`; };
   let sortKey = 'date', sortDir = -1;   // -1 décroissant, 1 croissant
+  const selected = new Set(); let leadRows = [];   // sélection pour les actions en masse, lignes affichées
   const STATUS_RANK = Object.fromEntries(STATUS.map((s, i) => [s[0], i]));
   const adminName = id => { const a = admins.find(x => x.id === id); return a ? (a.prenom || a.email) : ''; };
   const SORTERS = {
@@ -98,7 +103,8 @@
     const q = $('q').value.trim().toLowerCase(), fs = $('f-status').value, fa = $('f-assign').value;
     const fk = $('f-kind').value, ff = $('f-fin').value, fst = $('f-stade').value, ft = $('f-type').value, fv = $('f-ville').value.trim().toLowerCase();
     const fmin = $('f-min').value === '' ? null : +$('f-min').value, fmax = $('f-max').value === '' ? null : +$('f-max').value, ffrom = $('f-from').value, fto = $('f-to').value;
-    let rows = leads.filter(l => l.kind !== 'test');
+    const view = $('f-view').value;
+    let rows = leads.filter(l => l.kind !== 'test' && (view === 'archived' ? !!l.archived_at : !l.archived_at));
     if (q) rows = rows.filter(l => [l.prenom, l.nom, l.email, l.ville, l.adresse, l.ref, l.tel].join(' ').toLowerCase().includes(q));
     if (fs) rows = rows.filter(l => (l.status || 'nouveau') === fs);
     if (fa === 'none') rows = rows.filter(l => !l.assigned_to); else if (fa) rows = rows.filter(l => l.assigned_to === fa);
@@ -114,9 +120,14 @@
     const key = SORTERS[sortKey] || SORTERS.date;
     rows.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'fr')) * sortDir; });
     document.querySelectorAll('#leads th[data-sort]').forEach(th => { th.classList.toggle('asc', th.dataset.sort === sortKey && sortDir === 1); th.classList.toggle('desc', th.dataset.sort === sortKey && sortDir === -1); th.setAttribute('aria-sort', th.dataset.sort === sortKey ? (sortDir === 1 ? 'ascending' : 'descending') : 'none'); });
-    $('count').textContent = rows.length + ' dossier' + (rows.length > 1 ? 's' : '');
+    leadRows = rows;
+    const nArch = leads.filter(l => l.kind !== 'test' && l.archived_at).length;
+    $('f-view').options[1].textContent = 'Archives' + (nArch ? ' (' + nArch + ')' : '');
+    $('count').textContent = rows.length + ' dossier' + (rows.length > 1 ? 's' : '') + (view === 'archived' ? ' archivé' + (rows.length > 1 ? 's' : '') : '');
+    updateBulk();
     const today = new Date().toISOString().slice(0, 10);
-    $('leads').querySelector('tbody').innerHTML = rows.map(l => `<tr data-id="${l.id}" class="${l.next_action && l.next_action < today ? 'late' : ''}">
+    $('leads').querySelector('tbody').innerHTML = rows.map(l => `<tr data-id="${l.id}" class="${l.next_action && l.next_action < today ? 'late' : ''}${selected.has(l.id) ? ' sel' : ''}">
+      <td class="chk"><input type="checkbox" data-sel="${l.id}"${selected.has(l.id) ? ' checked' : ''} aria-label="Sélectionner"></td>
       <td class="num">${dt(l.created_at)}${l.kind === 'rappel' ? '<span class="pill">rappel</span>' : ''}</td>
       <td><b>${esc(l.prenom)} ${esc(l.nom)}</b><small>${esc(l.email)}<br>${esc(l.tel)}</small></td>
       <td>${esc(KIND[l.type_bien] || l.type_bien || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}<small>${esc(l.ville || l.adresse || '')}</small></td>
@@ -129,15 +140,45 @@
       <td><input type="date" data-f="next_action" class="inline" value="${l.next_action || ''}"></td>
       <td class="c">${photoBadge(l) || '<span class="muted">—</span>'}</td>
       <td class="nowrap"><button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
-    </tr>`).join('') || '<tr><td colspan="12" class="empty">Aucun dossier.</td></tr>';
-    $('leads-cards').innerHTML = rows.map(l => `<div class="mcard" data-open="${l.id}" role="button">
-      <div class="mrow"><b>${esc(l.prenom)} ${esc(l.nom)}</b><span class="mrow" style="gap:6px">${photoBadge(l)}${scoreBadge(scoreLead(l))}</span></div>
+    </tr>`).join('') || '<tr><td colspan="13" class="empty">Aucun dossier.</td></tr>';
+    $('leads-cards').innerHTML = rows.map(l => `<div class="mcard${selected.has(l.id) ? ' sel' : ''}" data-open="${l.id}" role="button">
+      <div class="mrow"><span class="mrow" style="gap:8px"><label class="mchk"><input type="checkbox" data-sel="${l.id}"${selected.has(l.id) ? ' checked' : ''} aria-label="Sélectionner"></label><b>${esc(l.prenom)} ${esc(l.nom)}</b></span><span class="mrow" style="gap:6px">${photoBadge(l)}${scoreBadge(scoreLead(l))}</span></div>
       <div class="msub">${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}${l.ville ? ' · ' + esc(l.ville) : ''}</div>
       <div class="mrow"><span class="num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</span><span class="pill st st-${l.status || 'nouveau'}">${STATUS_LABEL[l.status || 'nouveau']}</span></div>
       <div class="msub">${dt(l.created_at)}${l.assigned_to ? ' · ' + esc(adminName(l.assigned_to)) : ''}${l.next_action ? ' · prochaine action ' + esc(l.next_action) : ''}</div>
     </div>`).join('') || '<p class="empty">Aucun dossier.</p>';
   }
-  $('leads-cards').addEventListener('click', e => { const ph = e.target.closest('[data-photos]'); if (ph) { e.stopPropagation(); openPhotos(+ph.dataset.photos); return; } const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });
+  /* ---------- sélection et actions en masse ---------- */
+  function updateBulk() {
+    const n = selected.size, view = $('f-view').value;
+    $('bulk').classList.toggle('hidden', !n);
+    $('bulk-n').textContent = n + ' dossier' + (n > 1 ? 's' : '') + ' sélectionné' + (n > 1 ? 's' : '');
+    $('bulk-arch').classList.toggle('hidden', view === 'archived'); $('bulk-restore').classList.toggle('hidden', view !== 'archived');
+    const all = leadRows.length && leadRows.every(l => selected.has(l.id));
+    $('chk-all').checked = all; $('chk-all-h').checked = all;
+    $('chk-all-h').indeterminate = !all && leadRows.some(l => selected.has(l.id));
+    if ($('bulk-status').options.length === 1) $('bulk-status').innerHTML += STATUS.map(st => `<option value="${st[0]}">${st[1]}</option>`).join('');
+    $('bulk-assign').innerHTML = '<option value="">Changer le responsable…</option><option value="none">Personne</option>' + admins.map(a => `<option value="${a.id}">${esc(a.prenom || a.email)}</option>`).join('');
+  }
+  function toggleSel(id, on) { if (on) selected.add(id); else selected.delete(id); document.querySelectorAll(`[data-sel="${id}"]`).forEach(c => { c.checked = on; const row = c.closest('tr, .mcard'); if (row) row.classList.toggle('sel', on); }); updateBulk(); }
+  function selectAll(on) { leadRows.forEach(l => { if (on) selected.add(l.id); else selected.delete(l.id); }); renderLeads(); }
+  async function bulkLeads(patch) {
+    const ids = [...selected]; if (!ids.length) return;
+    const { error } = await sb.from('leads').update(patch).in('id', ids);
+    if (error) { alert('Action impossible : ' + error.message + (/archived_at/.test(error.message) ? '\n\nExécutez supabase/schema-v5.sql dans Supabase.' : '')); return; }
+    leads.forEach(l => { if (selected.has(l.id)) Object.assign(l, patch, { updated_at: new Date().toISOString() }); });
+    selected.clear(); renderLeads();
+  }
+  ['chk-all', 'chk-all-h'].forEach(id => $(id).addEventListener('change', e => selectAll(e.target.checked)));
+  $('bulk-clear').addEventListener('click', () => { selected.clear(); renderLeads(); });
+  $('bulk-status').addEventListener('change', e => { const v = e.target.value; e.target.value = ''; if (v) bulkLeads({ status: v }); });
+  $('bulk-assign').addEventListener('change', e => { const v = e.target.value; e.target.value = ''; if (v) bulkLeads({ assigned_to: v === 'none' ? null : v }); });
+  $('bulk-arch').addEventListener('click', () => bulkLeads({ archived_at: new Date().toISOString() }));
+  $('bulk-restore').addEventListener('click', () => bulkLeads({ archived_at: null }));
+  $('f-view').addEventListener('change', () => { selected.clear(); renderLeads(); });
+  $('leads').addEventListener('change', e => { const c = e.target.closest('[data-sel]'); if (c) toggleSel(+c.dataset.sel, c.checked); });
+  $('leads-cards').addEventListener('change', e => { const c = e.target.closest('[data-sel]'); if (c) toggleSel(+c.dataset.sel, c.checked); });
+  $('leads-cards').addEventListener('click', e => { if (e.target.closest('.mchk')) { e.stopPropagation(); return; } const ph = e.target.closest('[data-photos]'); if (ph) { e.stopPropagation(); openPhotos(+ph.dataset.photos); return; } const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });
   const FILTER_IDS = ['q', 'f-status', 'f-assign', 'f-kind', 'f-fin', 'f-stade', 'f-type', 'f-ville', 'f-min', 'f-max', 'f-from', 'f-to'];
   FILTER_IDS.forEach(id => $(id).addEventListener('input', renderLeads));
   $('f-reset').addEventListener('click', () => { FILTER_IDS.forEach(id => { $(id).value = ''; }); renderLeads(); });
@@ -163,10 +204,10 @@
     stOpenFor = id;
     stlist.innerHTML = STATUS.map(st => `<button type="button" class="pill st st-${st[0]}${(l.status || 'nouveau') === st[0] ? ' cur' : ''}" data-stpick="${st[0]}">${st[1]}</button>`).join('');
     stlist.classList.remove('hidden');
-    // centré sur le bouton, au-dessus de lui ; en dessous s'il manque de place en haut
-    const r = btn.getBoundingClientRect(), h = stlist.offsetHeight, w = stlist.offsetWidth, above = r.top - 8 - h >= 8;
+    // par-dessus le bouton : le menu est centré sur lui, et reste dans l'écran
+    const r = btn.getBoundingClientRect(), h = stlist.offsetHeight, w = stlist.offsetWidth;
     stlist.style.left = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - 8)) + 'px';
-    stlist.style.top = (above ? r.top - 8 - h : Math.min(r.bottom + 8, innerHeight - h - 8)) + 'px';
+    stlist.style.top = Math.max(8, Math.min(r.top + r.height / 2 - h / 2, innerHeight - h - 8)) + 'px';
   }
   function closeStatusMenu() { stlist.classList.add('hidden'); stOpenFor = null; }
   stlist.addEventListener('click', async e => {
@@ -511,7 +552,7 @@
   }
   function renderScoring() {
     const fl = $('sc-letter').value, fs = $('sc-status').value;
-    let rows = leads.filter(l => l.kind !== 'test' && l.kind !== 'rappel');
+    let rows = leads.filter(l => l.kind !== 'test' && l.kind !== 'rappel' && !l.archived_at);
     if (fs !== 'all') rows = rows.filter(l => !['signe', 'perdu'].includes(l.status));
     const scored = rows.map(l => ({ l, sc: scoreLead(l) }));
     let list = fl ? scored.filter(x => x.sc.letter === fl) : scored;
@@ -597,6 +638,7 @@
   const T_STEPS = [['kind', 'Bien'], ['bien', 'Descriptif'], ['finition', 'Finition'], ['travaux', 'Travaux'], ['financeQ', 'Financement'], ['acquisition', 'Acquisition'], ['situation', 'Situation'], ['contact', 'Coordonnées'], ['resultat', 'Estimation']];
   const T_LABEL = Object.fromEntries(T_STEPS);
   let sessions = [], tSortKey = 'date', tSortDir = -1;
+  const tSelected = new Set(); let tRows = [];
   const median = arr => { const a = arr.filter(x => x != null && isFinite(x)).sort((x, y) => x - y); if (!a.length) return null; const m = Math.floor(a.length / 2); return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
   const dur = ms => { if (ms == null) return '—'; const s = Math.round(ms / 1000); if (s < 60) return s + ' s'; if (s < 3600) return Math.floor(s / 60) + ' min ' + String(s % 60).padStart(2, '0') + ' s'; return Math.floor(s / 3600) + ' h ' + String(Math.floor(s % 3600 / 60)).padStart(2, '0'); };
   async function loadTunnel() {
@@ -618,15 +660,17 @@
     return Math.max.apply(null, t) - Math.min.apply(null, t);
   }
   function renderTunnel() {
-    const dev = $('t-device').value, st = $('t-state').value;
-    let rows = sessions.slice();
+    const dev = $('t-device').value, st = $('t-state').value, tView = $('t-view').value;
+    let rows = sessions.filter(x => !x.archived_at);   // les statistiques ne comptent que les parcours actifs
     if (dev) rows = rows.filter(x => x.device === dev);
     if (st === 'done') rows = rows.filter(x => x.completed_at); else if (st === 'abandon') rows = rows.filter(x => !x.completed_at);
     const started = rows.length, done = rows.filter(x => x.completed_at).length;
     const medDone = median(rows.filter(x => x.completed_at).map(sessionDuration));
     const mobile = rows.filter(x => x.device === 'mobile').length;
     const withContact = rows.filter(x => (x.max_step || 0) >= 7).length;
-    $('t-count').textContent = started + ' parcours';
+    const nArch = sessions.filter(x => x.archived_at).length;
+    $('t-view').options[1].textContent = 'Archives' + (nArch ? ' (' + nArch + ')' : '');
+    $('t-count').textContent = started + ' parcours' + (nArch ? ' · ' + nArch + ' archivé' + (nArch > 1 ? 's' : '') : '');
     $('t-kpis').innerHTML = [
       ['Parcours commencés', started, mobile ? Math.round(mobile / started * 100) + ' % sur mobile' : ''],
       ['Estimations complètes', done, started ? Math.round(done / started * 100) + ' % de conversion' : ''],
@@ -645,12 +689,15 @@
       return { k, label, n, prev, loss, i };
     });
     $('t-funnel').querySelector('tbody').innerHTML = lossRows.map(r => `<tr class="${r.i === worst ? 'late' : ''}"><td><b>${r.label}</b>${['acquisition', 'situation'].includes(r.k) ? '<small>étape optionnelle, selon le choix de financement</small>' : ''}</td><td class="r num">${r.n}</td><td class="r num">${started ? Math.round(r.n / started * 100) + ' %' : '—'}</td><td class="r num">${r.i && r.prev ? '−' + Math.round(r.loss * 100) + ' %' : '—'}</td><td class="r num">${exits[r.i] || 0}</td><td class="r num">${dur(times[r.i])}</td><td class="r num">${reach[r.i].filter(x => x.device === 'mobile').length}</td><td class="r num">${reach[r.i].filter(x => x.device === 'ordinateur').length}</td></tr>`).join('');
-    // parcours
+    // parcours : la liste suit la vue (actifs ou archives), avec les mêmes filtres d'appareil et d'état
+    if (tView === 'archived') { rows = sessions.filter(x => x.archived_at); if (dev) rows = rows.filter(x => x.device === dev); if (st === 'done') rows = rows.filter(x => x.completed_at); else if (st === 'abandon') rows = rows.filter(x => !x.completed_at); }
     const key = { date: x => x.started_at || '', device: x => x.device || '', bien: x => (KIND[x.kind] || '') + (x.surface || ''), step: x => x.max_step || 0, done: x => x.completed_at ? 1 : 0, duration: x => sessionDuration(x) || 0, ttc: x => +x.ttc || 0, total: x => +((x.data || {}).total) || 0, renta: x => +((x.data || {}).brut) || 0, finance: x => x.finance || '' }[tSortKey];
     rows.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'fr')) * tSortDir; });
     document.querySelectorAll('#t-sessions th[data-sort]').forEach(th => { th.classList.toggle('asc', th.dataset.sort === tSortKey && tSortDir === 1); th.classList.toggle('desc', th.dataset.sort === tSortKey && tSortDir === -1); });
     const leadByRef = Object.fromEntries(leads.map(l => [l.project_id, l]));
-    $('t-sessions').querySelector('tbody').innerHTML = rows.map(x => { const l = leadByRef[x.id]; return `<tr>
+    tRows = rows; updateTBulk();
+    $('t-sessions').querySelector('tbody').innerHTML = rows.map(x => { const l = leadByRef[x.id]; return `<tr class="${tSelected.has(x.id) ? 'sel' : ''}">
+      <td class="chk"><input type="checkbox" data-tsel="${esc(x.id)}"${tSelected.has(x.id) ? ' checked' : ''} aria-label="Sélectionner"></td>
       <td class="num">${new Date(x.started_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
       <td>${esc(x.device || '—')}</td>
       <td>${esc(KIND[x.kind] || '—')}${x.surface ? ' · ' + x.surface + ' m²' : ''}<small>${esc((x.data && x.data.etat) || '')}${x.data && x.data.works ? ' · ' + x.data.works + ' ouvrages' : ''}</small></td>
@@ -662,15 +709,38 @@
       <td>${esc(FIN[x.finance] || '—')}</td>
       <td class="r num">${x.data && x.data.total ? pct1(x.data.brut || 0) + (x.data.cf != null ? '<small>' + cfHtml(x.data.cf) + '</small>' : '') : '—'}</td>
       <td>${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip, l.id) : x.user_id ? accountChip(x) : x.ip ? ipChip(x.ip) : '—'}</td>
-    </tr>`; }).join('') || '<tr><td colspan="11" class="empty">Aucun parcours sur la période.</td></tr>';
-    $('t-cards').innerHTML = rows.map(x => { const l = leadByRef[x.id]; return `<div class="mcard"${l ? ` data-open="${l.id}" role="button"` : ''}>
-      <div class="mrow">${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip) : x.user_id ? accountChip(x) : x.ip ? ipChip(x.ip) : '<span class="msub">anonyme</span>'}${x.completed_at ? '<span class="pill" style="background:var(--good-soft);color:var(--good)">complet</span>' : '<span class="pill">incomplet</span>'}</div>
+    </tr>`; }).join('') || '<tr><td colspan="12" class="empty">Aucun parcours sur la période.</td></tr>';
+    $('t-cards').innerHTML = rows.map(x => { const l = leadByRef[x.id]; return `<div class="mcard${tSelected.has(x.id) ? ' sel' : ''}"${l ? ` data-open="${l.id}" role="button"` : ''}>
+      <div class="mrow"><label class="mchk"><input type="checkbox" data-tsel="${esc(x.id)}"${tSelected.has(x.id) ? ' checked' : ''} aria-label="Sélectionner"></label>${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip) : x.user_id ? accountChip(x) : x.ip ? ipChip(x.ip) : '<span class="msub">anonyme</span>'}${x.completed_at ? '<span class="pill" style="background:var(--good-soft);color:var(--good)">complet</span>' : '<span class="pill">incomplet</span>'}</div>
       <div class="msub">${new Date(x.started_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · ${esc(x.device || '')} · ${esc(KIND[x.kind] || '')}${x.surface ? ' ' + x.surface + ' m²' : ''}</div>
       <div class="mrow"><span>${esc(T_LABEL[x.last_step] || x.last_step || '—')} · ${dur(sessionDuration(x))}</span><span class="num">${x.ttc ? eur(x.ttc) : ''}</span></div>
       ${x.data && x.data.total ? `<div class="msub">projet ${eur(x.data.total)} · renta ${pct1(x.data.brut || 0)}${x.data.cf != null ? ' · ' + cfHtml(x.data.cf) : ''}</div>` : ''}
     </div>`; }).join('') || '<p class="empty">Aucun parcours sur la période.</p>';
   }
-  $('t-cards').addEventListener('click', e => { const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });
+  $('t-cards').addEventListener('click', e => { if (e.target.closest('.mchk')) { e.stopPropagation(); return; } const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });
+  function updateTBulk() {
+    const n = tSelected.size, view = $('t-view').value;
+    $('t-bulk').classList.toggle('hidden', !n);
+    $('t-bulk-n').textContent = n + ' parcours sélectionné' + (n > 1 ? 's' : '');
+    $('t-bulk-arch').classList.toggle('hidden', view === 'archived'); $('t-bulk-restore').classList.toggle('hidden', view !== 'archived');
+    const all = tRows.length && tRows.every(x => tSelected.has(x.id));
+    $('t-chk-all').checked = all; $('t-chk-all-h').checked = all; $('t-chk-all-h').indeterminate = !all && tRows.some(x => tSelected.has(x.id));
+  }
+  function toggleTSel(id, on) { if (on) tSelected.add(id); else tSelected.delete(id); document.querySelectorAll('[data-tsel]').forEach(c => { if (c.dataset.tsel !== id) return; c.checked = on; const row = c.closest('tr, .mcard'); if (row) row.classList.toggle('sel', on); }); updateTBulk(); }
+  async function bulkSessions(patch) {
+    const ids = [...tSelected]; if (!ids.length) return;
+    const { error } = await sb.from('funnel_sessions').update(patch).in('id', ids);
+    if (error) { alert('Action impossible : ' + error.message + (/archived_at|policy|permission/i.test(error.message) ? '\n\nExécutez supabase/schema-v5.sql dans Supabase.' : '')); return; }
+    sessions.forEach(x => { if (tSelected.has(x.id)) Object.assign(x, patch); });
+    tSelected.clear(); renderTunnel();
+  }
+  ['t-chk-all', 't-chk-all-h'].forEach(id => $(id).addEventListener('change', e => { tRows.forEach(x => { if (e.target.checked) tSelected.add(x.id); else tSelected.delete(x.id); }); renderTunnel(); }));
+  $('t-bulk-clear').addEventListener('click', () => { tSelected.clear(); renderTunnel(); });
+  $('t-bulk-arch').addEventListener('click', () => bulkSessions({ archived_at: new Date().toISOString() }));
+  $('t-bulk-restore').addEventListener('click', () => bulkSessions({ archived_at: null }));
+  $('t-view').addEventListener('change', () => { tSelected.clear(); renderTunnel(); });
+  $('t-sessions').addEventListener('change', e => { const c = e.target.closest('[data-tsel]'); if (c) toggleTSel(c.dataset.tsel, c.checked); });
+  $('t-cards').addEventListener('change', e => { const c = e.target.closest('[data-tsel]'); if (c) toggleTSel(c.dataset.tsel, c.checked); });
   ['t-device', 't-state'].forEach(id => $(id).addEventListener('input', renderTunnel));
   $('t-period').addEventListener('input', loadTunnel);
   $('t-sessions').querySelector('thead').addEventListener('click', e => { const th = e.target.closest('th[data-sort]'); if (!th) return; if (tSortKey === th.dataset.sort) tSortDir = -tSortDir; else { tSortKey = th.dataset.sort; tSortDir = -1; } renderTunnel(); });

@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/css/site.css?v=202609181109">
+  <link rel="stylesheet" href="/assets/css/site.css?v=202609181114">
 </head>
 <body class="admin">
   <div class="stick">
@@ -45,6 +45,7 @@
         <select id="f-fin" aria-label="Financement"><option value="">Financement : tous</option><option value="oui">Accompagnés</option><option value="renta">Rentabilité seule</option><option value="non">Sans rentabilité</option></select>
         <select id="f-stade" aria-label="Stade du projet"><option value="">Stade : tous</option><option value="etude">En étude</option><option value="compromis">Sous compromis</option><option value="acte">Acte signé</option></select>
         <select id="f-type" aria-label="Type de demande"><option value="">Estimations et rappels</option><option value="estimation">Estimations</option><option value="rappel">Rappels</option></select>
+        <select id="f-view" aria-label="Vue"><option value="active">Dossiers actifs</option><option value="archived">Archives</option></select>
         <span class="count" id="count"></span>
       </div>
       <div class="toolbar">
@@ -53,7 +54,16 @@
         <label class="tlabel">Du <input id="f-from" type="date" aria-label="Date de début"> au <input id="f-to" type="date" aria-label="Date de fin"></label>
         <button type="button" class="btn small" id="f-reset">Réinitialiser les filtres</button>
       </div>
-      <div class="tablewrap desk"><table class="grid-table sortable" id="leads"><thead><tr><th data-sort="date">Date</th><th data-sort="contact">Contact</th><th data-sort="bien">Bien</th><th class="r" data-sort="ttc">Travaux TTC</th><th class="r" data-sort="marge">Marge est.</th><th data-sort="score">Score</th><th data-sort="finance">Financement</th><th data-sort="status">Statut</th><th data-sort="assign">Responsable</th><th data-sort="next">Prochaine action</th><th data-sort="photos">Photos</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="bulkbar hidden" id="bulk">
+        <label class="mchk"><input type="checkbox" id="chk-all" aria-label="Tout sélectionner"></label>
+        <b id="bulk-n"></b>
+        <select id="bulk-status" aria-label="Changer le statut"><option value="">Changer le statut…</option></select>
+        <select id="bulk-assign" aria-label="Changer le responsable"><option value="">Changer le responsable…</option></select>
+        <button type="button" class="btn small" id="bulk-arch">Archiver</button>
+        <button type="button" class="btn small" id="bulk-restore">Restaurer</button>
+        <button type="button" class="btn small ghost" id="bulk-clear">Désélectionner</button>
+      </div>
+      <div class="tablewrap desk"><table class="grid-table sortable" id="leads"><thead><tr><th class="chk"><input type="checkbox" id="chk-all-h" aria-label="Tout sélectionner"></th><th data-sort="date">Date</th><th data-sort="contact">Contact</th><th data-sort="bien">Bien</th><th class="r" data-sort="ttc">Travaux TTC</th><th class="r" data-sort="marge">Marge est.</th><th data-sort="score">Score</th><th data-sort="finance">Financement</th><th data-sort="status">Statut</th><th data-sort="assign">Responsable</th><th data-sort="next">Prochaine action</th><th data-sort="photos">Photos</th><th></th></tr></thead><tbody></tbody></table></div>
       <div class="mcards" id="leads-cards"></div>
     </section>
 
@@ -126,6 +136,7 @@
         <select id="t-period" aria-label="Période"><option value="7">7 derniers jours</option><option value="30" selected>30 derniers jours</option><option value="90">90 derniers jours</option><option value="365">12 derniers mois</option></select>
         <select id="t-device" aria-label="Appareil"><option value="">Tous les appareils</option><option value="mobile">Mobile</option><option value="ordinateur">Ordinateur</option></select>
         <select id="t-state" aria-label="État du parcours"><option value="">Complets et incomplets</option><option value="done">Complets</option><option value="abandon">Incomplets</option></select>
+        <select id="t-view" aria-label="Vue"><option value="active">Parcours actifs</option><option value="archived">Archives</option></select>
         <span class="count" id="t-count"></span>
       </div>
       <div class="kpis" id="t-kpis"></div>
@@ -135,7 +146,14 @@
       </div>
       <div class="panel">
         <header><h2>Parcours</h2><span class="hint">Un parcours par estimation commencée, complète ou non. Le nom apparaît quand les coordonnées ont été validées ; sinon un pseudonyme d'animal, propre à chaque adresse IP, avec la ville d'où elle est vue (l'IP exacte au survol, effacée après 90 jours).</span></header>
-        <div class="tablewrap desk"><table class="grid-table sortable" id="t-sessions"><thead><tr><th data-sort="date">Début</th><th data-sort="device">Appareil</th><th data-sort="bien">Bien</th><th data-sort="step">Dernière étape</th><th data-sort="done">État</th><th class="r" data-sort="duration">Durée</th><th class="r" data-sort="ttc">Travaux</th><th class="r" data-sort="total">Coût total</th><th data-sort="finance">Financement</th><th class="r" data-sort="renta">Renta · cash-flow</th><th>Contact</th></tr></thead><tbody></tbody></table></div>
+        <div class="bulkbar hidden" id="t-bulk">
+          <label class="mchk"><input type="checkbox" id="t-chk-all" aria-label="Tout sélectionner"></label>
+          <b id="t-bulk-n"></b>
+          <button type="button" class="btn small" id="t-bulk-arch">Archiver</button>
+          <button type="button" class="btn small" id="t-bulk-restore">Restaurer</button>
+          <button type="button" class="btn small ghost" id="t-bulk-clear">Désélectionner</button>
+        </div>
+        <div class="tablewrap desk"><table class="grid-table sortable" id="t-sessions"><thead><tr><th class="chk"><input type="checkbox" id="t-chk-all-h" aria-label="Tout sélectionner"></th><th data-sort="date">Début</th><th data-sort="device">Appareil</th><th data-sort="bien">Bien</th><th data-sort="step">Dernière étape</th><th data-sort="done">État</th><th class="r" data-sort="duration">Durée</th><th class="r" data-sort="ttc">Travaux</th><th class="r" data-sort="total">Coût total</th><th data-sort="finance">Financement</th><th class="r" data-sort="renta">Renta · cash-flow</th><th>Contact</th></tr></thead><tbody></tbody></table></div>
         <div class="mcards" id="t-cards"></div>
       </div>
     </section>
@@ -156,11 +174,11 @@
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/config.js?v=202609181109"></script>
-  <script src="/assets/js/catalog.js?v=202609181109"></script>
-  <script src="/assets/js/engine.js?v=202609181109"></script>
-  <script src="/assets/js/pricing.js?v=202609181109"></script>
-  <script src="/assets/js/auth.js?v=202609181109"></script>
-  <script src="/assets/js/admin.js?v=202609181109"></script>
+  <script src="/config.js?v=202609181114"></script>
+  <script src="/assets/js/catalog.js?v=202609181114"></script>
+  <script src="/assets/js/engine.js?v=202609181114"></script>
+  <script src="/assets/js/pricing.js?v=202609181114"></script>
+  <script src="/assets/js/auth.js?v=202609181114"></script>
+  <script src="/assets/js/admin.js?v=202609181114"></script>
 </body>
 </html>
