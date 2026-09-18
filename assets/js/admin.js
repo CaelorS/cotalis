@@ -130,7 +130,7 @@
     const today = new Date().toISOString().slice(0, 10);
     $('leads').querySelector('tbody').innerHTML = rows.map(l => `<tr data-id="${l.id}" class="${l.next_action && l.next_action < today ? 'late' : ''}${selected.has(l.id) ? ' sel' : ''}">
       <td class="chk"><input type="checkbox" data-sel="${l.id}"${selected.has(l.id) ? ' checked' : ''} aria-label="Sélectionner"></td>
-      <td class="num">${dt(l.created_at)}${l.kind === 'rappel' ? '<span class="pill">rappel</span>' : ''}</td>
+      <td class="num">${dt(l.created_at)}${l.kind === 'rappel' ? '<span class="pill">rappel demandé</span>' : ''}</td>
       <td><b>${esc(l.prenom)} ${esc(l.nom)}</b><small>${esc(l.email)}<br>${esc(l.tel)}</small></td>
       <td>${esc(KIND[l.type_bien] || l.type_bien || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}<small>${esc(l.ville || l.adresse || '')}</small></td>
       <td class="r num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</td>
