@@ -90,7 +90,7 @@
     $('surface-label').textContent = S.kind === 'immeuble' ? 'Surface habitable totale' : 'Surface habitable';
 
     const idx = list.indexOf(S.step);
-    $('progress').innerHTML = PROGRESS.map((p, i) => `<li class="${i < cur ? 'done' : i === cur ? 'now' : ''}"><button type="button" data-go="${p[1]}" ${i <= S.maxIdx ? '' : 'disabled'} aria-current="${i === cur ? 'step' : 'false'}" aria-label="${p[0]}" title="${p[0]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[p[1]]}</svg><span>${p[0]}</span></button></li>`).join('');
+    $('progress').innerHTML = `<li class="reset"><a href="/estimation/?new=1" title="Repartir de zéro" aria-label="Nouvelle estimation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg><span>Nouvelle estimation</span></a></li>` + PROGRESS.map((p, i) => `<li class="${i < cur ? 'done' : i === cur ? 'now' : ''}"><button type="button" data-go="${p[1]}" ${i <= S.maxIdx ? '' : 'disabled'} aria-current="${i === cur ? 'step' : 'false'}" aria-label="${p[0]}" title="${p[0]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[p[1]]}</svg><span>${p[0]}</span></button></li>`).join('');
     $('pct').textContent = S.step === 'resultat' ? 'Estimation prête' : 'Étape ' + (idx + 1) + ' sur ' + list.length + ' · ' + PROGRESS[cur][0];
     document.body.dataset.step = S.step;
 

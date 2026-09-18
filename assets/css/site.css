@@ -842,3 +842,17 @@ tr.lot td .loticon { width: 18px; height: 18px; vertical-align: -4px; }
 .report .actions .bico { width: 17px; height: 17px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
 @media (max-width: 980px) { .report .actions .bico { display: none; } }
 @media (min-width: 981px) and (max-width: 1300px) { .top .progress li button { font-size: 11px; letter-spacing: .03em; } .top .progress { margin-left: 14px; } }
+
+/* fil d'Ariane : « Nouvelle estimation » en tête, traité comme une action et non comme une étape */
+.progress ol { grid-template-columns: auto; }
+.progress li.reset { border-bottom-color: transparent; margin-right: 10px; display: flex; align-items: center; }
+.progress li.reset a { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2); font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; font-weight: 600; text-decoration: none; white-space: nowrap; transition: color .15s, border-color .15s, background .15s; }
+.progress li.reset a svg { width: 15px; height: 15px; flex-shrink: 0; transition: transform .35s ease; }
+.progress li.reset a:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.progress li.reset a:hover svg { transform: rotate(-360deg); }
+@media (max-width: 980px) {
+  .progress li.reset { margin-right: 4px; }
+  .progress li.reset a { padding: 6px; border-radius: 50%; }
+  .progress li.reset a svg { width: 18px; height: 18px; }
+  .progress li.reset a span { display: none; }
+}
