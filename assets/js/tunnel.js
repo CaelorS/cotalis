@@ -575,7 +575,7 @@
       ${viewer ? `<div class="ok-note no-print">Vous consultez une estimation partagée. <a href="/estimation/?new=1">Faire ma propre estimation</a></div>` : `<div class="ok-note no-print">Merci ${esc(c.prenom)}, votre estimation est prête. Téléchargez-la en PDF ci-dessous ; une copie vous sera envoyée à ${esc(c.email)}.${S.accountPending ? ' Votre compte est créé : confirmez votre e-mail pour retrouver cette estimation sur tous vos appareils.' : ''}</div>`}
       <div class="rhead">
         <div><h2>Estimation travaux</h2><div class="who">${who} · ${date} · réf. <span class="num">${esc(S.ref)}</span></div></div>
-        <div class="actions"><button type="button" class="btn primary" id="btn-pdf"><svg class="bico" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg><span class="l">Télécharger le PDF</span><span class="s">PDF</span></button><button type="button" class="btn" id="btn-share"><svg class="bico" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.6M8.2 13.2l7.6 4.6"/></svg>Partager</button>${viewer ? '' : `<button type="button" class="btn" id="btn-edit"><svg class="bico" viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16z"/><path d="M13 7l4 4"/></svg>Modifier</button><button type="button" class="btn" id="btn-rappel">${S.rappel ? '<svg class="bico" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span class="l">Rappel demandé</span><span class="s">Rappel ✓</span>' : '<svg class="bico" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg><span class="l">Être rappelé</span><span class="s">Rappel</span>'}</button>`}<a class="btn" href="/estimation/?new=1"><svg class="bico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="l">Nouvelle estimation</span><span class="s">Nouvelle</span></a></div>
+        <div class="actions"><button type="button" class="btn primary" id="btn-pdf"><svg class="bico" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg><span class="l">Télécharger le PDF</span><span class="s">PDF</span></button><button type="button" class="btn" id="btn-share"><svg class="bico" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.6M8.2 13.2l7.6 4.6"/></svg>Partager</button>${viewer ? '' : `<button type="button" class="btn" id="btn-edit"><svg class="bico" viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16z"/><path d="M13 7l4 4"/></svg>Modifier</button><button type="button" class="btn" id="btn-visite">${visiteBtn()}</button><button type="button" class="btn" id="btn-rappel">${S.rappel ? '<svg class="bico" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span class="l">Rappel demandé</span><span class="s">Rappel ✓</span>' : '<svg class="bico" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg><span class="l">Être rappelé</span><span class="s">Rappel</span>'}</button>`}<a class="btn" href="/estimation/?new=1"><svg class="bico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="l">Nouvelle estimation</span><span class="s">Nouvelle</span></a></div>
       </div>
       <div class="two">
         <div class="box"><h3>Le bien</h3><table class="kv">${bien.map(b => `<tr><td>${esc(b[0])}</td><td>${esc(b[1])}</td></tr>`).join('')}</table></div>
@@ -625,6 +625,7 @@
     $('btn-share').addEventListener('click', share);
     if (!viewer) {
       $('btn-edit').addEventListener('click', () => { S.step = 'travaux'; save(); showStep(); });
+      $('btn-visite').addEventListener('click', openVisite);
       $('btn-rappel').addEventListener('click', () => { S.rappel = true; save(); submitLead('rappel'); $('btn-rappel').innerHTML = '<svg class="bico" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span class="l">Rappel demandé</span><span class="s">Rappel ✓</span>'; });
     }
   }
@@ -638,6 +639,52 @@
     d.sharedAt = new Date().toISOString();
     return d;
   }
+  /* ---------- visite technique : créneaux de l'agenda de Simon ---------- */
+  const VICO = '<svg class="bico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+  const dfr = (iso, o) => new Date(iso).toLocaleString('fr-FR', Object.assign({ timeZone: 'Europe/Paris' }, o));
+  function visiteBtn() {
+    if (S.visiteAt) return VICO + `<span class="l">Visite le ${dfr(S.visiteAt, { day: '2-digit', month: '2-digit' })}</span><span class="s">Visite ✓</span>`;
+    return VICO + '<span class="l">Planifier la visite</span><span class="s">Visite</span>';
+  }
+  let vSlot = null;
+  function vShow(html, hint) { $('v-body').innerHTML = html; if (hint != null) $('v-hint').textContent = hint; }
+  async function openVisite() {
+    $('vmodal').classList.remove('hidden');
+    if (S.visiteAt) { vShow(`<p class="vok">Visite prévue le <b>${dfr(S.visiteAt, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</b>, à ${esc(S.adresse)}.</p><p class="hint">Pour la déplacer, répondez à l'invitation reçue par e-mail ou appelez-nous.</p>`, 'Tout est calé.'); return; }
+    vShow('<p class="hint">Recherche des créneaux disponibles…</p>', 'Choisissez un créneau : la visite dure environ une heure, sur place.');
+    if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); }
+    await saveProject();
+    let data = null;
+    try { const r = await fetch(BASE + '/functions/v1/gcal-slots', { method: 'POST', headers: hdr(), body: '{}' }); data = await r.json(); if (!r.ok) throw new Error(data.error || r.status); }
+    catch (e) { vShow('<p>La prise de rendez-vous en ligne n\'est pas encore ouverte. Demandez à être rappelé : on fixe la visite ensemble.</p>', ''); return; }
+    if (!data.slots.length) { vShow('<p>Aucun créneau libre sur les trois prochaines semaines. Demandez à être rappelé, on trouvera une date.</p>', ''); return; }
+    const days = {};
+    data.slots.forEach(iso => { const k = dfr(iso, { weekday: 'long', day: 'numeric', month: 'long' }); (days[k] = days[k] || []).push(iso); });
+    vShow(Object.keys(days).map(k => `<div class="slotday"><h4>${k}</h4><div class="slotlist">${days[k].map(iso => `<button type="button" class="slot" data-slot="${iso}">${dfr(iso, { hour: '2-digit', minute: '2-digit' })}</button>`).join('')}</div></div>`).join(''));
+  }
+  function confirmVisite(iso) {
+    vSlot = iso;
+    vShow(`<p><b>${dfr(iso, { weekday: 'long', day: 'numeric', month: 'long' })} à ${dfr(iso, { hour: '2-digit', minute: '2-digit' })}</b>, visite d'environ une heure à ${esc(S.adresse)}.</p><p class="hint">Une invitation sera envoyée à ${esc(S.contact.email)}.</p><div class="mrow" style="gap:8px;margin-top:10px"><button type="button" class="btn primary" id="v-confirm">Confirmer ce créneau</button><button type="button" class="btn" id="v-back">Autre créneau</button></div>`, 'On vérifie une dernière fois.');
+  }
+  async function bookVisite() {
+    const btn = $('v-confirm'); if (btn) { btn.disabled = true; btn.textContent = 'Réservation…'; }
+    try {
+      const r = await fetch(BASE + '/functions/v1/gcal-book', { method: 'POST', headers: hdr(), body: JSON.stringify({ project_id: S.pid, token: S.token, start: vSlot }) });
+      const d = await r.json();
+      if (!r.ok) { if (r.status === 409) { vShow('<p>Ce créneau vient d\'être pris. Choisissez-en un autre.</p><p><button type="button" class="btn" id="v-back">Voir les créneaux</button></p>', ''); return; } throw new Error(d.error || r.status); }
+      S.visiteAt = d.start; save(); track();
+      if ($('btn-visite')) $('btn-visite').innerHTML = visiteBtn();
+      vShow(`<p class="vok">C'est noté ! Visite le <b>${d.label}</b>. L'invitation part chez ${esc(d.email)}, avec l'adresse et le contact de votre interlocuteur.</p>`, 'À très vite sur place.');
+    } catch (e) { vShow('<p>La réservation n\'a pas abouti. Demandez à être rappelé, on fixe la visite par téléphone.</p>', ''); }
+  }
+  $('v-close').addEventListener('click', () => $('vmodal').classList.add('hidden'));
+  $('vmodal').addEventListener('click', e => {
+    if (e.target === $('vmodal')) { $('vmodal').classList.add('hidden'); return; }
+    const sl = e.target.closest('[data-slot]'); if (sl) { confirmVisite(sl.dataset.slot); return; }
+    if (e.target.closest('#v-confirm')) bookVisite();
+    if (e.target.closest('#v-back')) openVisite();
+  });
+
   async function saveProject() {
     if (viewer || !hasDb() || !S.kind) return false;
     try {
@@ -802,7 +849,7 @@
   $('btn-login').addEventListener('click', () => { if (C.auth) C.auth.open('login'); });
   $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.add('hidden'); });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') $('modal').classList.add('hidden');
+    if (e.key === 'Escape') { $('modal').classList.add('hidden'); $('vmodal').classList.add('hidden'); }
     if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox' && S.step !== 'travaux' && S.step !== 'resultat' && !viewer) { e.preventDefault(); goNext(); }
   });
 

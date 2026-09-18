@@ -1,0 +1,10 @@
+# Fonctions serveur Cotalia. gcal-auth reçoit le retour de Google sans jeton Supabase, gcal-slots et gcal-book
+# sont appelées par le tunnel avec la clé anonyme : pas de vérification de JWT, la sécurité est dans le code.
+project_id = "yjmeskpeyikivucnykqa"
+
+[functions.gcal-auth]
+verify_jwt = false
+[functions.gcal-slots]
+verify_jwt = false
+[functions.gcal-book]
+verify_jwt = false

@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/css/site.css?v=202609181209">
+  <link rel="stylesheet" href="/assets/css/site.css?v=202609181220">
 </head>
 <body class="admin">
   <div class="stick">
@@ -167,6 +167,22 @@
           <table class="grid-table" id="admins"><thead><tr><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Depuis</th><th></th></tr></thead><tbody></tbody></table>
         </div>
       </div>
+      <div class="panel">
+        <header><h2>Agenda des visites</h2><span class="hint">Les clients choisissent un créneau de visite technique depuis leur estimation, dans l'agenda Google relié ici. Le rendez-vous est créé avec l'adresse du bien et le client invité, encadré de deux blocs de trajet.</span></header>
+        <div class="body">
+          <div class="mrow" style="gap:12px;flex-wrap:wrap"><span id="agenda-status" class="hint">Vérification…</span><button type="button" class="btn primary" id="agenda-connect">Connecter l'agenda Google</button></div>
+          <div class="grid" style="margin-top:16px">
+            <div class="field"><label>Durée d'une visite (min)</label><input type="number" id="ag-duration" step="15" min="15"></div>
+            <div class="field"><label>Trajet bloqué avant et après (min)</label><input type="number" id="ag-buffer" step="15" min="0"></div>
+            <div class="field"><label>Délai minimum de réservation (h)</label><input type="number" id="ag-minDelayH" step="1" min="0"></div>
+            <div class="field"><label>Visites maximum par jour</label><input type="number" id="ag-maxPerDay" step="1" min="1"></div>
+            <div class="field"><label>Début des visites (h)</label><input type="number" id="ag-open" step="1" min="6" max="20"></div>
+            <div class="field"><label>Fin des visites (h)</label><input type="number" id="ag-close" step="1" min="8" max="22"></div>
+          </div>
+          <div class="field" style="margin-top:12px"><label>Jours ouverts</label><div class="mrow" id="ag-days" style="gap:14px;flex-wrap:wrap"></div></div>
+          <div class="savebar"><span class="hint" id="agenda-msg"></span><button type="button" class="btn" id="agenda-save">Enregistrer les règles</button></div>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -174,11 +190,11 @@
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/config.js?v=202609181209"></script>
-  <script src="/assets/js/catalog.js?v=202609181209"></script>
-  <script src="/assets/js/engine.js?v=202609181209"></script>
-  <script src="/assets/js/pricing.js?v=202609181209"></script>
-  <script src="/assets/js/auth.js?v=202609181209"></script>
-  <script src="/assets/js/admin.js?v=202609181209"></script>
+  <script src="/config.js?v=202609181220"></script>
+  <script src="/assets/js/catalog.js?v=202609181220"></script>
+  <script src="/assets/js/engine.js?v=202609181220"></script>
+  <script src="/assets/js/pricing.js?v=202609181220"></script>
+  <script src="/assets/js/auth.js?v=202609181220"></script>
+  <script src="/assets/js/admin.js?v=202609181220"></script>
 </body>
 </html>

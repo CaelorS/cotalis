@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/css/site.css?v=202609181209">
+  <link rel="stylesheet" href="/assets/css/site.css?v=202609181220">
 </head>
 <body>
   <div class="stick">
@@ -287,6 +287,14 @@
     </aside>
   </main>
 
+  <div class="modal hidden" id="vmodal" role="dialog" aria-modal="true" aria-labelledby="v-title">
+    <div class="modal-box vbox">
+      <h3 id="v-title">Planifier la visite technique</h3>
+      <p id="v-hint">Choisissez un créneau : la visite dure environ une heure, sur place.</p>
+      <div id="v-body" class="slots"></div>
+      <div class="savebar"><button type="button" class="btn" id="v-close">Fermer</button></div>
+    </div>
+  </div>
   <div class="modal hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-box">
       <h3 id="modal-title">Lien copié</h3>
@@ -297,11 +305,11 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/config.js?v=202609181209"></script>
-  <script src="/assets/js/catalog.js?v=202609181209"></script>
-  <script src="/assets/js/engine.js?v=202609181209"></script>
-  <script src="/assets/js/pricing.js?v=202609181209"></script>
-  <script src="/assets/js/auth.js?v=202609181209"></script>
-  <script src="/assets/js/tunnel.js?v=202609181209"></script>
+  <script src="/config.js?v=202609181220"></script>
+  <script src="/assets/js/catalog.js?v=202609181220"></script>
+  <script src="/assets/js/engine.js?v=202609181220"></script>
+  <script src="/assets/js/pricing.js?v=202609181220"></script>
+  <script src="/assets/js/auth.js?v=202609181220"></script>
+  <script src="/assets/js/tunnel.js?v=202609181220"></script>
 </body>
 </html>

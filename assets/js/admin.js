@@ -261,6 +261,7 @@
           <tr><td>E-mail</td><td><a href="mailto:${esc(l.email)}">${esc(l.email)}</a></td></tr><tr><td>Téléphone</td><td><a href="tel:${esc(l.tel)}">${esc(l.tel)}</a></td></tr>
           <tr><td>Demande</td><td>${l.kind === 'rappel' ? 'Rappel pour visite technique' : 'Estimation'} · ${dt(l.created_at)}</td></tr>
           <tr><td>Stade</td><td>${esc(stadeLabel(l.stade))} · ${esc(demLabel(l.demarrage) || 'démarrage non précisé')}</td></tr>
+          <tr><td>Visite technique</td><td>${l.visite_at ? new Date(l.visite_at).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : '—'}</td></tr>
           <tr><td>Projet partagé</td><td>${l.project_id ? `<a href="/estimation/?p=${encodeURIComponent(l.project_id)}" target="_blank" rel="noopener">ouvrir l'estimation</a>` : '—'}</td></tr>
         </table></div>
         <div class="box"><h3>Bien</h3><table class="kv">
@@ -750,7 +751,45 @@
   $('t-sessions').addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) openLead(+b.dataset.open); });
 
   /* ---------- administrateurs ---------- */
+  /* ---------- agenda des visites ---------- */
+  const CFG = window.COTALIA_CONFIG || {}, FN = (CFG.supabaseUrl || '').replace(/\/$/, '') + '/functions/v1/';
+  const AG_DEFAULT = { duration: 60, buffer: 90, minDelayH: 48, maxPerDay: 2, days: { '1': [9, 18], '2': [9, 18], '3': [9, 18], '4': [9, 18], '5': [9, 18] } };
+  const AG_DAYS = [['1', 'Lundi'], ['2', 'Mardi'], ['3', 'Mercredi'], ['4', 'Jeudi'], ['5', 'Vendredi'], ['6', 'Samedi']];
+  async function loadAgenda() {
+    try { const { data, error } = await sb.rpc('calendar_status'); $('agenda-status').textContent = error ? 'Exécutez supabase/schema-v6.sql pour activer l\'agenda.' : (data ? 'Agenda relié : ' + data : 'Aucun agenda relié pour l\'instant.'); $('agenda-connect').textContent = data ? 'Reconnecter l\'agenda Google' : 'Connecter l\'agenda Google'; } catch (e) { $('agenda-status').textContent = 'État indisponible.'; }
+    let ag = AG_DEFAULT;
+    try { const { data } = await sb.from('pricing_settings').select('value').eq('key', 'AGENDA').maybeSingle(); if (data && data.value) ag = Object.assign({}, AG_DEFAULT, data.value, { days: Object.assign({}, data.value.days || AG_DEFAULT.days) }); } catch (e) {}
+    ['duration', 'buffer', 'minDelayH', 'maxPerDay'].forEach(k => { $('ag-' + k).value = ag[k]; });
+    const first = Object.values(ag.days)[0] || [9, 18];
+    $('ag-open').value = first[0]; $('ag-close').value = first[1];
+    $('ag-days').innerHTML = AG_DAYS.map(d => `<label class="mchk" style="gap:6px"><input type="checkbox" value="${d[0]}"${ag.days[d[0]] ? ' checked' : ''}> ${d[1]}</label>`).join('');
+  }
+  $('agenda-save').addEventListener('click', async () => {
+    const open = +$('ag-open').value || 9, close = +$('ag-close').value || 18, days = {};
+    $('ag-days').querySelectorAll('input:checked').forEach(c => { days[c.value] = [open, close]; });
+    const value = { duration: +$('ag-duration').value || 60, buffer: +$('ag-buffer').value || 0, minDelayH: +$('ag-minDelayH').value || 0, maxPerDay: +$('ag-maxPerDay').value || 1, days };
+    const { error } = await sb.from('pricing_settings').upsert([{ key: 'AGENDA', value, updated_at: new Date().toISOString() }]);
+    $('agenda-msg').textContent = error ? 'Enregistrement impossible : ' + error.message : 'Règles enregistrées, appliquées aux prochains créneaux proposés.';
+  });
+  $('agenda-connect').addEventListener('click', async () => {
+    $('agenda-msg').textContent = 'Redirection vers Google…';
+    try {
+      const { data: sess } = await sb.auth.getSession();
+      const r = await fetch(FN + 'gcal-auth', { method: 'POST', headers: { Authorization: 'Bearer ' + (sess && sess.session ? sess.session.access_token : ''), apikey: CFG.supabaseAnonKey || '', 'Content-Type': 'application/json' }, body: '{}' });
+      const d = await r.json();
+      if (!r.ok || !d.url) throw new Error(d.error || ('HTTP ' + r.status));
+      location.href = d.url;
+    } catch (e) { $('agenda-msg').textContent = 'Connexion impossible : ' + e.message + '. Les fonctions serveur sont-elles déployées ?'; }
+  });
+  if (/[?&]agenda=(ok|erreur)/.test(location.search)) {
+    const ok = /agenda=ok/.test(location.search);
+    document.querySelector('.tab.selected').classList.remove('selected'); document.querySelector('.tab[data-tab="admins"]').classList.add('selected');
+    setTimeout(() => { $('agenda-msg').textContent = ok ? 'Agenda Google connecté.' : 'La connexion à Google n\'a pas abouti. Réessayez.'; }, 800);
+    history.replaceState(null, '', location.pathname);
+  }
+
   async function loadAdmins() {
+    loadAgenda();
     await loadAdminsList();
     const { data: inv } = await sb.from('admin_invites').select('*').order('created_at');
     const me = A.user.id;
