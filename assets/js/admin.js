@@ -163,9 +163,10 @@
     stOpenFor = id;
     stlist.innerHTML = STATUS.map(st => `<button type="button" class="pill st st-${st[0]}${(l.status || 'nouveau') === st[0] ? ' cur' : ''}" data-stpick="${st[0]}">${st[1]}</button>`).join('');
     stlist.classList.remove('hidden');
-    const r = btn.getBoundingClientRect(), h = stlist.offsetHeight, below = r.bottom + 6 + h <= innerHeight;
-    stlist.style.left = Math.min(r.left, innerWidth - stlist.offsetWidth - 8) + 'px';
-    stlist.style.top = (below ? r.bottom + 6 : Math.max(8, r.top - 6 - h)) + 'px';
+    // centré sur le bouton, au-dessus de lui ; en dessous s'il manque de place en haut
+    const r = btn.getBoundingClientRect(), h = stlist.offsetHeight, w = stlist.offsetWidth, above = r.top - 8 - h >= 8;
+    stlist.style.left = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - 8)) + 'px';
+    stlist.style.top = (above ? r.top - 8 - h : Math.min(r.bottom + 8, innerHeight - h - 8)) + 'px';
   }
   function closeStatusMenu() { stlist.classList.add('hidden'); stOpenFor = null; }
   stlist.addEventListener('click', async e => {
