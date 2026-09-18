@@ -57,6 +57,8 @@
     renderLeads();
   }
   const margeOf = l => (l.payload && l.payload.interne && l.payload.interne.marge) || 0;
+  const filesOf = l => (l.payload && l.payload.files) || [];
+  const photoBadge = l => filesOf(l).length ? `<span class="photos" title="${filesOf(l).length} fichier(s) déposé(s)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg><i>✓</i><small>${filesOf(l).length}</small></span>` : '';
   let sortKey = 'date', sortDir = -1;   // -1 décroissant, 1 croissant
   const STATUS_RANK = Object.fromEntries(STATUS.map((s, i) => [s[0], i]));
   const adminName = id => { const a = admins.find(x => x.id === id); return a ? (a.prenom || a.email) : ''; };
@@ -105,10 +107,10 @@
       <td><select data-f="status" class="inline">${STATUS.map(s => `<option value="${s[0]}"${(l.status || 'nouveau') === s[0] ? ' selected' : ''}>${s[1]}</option>`).join('')}</select></td>
       <td><select data-f="assigned_to" class="inline"><option value="">—</option>${admins.map(a => `<option value="${a.id}"${l.assigned_to === a.id ? ' selected' : ''}>${esc(a.prenom || a.email)}</option>`).join('')}</select></td>
       <td><input type="date" data-f="next_action" class="inline" value="${l.next_action || ''}"></td>
-      <td><button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
+      <td class="nowrap">${photoBadge(l)}<button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td>
     </tr>`).join('') || '<tr><td colspan="11" class="empty">Aucun dossier.</td></tr>';
     $('leads-cards').innerHTML = rows.map(l => `<div class="mcard" data-open="${l.id}" role="button">
-      <div class="mrow"><b>${esc(l.prenom)} ${esc(l.nom)}</b>${scoreBadge(scoreLead(l))}</div>
+      <div class="mrow"><b>${esc(l.prenom)} ${esc(l.nom)}</b><span class="mrow" style="gap:6px">${photoBadge(l)}${scoreBadge(scoreLead(l))}</span></div>
       <div class="msub">${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}${l.ville ? ' · ' + esc(l.ville) : ''}</div>
       <div class="mrow"><span class="num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</span><span class="pill">${STATUS_LABEL[l.status || 'nouveau']}</span></div>
       <div class="msub">${dt(l.created_at)}${l.assigned_to ? ' · ' + esc(adminName(l.assigned_to)) : ''}${l.next_action ? ' · prochaine action ' + esc(l.next_action) : ''}</div>
@@ -137,7 +139,7 @@
     const l = leads.find(x => x.id === id); if (!l) return;
     const p = l.payload || {}, b = p.bien || {}, i = p.interne || {}, s = l.situation || {};
     const files = p.files || [];
-    const fileLinks = await Promise.all(files.map(async f => { try { const { data } = await sb.storage.from('plans').createSignedUrl(f, 600); return `<li><a href="${data.signedUrl}" target="_blank" rel="noopener">${esc(f.split('/').pop())}</a></li>`; } catch (e) { return `<li>${esc(f)}</li>`; } }));
+    const fileLinks = await Promise.all(files.map(async f => { try { const { data } = await sb.storage.from('plans').createSignedUrl(f, 60 * 60 * 24 * 365); return `<li><a href="${data.signedUrl}" target="_blank" rel="noopener">${esc(f.split('/').pop())}</a></li>`; } catch (e) { return `<li>${esc(f)}</li>`; } }));
     const works = Object.keys(p.works || {}).filter(k => p.works[k]).map(k => C.ITEMS[k] ? C.ITEMS[k].label + (p.qty && p.qty[k] != null ? ' (' + p.qty[k] + ' ' + C.ITEMS[k].unit + ')' : '') : k);
     $('d-title').textContent = (l.prenom || '') + ' ' + (l.nom || '') + ' · ' + (l.ref || '');
     $('d-body').innerHTML = `
@@ -168,7 +170,7 @@
       </div>
       <div class="two">
         <div class="box"><h3>Travaux retenus</h3><ul class="plain">${works.map(w => `<li>${esc(w)}</li>`).join('') || '<li>—</li>'}</ul></div>
-        <div class="box"><h3>Plans et photos</h3><ul class="plain">${fileLinks.join('') || '<li>aucun fichier</li>'}</ul><p class="hint" style="margin:8px 0 0">Liens valables 10 minutes.</p></div>
+        <div class="box"><h3>Plans et photos</h3><ul class="plain">${fileLinks.join('') || '<li>aucun fichier</li>'}</ul><p class="hint" style="margin:8px 0 0">Fichiers conservés avec le dossier, sans limite de durée. Liens valables un an.</p></div>
       </div>
       ${(() => { const sc = scoreLead(l); return `<div class="box"><h3>Score ${scoreBadge(sc)}</h3><div class="gauges">${['valeur', 'maturite', 'engagement'].map(k => `<div class="gauge"><div class="eyebrow">${{ valeur: 'Valeur du dossier', maturite: 'Maturité', engagement: 'Engagement' }[k]} · ${sc[k]} / 100</div><div class="track"><i style="width:${sc[k]}%"></i></div><ul class="plain">${sc.why[k].map(w => `<li>${esc(w)}</li>`).join('') || '<li>aucun signal</li>'}</ul></div>`).join('')}</div>${sc.rule ? `<p class="hint" style="margin:8px 0 0">Règle appliquée : ${esc(sc.rule)}</p>` : ''}</div>`; })()}
       <div class="box"><h3>Suivi</h3>

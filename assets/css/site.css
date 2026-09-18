@@ -768,3 +768,9 @@ body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: 
   .rule-then select[multiple] { width: 100%; max-width: 100%; box-sizing: border-box; }
   .rule-then select[multiple] option { white-space: normal; padding: 6px 4px; }
 }
+
+/* indicateur de photos déposées */
+.photos { display: inline-flex; align-items: center; gap: 2px; color: var(--ink-2); margin-right: 8px; vertical-align: middle; position: relative; }
+.photos i { font-style: normal; color: var(--good); font-weight: 700; font-size: 12px; }
+.photos small { color: var(--ink-3); font-size: 11px; }
+td.nowrap { white-space: nowrap; }
