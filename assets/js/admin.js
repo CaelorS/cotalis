@@ -10,6 +10,8 @@
   const STATUS = [['nouveau', 'Nouveau'], ['contacte', 'Contacté'], ['relance', 'Relancé'], ['visite', 'Visite planifiée'], ['devis', 'Devis envoyé'], ['signe', 'Signé'], ['perdu', 'Perdu']];
   const STATUS_LABEL = Object.fromEntries(STATUS);
   const FIN = { oui: 'Accompagné', renta: 'Rentabilité seule', non: 'Sans rentabilité' };
+  const EPOQUE = { '1930': 'avant 1948', '1960': '1948-1974', '1982': '1975-1989', '2000': '1990-2011', '2016': '2012 et après', '2025': 'neuf' };
+  const epoque = a => EPOQUE[String(a)] || (a ? String(a) : '?');
   const DEM = { '1': 'dès que possible', '3': 'sous 3 mois', '6': 'sous 6 mois', later: 'travaux non planifiés' };
   const demLabel = d => DEM[String(d || '')] || '';
   let sb = null, leads = [], admins = [], pricingLoaded = false, dirty = new Set();
@@ -152,7 +154,7 @@
         </table></div>
         <div class="box"><h3>Bien</h3><table class="kv">
           <tr><td>Type</td><td>${esc(KIND[l.type_bien] || '')} · ${esc(b.type || '')}</td></tr><tr><td>Adresse</td><td>${esc(l.adresse || '')}</td></tr>
-          <tr><td>Surface</td><td>${l.surface || '?'} m² · ${esc(b.eau || '?')} pièces d'eau</td></tr><tr><td>Année / DPE / état</td><td>${esc(b.annee || '?')} · ${esc(b.dpe || '?')} · ${esc(b.etat || '?')}</td></tr>
+          <tr><td>Surface</td><td>${l.surface || '?'} m² · ${esc(b.eau || '?')} pièces d'eau</td></tr><tr><td>Époque / DPE / état</td><td>${esc(epoque(b.annee))} · ${esc(b.dpe || '?')} · ${esc(b.etat || '?')}</td></tr>
           <tr><td>Finition</td><td>${esc(l.gamme || '')}</td></tr><tr><td>Occupé / accès / visite</td><td>${esc(b.occupe || '?')} · ${esc(b.acces || '?')} · ${esc(b.visite || '?')}</td></tr>
         </table></div>
       </div>

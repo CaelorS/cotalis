@@ -209,7 +209,7 @@
       S.apts[+el.dataset.apt].type = el.value; S.eau = defaultEau(); $('eau').value = S.eau; S.qty = {};
     } else if (el.dataset.k) {
       const k = el.dataset.k;
-      const v = el.type === 'checkbox' ? el.checked : (el.type === 'number' ? (el.value === '' ? '' : +el.value) : el.value);
+      const v = el.type === 'checkbox' ? el.checked : (el.type === 'number' || k === 'annee' ? (el.value === '' ? '' : +el.value) : el.value);
       setPath(k, v);
       if (k === 'adresse') { S.ville = ''; S.cp = ''; }
       if (k === 'zone') { S.zoneAuto = false; $('zone-hint').textContent = 'choisie manuellement'; }
@@ -432,7 +432,7 @@
       ['Type de bien', KIND[S.kind]], ['Adresse', S.adresse], ['Zone de prix', C.REGION[S.zone][1]], ['Surface habitable', fmt(S.surface) + ' m²'], ['Typologie', typo],
       ['Pièces d\'eau', fmt(R.ctx.eau)],
       S.kind === 'appart' ? ['Étage', S.etage === '' ? 'non renseigné' : (S.etage > 0 ? fmt(S.etage) + 'ᵉ' + (S.ascenseur === 'oui' ? ', avec ascenseur' : S.ascenseur === 'non' ? ', sans ascenseur' : '') : 'rez-de-chaussée')] : null,
-      ['Année de construction', S.annee || 'inconnue'], ['DPE', S.dpe || 'inconnu'], ['État général', etatSel ? etatSel.textContent : 'non renseigné'],
+      ['Époque de construction', (() => { const o = $('annee').querySelector(`option[value="${S.annee}"]`); return o && S.annee !== '' ? o.textContent : 'inconnue'; })()], ['DPE', S.dpe || 'inconnu'], ['État général', etatSel ? etatSel.textContent : 'non renseigné'],
       ['Occupé pendant les travaux', TRI[S.occupe]], ['Accès difficile', TRI[S.acces]], ['Visite technique', S.visite === 'oui' ? 'déjà réalisée' : S.visite === 'plan' ? 'à planifier' : 'pas encore'],
       ['Plans et photos', S.files.length ? S.files.length + ' fichier' + (S.files.length > 1 ? 's' : '') : 'aucun'],
       ['Finition', C.GAMME[S.gamme][1]], ['Projet', (STADE[S.stade] || 'en étude') + (S.demarrage === 'later' ? ', travaux non planifiés pour l\'instant' : S.demarrage ? ', démarrage souhaité sous ' + S.demarrage + ' mois' : ', démarrage non précisé')],

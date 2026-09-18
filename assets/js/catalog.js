@@ -92,7 +92,7 @@
   // when : toutes les conditions doivent être vraies. Champs : kind, etat, dpe, annee, surface, eau, zone, gamme, strat.
   const RULES = [
     { id: 'dpe_fg', label: 'Passoire thermique (DPE F ou G)', when: [{ f: 'dpe', op: 'in', v: 'F,G' }], add: ['fen', 'iti'], remove: [] },
-    { id: 'avant_1975', label: 'Bâti antérieur à 1975, sans isolation d\'origine', when: [{ f: 'annee', op: 'lt', v: '1975' }], add: ['iti', 'fen'], remove: [] },
+    { id: 'avant_1975', label: 'Bâti antérieur à 1975 (époques « avant 1948 » et « 1948 à 1974 »), sans isolation d\'origine', when: [{ f: 'annee', op: 'lt', v: '1975' }], add: ['iti', 'fen'], remove: [] },
     { id: 'maison_total', label: 'Maison à rénover entièrement', when: [{ f: 'kind', op: 'eq', v: 'maison' }, { f: 'etat', op: 'eq', v: 'total' }], add: ['combles'], remove: [] },
     { id: 'maison_fg', label: 'Maison en passoire thermique', when: [{ f: 'kind', op: 'eq', v: 'maison' }, { f: 'dpe', op: 'in', v: 'F,G' }], add: ['combles'], remove: [] },
     { id: 'immeuble_elec', label: 'Immeuble : conformité électrique complète et tableaux par appartement', when: [{ f: 'kind', op: 'eq', v: 'immeuble' }], add: ['elec', 'tableaux_apt'], remove: ['tableau'] },

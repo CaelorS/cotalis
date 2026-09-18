@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/css/site.css?v=202609181009">
+  <link rel="stylesheet" href="/assets/css/site.css?v=202609181013">
 </head>
 <body>
   <header class="top">
@@ -73,7 +73,8 @@
             <div class="field"><label for="eau">Pièces d'eau (SDB + WC)</label><input id="eau" data-k="eau" type="number" min="0" max="60" step="1" inputmode="numeric"></div>
             <div class="field" data-only="appart"><label for="etage">Étage</label><input id="etage" data-k="etage" type="number" min="0" max="40" step="1" inputmode="numeric"></div>
             <div class="field" data-only="immeuble"><label for="niveaux">Nombre de niveaux</label><input id="niveaux" data-k="niveaux" type="number" min="1" max="15" step="1" inputmode="numeric"></div>
-            <div class="field"><label for="annee">Année de construction</label><input id="annee" data-k="annee" type="number" min="1600" max="2026" step="1" placeholder="inconnue" inputmode="numeric"></div>
+            <div class="field"><label for="annee">Époque de construction</label>
+              <select id="annee" data-k="annee"><option value="">Je ne sais pas</option><option value="1930">Avant 1948</option><option value="1960">1948 à 1974</option><option value="1982">1975 à 1989</option><option value="2000">1990 à 2011</option><option value="2016">2012 et après</option><option value="2025">Neuf, moins de 2 ans</option></select></div>
             <div class="field"><label for="dpe">DPE actuel</label>
               <select id="dpe" data-k="dpe"><option value="">Inconnu</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option></select></div>
             <div class="field"><label for="etat">État général</label>
@@ -294,11 +295,11 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/config.js?v=202609181009"></script>
-  <script src="/assets/js/catalog.js?v=202609181009"></script>
-  <script src="/assets/js/engine.js?v=202609181009"></script>
-  <script src="/assets/js/pricing.js?v=202609181009"></script>
-  <script src="/assets/js/auth.js?v=202609181009"></script>
-  <script src="/assets/js/tunnel.js?v=202609181009"></script>
+  <script src="/config.js?v=202609181013"></script>
+  <script src="/assets/js/catalog.js?v=202609181013"></script>
+  <script src="/assets/js/engine.js?v=202609181013"></script>
+  <script src="/assets/js/pricing.js?v=202609181013"></script>
+  <script src="/assets/js/auth.js?v=202609181013"></script>
+  <script src="/assets/js/tunnel.js?v=202609181013"></script>
 </body>
 </html>
