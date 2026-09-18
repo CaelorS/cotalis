@@ -827,3 +827,13 @@ tr.lot td .loticon { width: 18px; height: 18px; vertical-align: -4px; }
 .btn.chev::before { content: "›"; position: absolute; right: 14px; top: 50%; transform: translate(-8px, -52%); font-size: 24px; line-height: 1; opacity: 0; transition: opacity .25s ease, transform .25s ease; }
 .btn.chev:hover:not([disabled]) { padding-right: 40px; }
 .btn.chev:hover:not([disabled])::before { opacity: 1; transform: translate(0, -52%); }
+
+/* tunnel : le fil d'Ariane vit dans l'en-tête, tout tient sur une ligne sur ordinateur */
+.top .progress { flex: 1; min-width: 0; background: none; border: 0; padding: 0; margin: 0 8px 0 24px; }
+.top .progress .pct { display: none; }
+.top .progress.hidden { display: none; }
+@media (max-width: 980px) {
+  .top:has(.progress) { flex-wrap: wrap; }
+  .top .progress { order: 10; flex: none; width: 100%; margin: 6px 0 0; }
+  .top .progress .pct { display: block; }
+}
