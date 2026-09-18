@@ -890,3 +890,4 @@ select.st { padding: 4px 26px 4px 10px; border-width: 1px; }
 .grid-table tr.sel td { background: var(--accent-soft); }
 .mcard.sel { border-color: var(--accent); background: var(--accent-soft); }
 @media (max-width: 980px) { .bulkbar { top: calc(var(--stick-h, 0px) + 4px); gap: 8px; padding: 8px 10px; } .bulkbar .ghost { margin-left: 0; } }
+.st-signe-soft { background: #DFF1E6; color: #2F855A; border-color: #A9D8BC; }

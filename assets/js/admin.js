@@ -7,7 +7,7 @@
   const eur = v => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Math.round(v || 0));
   const dt = v => v ? new Date(v).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '';
   const KIND = { appart: 'Appartement', maison: 'Maison', immeuble: 'Immeuble' };
-  const STATUS = [['nouveau', 'Nouveau'], ['contacte', 'Contacté'], ['relance', 'Relancé'], ['visite', 'Visite planifiée'], ['devis', 'Devis envoyé'], ['signe', 'Signé'], ['perdu', 'Perdu']];
+  const STATUS = [['nouveau', 'Nouveau'], ['relance', 'Relancé'], ['contacte', 'Contacté'], ['visite', 'Visite planifiée'], ['devis', 'Devis envoyé'], ['signe', 'Signé'], ['perdu', 'Perdu']];
   const STATUS_LABEL = Object.fromEntries(STATUS);
   const FIN = { oui: 'Accompagné', renta: 'Rentabilité seule', non: 'Sans rentabilité' };
   const EPOQUE = { '1930': 'avant 1948', '1960': '1948-1974', '1982': '1975 et après', '2000': '1975 et après', '2016': '1975 et après', '2025': 'neuf' };
@@ -87,6 +87,7 @@
   let sortKey = 'date', sortDir = -1;   // -1 décroissant, 1 croissant
   const selected = new Set(); let leadRows = [];   // sélection pour les actions en masse, lignes affichées
   const STATUS_RANK = Object.fromEntries(STATUS.map((s, i) => [s[0], i]));
+  const rappelFait = l => (STATUS_RANK[l.status || 'nouveau'] || 0) >= STATUS_RANK.contacte;   // rappel demandé et client contacté depuis
   const adminName = id => { const a = admins.find(x => x.id === id); return a ? (a.prenom || a.email) : ''; };
   const SORTERS = {
     date: l => l.created_at || '',
@@ -130,7 +131,7 @@
     const today = new Date().toISOString().slice(0, 10);
     $('leads').querySelector('tbody').innerHTML = rows.map(l => `<tr data-id="${l.id}" class="${l.next_action && l.next_action < today ? 'late' : ''}${selected.has(l.id) ? ' sel' : ''}">
       <td class="chk"><input type="checkbox" data-sel="${l.id}"${selected.has(l.id) ? ' checked' : ''} aria-label="Sélectionner"></td>
-      <td class="num">${dt(l.created_at)}${l.kind === 'rappel' ? '<span class="pill">rappel demandé</span>' : ''}</td>
+      <td class="num">${dt(l.created_at)}${l.kind === 'rappel' ? (rappelFait(l) ? '<span class="pill st st-signe-soft">rappel fait</span>' : '<span class="pill">rappel demandé</span>') : ''}</td>
       <td><b>${esc(l.prenom)} ${esc(l.nom)}</b><small>${esc(l.email)}<br>${esc(l.tel)}</small></td>
       <td>${esc(KIND[l.type_bien] || l.type_bien || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}<small>${esc(l.ville || l.adresse || '')}</small></td>
       <td class="r num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</td>
