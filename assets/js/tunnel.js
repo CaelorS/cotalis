@@ -569,7 +569,7 @@
       ${viewer ? `<div class="ok-note no-print">Vous consultez une estimation partagée. <a href="/estimation/?new=1">Faire ma propre estimation</a></div>` : `<div class="ok-note no-print">Merci ${esc(c.prenom)}, votre estimation est prête. Téléchargez-la en PDF ci-dessous ; une copie vous sera envoyée à ${esc(c.email)}.${S.accountPending ? ' Votre compte est créé : confirmez votre e-mail pour retrouver cette estimation sur tous vos appareils.' : ''}</div>`}
       <div class="rhead">
         <div><h2>Estimation travaux</h2><div class="who">${who} · ${date} · réf. <span class="num">${esc(S.ref)}</span></div></div>
-        <div class="actions"><button type="button" class="btn primary" id="btn-pdf"><span class="l">Télécharger le PDF</span><span class="s">PDF</span></button><button type="button" class="btn" id="btn-share">Partager</button>${viewer ? '' : `<button type="button" class="btn" id="btn-edit">Modifier</button><button type="button" class="btn" id="btn-rappel">${S.rappel ? '<span class="l">Rappel demandé ✓</span><span class="s">Rappel ✓</span>' : '<span class="l">Être rappelé</span><span class="s">Rappel</span>'}</button>`}<a class="btn" href="/estimation/?new=1"><span class="l">Nouvelle estimation</span><span class="s">Nouvelle</span></a></div>
+        <div class="actions"><button type="button" class="btn primary" id="btn-pdf"><svg class="bico" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg><span class="l">Télécharger le PDF</span><span class="s">PDF</span></button><button type="button" class="btn" id="btn-share"><svg class="bico" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.6M8.2 13.2l7.6 4.6"/></svg>Partager</button>${viewer ? '' : `<button type="button" class="btn" id="btn-edit"><svg class="bico" viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16z"/><path d="M13 7l4 4"/></svg>Modifier</button><button type="button" class="btn" id="btn-rappel">${S.rappel ? '<svg class="bico" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span class="l">Rappel demandé</span><span class="s">Rappel ✓</span>' : '<svg class="bico" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg><span class="l">Être rappelé</span><span class="s">Rappel</span>'}</button>`}<a class="btn" href="/estimation/?new=1"><svg class="bico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="l">Nouvelle estimation</span><span class="s">Nouvelle</span></a></div>
       </div>
       <div class="two">
         <div class="box"><h3>Le bien</h3><table class="kv">${bien.map(b => `<tr><td>${esc(b[0])}</td><td>${esc(b[1])}</td></tr>`).join('')}</table></div>
@@ -619,7 +619,7 @@
     $('btn-share').addEventListener('click', share);
     if (!viewer) {
       $('btn-edit').addEventListener('click', () => { S.step = 'travaux'; save(); showStep(); });
-      $('btn-rappel').addEventListener('click', () => { S.rappel = true; save(); submitLead('rappel'); $('btn-rappel').innerHTML = '<span class="l">Rappel demandé ✓</span><span class="s">Rappel ✓</span>'; });
+      $('btn-rappel').addEventListener('click', () => { S.rappel = true; save(); submitLead('rappel'); $('btn-rappel').innerHTML = '<svg class="bico" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span class="l">Rappel demandé</span><span class="s">Rappel ✓</span>'; });
     }
   }
 

@@ -837,3 +837,7 @@ tr.lot td .loticon { width: 18px; height: 18px; vertical-align: -4px; }
   .top .progress { order: 10; flex: none; width: 100%; margin: 6px 0 0; }
   .top .progress .pct { display: block; }
 }
+
+/* icônes devant les libellés des boutons du rapport, version ordinateur */
+.report .actions .bico { width: 17px; height: 17px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
+@media (max-width: 980px) { .report .actions .bico { display: none; } }
