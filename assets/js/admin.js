@@ -207,7 +207,7 @@
     if (!pricingLoaded) { await C.loadPricing(); pricingLoaded = true; }
     dirty.clear(); $('prix-msg').textContent = '';
     $('settings').innerHTML = SETTINGS.map(([k, label, unit, mult]) => { const v = getSetting(k), d = getDefault(k); return `<div class="field"><label>${label} <span class="optsub">défaut ${(d * mult).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}${unit}</span></label><div class="unit"><input type="number" step="${mult === 100 ? 0.5 : 0.01}" data-set="${k}" value="${+(v * mult).toFixed(3)}">${unit ? `<span>${unit}</span>` : ''}</div></div>`; }).join('');
-    $('items').querySelector('tbody').innerHTML = C.CATALOG.map(l => `<tr class="lot"><td colspan="10">${esc(l.lot)}</td></tr>` + l.items.map(it => { const d = C.DEFAULTS.items[it.id] || { pu: '—' }; return `<tr data-item="${it.id}"${it.custom ? ' data-custom="1"' : ''}>
+    $('items').querySelector('tbody').innerHTML = C.CATALOG.map(l => `<tr class="lot"><td colspan="10">${C.lotIcon(l.lot)}${esc(l.lot)}</td></tr>` + l.items.map(it => { const d = C.DEFAULTS.items[it.id] || { pu: '—' }; return `<tr data-item="${it.id}"${it.custom ? ' data-custom="1"' : ''}>
       <td><input type="checkbox" data-f="active"${it.inactive ? '' : ' checked'}></td>
       <td><input type="text" data-f="label" value="${esc(it.label)}" class="wide"><input type="text" data-f="sub" value="${esc(it.sub || '')}" class="wide sub" placeholder="précision"></td>
       <td>${esc(it.unit)}</td>
@@ -219,7 +219,7 @@
       <td class="qtycell"><select data-f="qty_mode" class="inline">${Object.keys(C.QTY_MODES).map(k => `<option value="${k}"${it.qm === k ? ' selected' : ''}>${C.QTY_MODES[k]}</option>`).join('')}</select> <input type="number" step="0.01" data-f="qty_coef" value="${it.qc == null ? 1 : it.qc}" style="width:72px" aria-label="Coefficient">${d.qm ? `<small>défaut : ${esc(C.QTY_MODES[d.qm])} ${d.qc}</small>` : ''}</td>
       <td>${it.custom ? `<button type="button" class="btn small" data-del="${it.id}">Supprimer</button>` : ''}</td>
     </tr>`; }).join('')).join('');
-    $('items-cards').innerHTML = C.CATALOG.map(l => `<div class="mlot">${esc(l.lot)}</div>` + l.items.map(it => `<div class="mcard${it.inactive ? ' off' : ''}">
+    $('items-cards').innerHTML = C.CATALOG.map(l => `<div class="mlot">${C.lotIcon(l.lot)}${esc(l.lot)}</div>` + l.items.map(it => `<div class="mcard${it.inactive ? ' off' : ''}">
       <div class="mrow"><b>${esc(it.label)}</b><button type="button" class="btn small" data-edit="${it.id}" aria-label="Modifier ${esc(it.label)}">✎</button></div>
       <div class="msub">${esc(it.sub || '')}</div>
       <div class="mrow"><span class="num">${eur(it.pu)}${it.unit === 'forfait' ? '' : '/' + it.unit} HT</span><span>${it.inactive ? 'inactif' : 'MO ' + Math.round(it.lab * 100) + ' % · TVA ' + (it.tva === 5.5 ? '5,5' : '10') + ' % · marge ' + (it.marge == null ? 'défaut' : Math.round(it.marge * 100) + ' %')}</span></div>
@@ -318,7 +318,7 @@
     if (!pricingLoaded) { await C.loadPricing(); pricingLoaded = true; }
     rules = JSON.parse(JSON.stringify(C.RULES));
     $('sel-msg').textContent = '';
-    $('preset-table').querySelector('tbody').innerHTML = C.CATALOG.map(l => `<tr class="lot"><td colspan="5">${esc(l.lot)}</td></tr>` + l.items.filter(it => !it.inactive).map(it => `<tr data-preset="${it.id}"><td>${esc(it.label)}</td>${ETATS.map(e => `<td><input type="checkbox" data-etat="${e[0]}"${(C.PRESET[e[0]] || []).includes(it.id) ? ' checked' : ''} aria-label="${esc(it.label)} : ${e[1]}"></td>`).join('')}</tr>`).join('')).join('');
+    $('preset-table').querySelector('tbody').innerHTML = C.CATALOG.map(l => `<tr class="lot"><td colspan="5">${C.lotIcon(l.lot)}${esc(l.lot)}</td></tr>` + l.items.filter(it => !it.inactive).map(it => `<tr data-preset="${it.id}"><td>${esc(it.label)}</td>${ETATS.map(e => `<td><input type="checkbox" data-etat="${e[0]}"${(C.PRESET[e[0]] || []).includes(it.id) ? ' checked' : ''} aria-label="${esc(it.label)} : ${e[1]}"></td>`).join('')}</tr>`).join('')).join('');
     renderRules();
   }
   const itemOptions = (sel) => allItems().map(it => `<option value="${it.id}"${(sel || []).includes(it.id) ? ' selected' : ''}>${esc(it.lotName)} · ${esc(it.label)}</option>`).join('');

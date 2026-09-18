@@ -367,7 +367,7 @@
   function lotHtml(l, items, withSum) {
     return `
         <div class="lot">
-          <div class="lot-head"><h3>${esc(l.lot)}</h3>${withSum ? `<span class="sum">sous-total <b class="num" data-lotsum="${esc(l.lot)}"></b></span>` : ''}</div>
+          <div class="lot-head"><h3>${C.lotIcon(l.lot)}${esc(l.lot)}</h3>${withSum ? `<span class="sum">sous-total <b class="num" data-lotsum="${esc(l.lot)}"></b></span>` : ''}</div>
           ${items.map(it => `
             <div class="item" data-item="${it.id}">
               <input type="checkbox" id="w-${it.id}" data-w="${it.id}">
@@ -511,7 +511,7 @@
     const devisRows = C.CATALOG.map(l => {
       const rows = R.lines.filter(x => x.on && x.it.lotName === l.lot && x.amount > 0);
       if (!rows.length) return '';
-      return `<tr class="lot"><td colspan="3">${esc(l.lot)}</td><td class="r num">${eur(R.lots[l.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}${x.it.sub ? `<small>${esc(x.it.sub)}</small>` : ''}</td><td class="r num">${fmt(x.q)}&nbsp;${x.it.unit}</td><td class="r num">${eur(x.unitPrice)}${x.it.unit === 'forfait' ? '' : '/' + x.it.unit}</td><td class="r num">${eur(x.amount)}</td></tr>`).join('');
+      return `<tr class="lot"><td colspan="3">${C.lotIcon(l.lot)}${esc(l.lot)}</td><td class="r num">${eur(R.lots[l.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}${x.it.sub ? `<small>${esc(x.it.sub)}</small>` : ''}</td><td class="r num">${fmt(x.q)}&nbsp;${x.it.unit}</td><td class="r num">${eur(x.unitPrice)}${x.it.unit === 'forfait' ? '' : '/' + x.it.unit}</td><td class="r num">${eur(x.amount)}</td></tr>`).join('');
     }).join('');
     const fin = (S.finance === 'oui' || S.finance === 'renta') && R.total > 0;
     const bank = fin ? [

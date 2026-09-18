@@ -785,3 +785,11 @@ td.nowrap { white-space: nowrap; }
 @media (max-width: 980px) { .whybtn { width: 22px; height: 22px; font-size: 12px; } }
 
 .suggest li.active { background: var(--accent-soft); color: var(--accent); }
+
+/* ---------- icônes des lots ---------- */
+.loticon { width: 22px; height: 22px; flex-shrink: 0; fill: none; stroke: var(--accent); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; opacity: .6; vertical-align: -5px; margin-right: 8px; }
+.lot-head h3 { display: flex; align-items: center; }
+.lot-head h3 .loticon { width: 24px; height: 24px; margin-right: 10px; }
+.mlot { display: flex; align-items: center; gap: 6px; }
+.mlot .loticon { width: 18px; height: 18px; margin: 0; }
+tr.lot td .loticon { width: 18px; height: 18px; vertical-align: -4px; }

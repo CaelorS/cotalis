@@ -125,6 +125,21 @@
     placard: "Des rangements sur mesure : les locataires les cherchent, les annonces les vantent, et ça évite les armoires bancales.",
     nett: "Le chantier finit par un vrai nettoyage, vitres comprises. Vous récupérez un logement prêt à photographier et à louer.",
   };
+  // Icônes des lots : trait fin monoligne, sans fond (chemins SVG dans une vue 0 0 32 32)
+  const LOT_ICONS = {
+    'Démolition et dépose': '<path d="M6 24h12v4H6zM22 6l4 4-11 11-4-4zM11 17l-3 7 7-3M4 12h5M6 9h3"/>',
+    'Gros œuvre et cloisons': '<path d="M4 10h24v16H4zM4 16h24M4 22h24M12 10v6M20 16v6M12 22v4M20 10v6"/>',
+    'Électricité': '<path d="M18 3 8 18h7l-2 11 11-16h-7z"/>',
+    'Parties communes et réseaux': '<path d="M10 4h12v24H10zM16 4v24M10 12h12M10 20h12M4 12h6M22 12h6M4 20h6M22 20h6"/>',
+    'Plomberie et chauffage': '<path d="M6 14h10v6H6zM16 17h6a4 4 0 0 1 4 4v6M3 14v6M11 10c0-3 5-3 5 0M13 8V5M26 27l-1.5 2-1.5-2a1.5 1.5 0 0 1 3 0z"/>',
+    'Isolation et menuiseries extérieures': '<path d="M4 8h24v16H4zM10 8v16M22 8v16M10 16h12M14 4c1 1 1 2 0 3M18 4c1 1 1 2 0 3"/>',
+    'Extérieurs et toiture': '<path d="M3 15 16 4l13 11M6 14v14h20V14M13 28v-8h6v8M22 8V4h3v6"/>',
+    'Salle de bain et WC': '<path d="M4 16h24v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM7 16V7a3 3 0 0 1 6 0M13 7h-2M9 27v2M23 27v2"/>',
+    'Cuisine': '<path d="M4 14h24v12H4zM4 20h24M16 14v12M10 10a3 3 0 0 1 6 0M12 6v2M22 6v6"/><circle cx="9" cy="17" r="1.2"/><circle cx="23" cy="17" r="1.2"/>',
+    'Sols': '<path d="M4 8h24v16H4zM4 16h24M12 8v8M20 16v8M20 8v8M12 16v8"/>',
+    'Peinture et menuiseries intérieures': '<path d="M5 6h16v7H5zM21 9h5v6h-9v4M15 19h3v9h-3z"/>',
+  };
+  const lotIcon = (lot, cls) => LOT_ICONS[lot] ? `<svg class="loticon${cls ? ' ' + cls : ''}" viewBox="0 0 32 32" aria-hidden="true">${LOT_ICONS[lot]}</svg>` : '';
   const ITEMS = {};
   CATALOG.forEach(l => l.items.forEach(i => { i.lotName = l.lot; if (l.only && !i.only) i.only = l.only; i.qty = qtyFn(i.qm, i.qc); ITEMS[i.id] = i; }));
 
@@ -186,7 +201,7 @@
   const EAU_DEFAULT = { t1: 1, t2: 1, t3: 1, t4: 2, t5: 2, t6: 2 };
 
   root.COTALIA = Object.assign(root.COTALIA || {}, {
-    CATALOG, ITEMS, WHY, PRESET, RULES, RULE_FIELDS, RULE_OPS, QTY, QTY_MODES, qtyFn, REGION, GAMME, PIECES, EAU_DEFAULT, zoneFromAddress,
+    CATALOG, ITEMS, WHY, LOT_ICONS, lotIcon, PRESET, RULES, RULE_FIELDS, RULE_OPS, QTY, QTY_MODES, qtyFn, REGION, GAMME, PIECES, EAU_DEFAULT, zoneFromAddress,
     MARGE: 0.18,      // marge brute sur le prix HT hors aléas
     PILOTAGE: 0.03,   // pilotage de chantier, sur les coûts directs
     FG: 0.08,         // frais généraux, sur les coûts directs
