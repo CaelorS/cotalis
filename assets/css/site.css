@@ -469,8 +469,7 @@ body.admin { background: var(--bg); }
   .result .mini small { font-size: 12px; color: var(--ink-3); }
   body[data-step="kind"] .result, body[data-step="bien"] .result { display: none; }
   .tunnel { padding-bottom: 96px; }
-  .stepnav { position: sticky; bottom: 46px; background: var(--bg); padding: 10px 0; z-index: 21; }
-  body[data-step="kind"] .stepnav, body[data-step="bien"] .stepnav { bottom: 0; }
+  .stepnav { position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; z-index: 21; }
 }
 @media (max-width: 980px) {
   .top .tag, .top .sub { display: none; }
@@ -634,7 +633,7 @@ body.admin { background: var(--bg); }
 @media (max-width: 980px) { .grid.grid3 { grid-template-columns: 1fr; } }
 /* pas d'encadré avant la finition : le formulaire prend toute la largeur */
 body[data-step="kind"] #panel, body[data-step="bien"] #panel { display: none; }
-body[data-step="kind"] .wb, body[data-step="bien"] .wb { grid-template-columns: minmax(0, 1fr); max-width: 1040px; }
+.wb { grid-template-columns: minmax(0, 1fr); max-width: 1040px; }   /* plus de panneau latéral : le chiffrage attend les coordonnées */
 
 /* zone de dépôt illustrée */
 .drop.drop-big { padding: 24px 28px; min-height: 150px; gap: 24px; border-width: 2px; }
@@ -902,19 +901,35 @@ select.st { padding: 4px 26px 4px 10px; border-width: 1px; }
 .vok { color: var(--good); }
 
 /* trafic du site */
-.schart { margin: 14px 0 4px; }
-.schart svg { width: 100%; height: 170px; display: block; }
+.schart { margin: 4px 0 8px; }
+.schart svg { width: 100%; height: 200px; display: block; }
+.schart .hit { fill: transparent; }
+.schart .hit:hover { fill: var(--accent); opacity: .06; }
 .schart .grid { stroke: var(--line-2); stroke-width: 1; }
-.schart .ax { font-size: 10px; fill: var(--ink-3); font-family: "IBM Plex Mono", monospace; }
+.schart .ax { font-size: 11px; fill: var(--ink-3); font-family: "IBM Plex Mono", monospace; }
 .schart .area { fill: var(--accent); opacity: .12; }
 .schart .line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
 .schart .dot { fill: var(--surface); stroke: var(--accent); stroke-width: 1.5; }
 .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
 @media (max-width: 980px) { .trio { grid-template-columns: 1fr; } .schart svg { height: 140px; } }
 
-/* chiffrage masqué tant que les coordonnées ne sont pas laissées */
-.blur { filter: blur(7px); user-select: none; opacity: .55; }
-.lockbox { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; padding: 10px 12px; background: var(--accent-soft); border-radius: 6px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
-.lockbox svg { width: 20px; height: 20px; flex-shrink: 0; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; margin-top: 2px; }
-.lockbox b { color: var(--ink); }
-body.locked .lot-head .sum { display: none; }
+body.locked .lot-head .sum { display: none; }   /* sous-totaux masqués tant que les coordonnées ne sont pas laissées */
+
+/* espace intérieur des panneaux : un bloc posé dans un cadre ne touche jamais ses bords */
+.panel > :not(header):not(.body):not(.toolbar) { margin-left: 22px; margin-right: 22px; }
+.panel > header + :not(.body):not(.toolbar) { margin-top: 18px; }
+.panel > :not(header):not(.body) + :not(.body):not(.toolbar) { margin-top: 14px; }
+.panel > :last-child:not(header):not(.body) { margin-bottom: 22px; }
+.admin .panel > :not(header):not(.body):not(.toolbar) { margin-left: 24px; margin-right: 24px; }
+.admin .panel > header + :not(.body):not(.toolbar) { margin-top: 20px; }
+.admin .panel > :last-child:not(header):not(.body) { margin-bottom: 24px; }
+.admin .panel > .toolbar { padding: 16px 24px 0 !important; margin-bottom: 0; }
+.admin .panel > .toolbar + * { margin-top: 14px; }
+.kpis { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 0; }
+.panel > .kpis + .schart { margin-top: 18px; }
+.schart + .hint { margin: 0 24px; }
+@media (max-width: 980px) {
+  .panel > :not(header):not(.body):not(.toolbar), .admin .panel > :not(header):not(.body):not(.toolbar) { margin-left: 12px; margin-right: 12px; }
+  .admin .panel > .toolbar { padding: 12px 12px 0 !important; }
+  .schart + .hint { margin: 0 12px; }
+}

@@ -652,7 +652,8 @@
     const sess = Object.values(bySess), nS = sess.length, nV = new Set(ev.map(e => e.visitor)).size;
     const bounce = sess.filter(x => x.views <= 1 && !x.cta).length;
     const homeS = sess.filter(x => x.home).length, ctaS = sess.filter(x => x.cta).length;
-    const started = sessions.filter(x => !x.archived_at).length, done = sessions.filter(x => !x.archived_at && x.completed_at).length;
+    const sinceTs = ev.length ? ev[0].ts : null;   // la mesure d'audience est plus récente que les parcours : on compare sur la même fenêtre
+    const started = sessions.filter(x => !x.archived_at && (!sinceTs || x.started_at >= sinceTs)).length;
     const avg = nS ? sess.reduce((a, x) => a + x.secs, 0) / nS : 0;
     $('s-kpis').innerHTML = [
       ['Visites', nS, nV + ' visiteur' + (nV > 1 ? 's' : '') + ' unique' + (nV > 1 ? 's' : '')],
@@ -660,26 +661,31 @@
       ['Durée moyenne', dur(avg * 1000), 'temps passé par visite'],
       ['Taux de rebond', pct(bounce, nS), 'une seule page, sans clic'],
       ['Clics bouton principal', ctaS, homeS ? pct(ctaS, homeS) + ' des visites de l\'accueil' : ''],
-      ['Estimations commencées', started, nS ? pct(started, nS) + ' des visites' : ''],
-      ['Estimations complètes', done, started ? pct(done, started) + ' des parcours' : ''],
+      ['Estimations commencées', started, nS ? pct(started, nS) + ' des visites' + (sinceTs ? ', depuis le ' + new Date(sinceTs).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '') : ''],
     ].map(k => `<div class="tile"><div class="eyebrow">${k[0]}</div><div class="v num">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('');
     // courbe des visites par jour
     const dayKey = ts => new Date(ts).toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
     const perDay = {}; sess.forEach(x => { const k = dayKey(x.first); perDay[k] = (perDay[k] || 0) + 1; });
     const labels = []; for (let i = days - 1; i >= 0; i--) { const d = new Date(Date.now() - i * 864e5); labels.push(dayKey(d)); }
-    const vals = labels.map(k => perDay[k] || 0), max = Math.max(1, ...vals);
-    const W = 640, H = 150, L = 30, R = 8, T = 10, B = 24, w = W - L - R, h = H - T - B;
-    const px = i => L + (labels.length > 1 ? i / (labels.length - 1) * w : w / 2), py = v => T + h - v / max * h;
+    const vals = labels.map(k => perDay[k] || 0);
+    const rawMax = Math.max(1, ...vals), step = rawMax <= 5 ? 1 : rawMax <= 10 ? 2 : rawMax <= 25 ? 5 : rawMax <= 50 ? 10 : rawMax <= 100 ? 20 : Math.pow(10, Math.floor(Math.log10(rawMax))) / 2;
+    const max = Math.ceil(rawMax / step) * step;
+    const W = Math.max(320, $('s-chart').clientWidth || 640), H = 200, L = 34, R = 16, T = 14, B = 28, w = W - L - R, h = H - T - B, n = labels.length;
+    const px = i => L + (n > 1 ? i / (n - 1) * w : w / 2), py = v => T + h - v / max * h;
     const path = vals.map((v, i) => (i ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(v).toFixed(1)).join(' ');
-    const area = path + ` L${px(vals.length - 1).toFixed(1)} ${(T + h).toFixed(1)} L${px(0).toFixed(1)} ${(T + h).toFixed(1)} Z`;
-    const every = Math.max(1, Math.ceil(labels.length / 8));
+    const area = path + ` L${px(n - 1).toFixed(1)} ${(T + h).toFixed(1)} L${px(0).toFixed(1)} ${(T + h).toFixed(1)} Z`;
+    const every = Math.max(1, Math.ceil(84 / (w / Math.max(1, n - 1))));
     const fmtDay = k => { const [y, m, d] = k.split('-'); return d + '/' + m; };
-    $('s-chart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Visites par jour">
-      ${[0, .5, 1].map(f => `<line x1="${L}" x2="${W - R}" y1="${(T + h - f * h).toFixed(1)}" y2="${(T + h - f * h).toFixed(1)}" class="grid"/><text x="${L - 6}" y="${(T + h - f * h + 4).toFixed(1)}" class="ax" text-anchor="end">${Math.round(f * max)}</text>`).join('')}
+    const ticks = []; for (let v = 0; v <= max; v += step) ticks.push(v);
+    const labelIdx = new Set(); for (let i = 0; i < n; i += every) labelIdx.add(i); if (n - 1 - Math.max(...labelIdx) >= every) labelIdx.add(n - 1); else if (n > 1) { labelIdx.delete(Math.max(...labelIdx)); labelIdx.add(n - 1); }
+    const slot = n > 1 ? w / (n - 1) : w;
+    $('s-chart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-label="Visites par jour">
+      ${ticks.map(v => `<line x1="${L}" x2="${W - R}" y1="${py(v).toFixed(1)}" y2="${py(v).toFixed(1)}" class="grid"/><text x="${L - 8}" y="${(py(v) + 3.5).toFixed(1)}" class="ax" text-anchor="end">${v}</text>`).join('')}
       <path d="${area}" class="area"/><path d="${path}" class="line"/>
-      ${vals.map((v, i) => `<circle cx="${px(i).toFixed(1)}" cy="${py(v).toFixed(1)}" r="3" class="dot"><title>${fmtDay(labels[i])} : ${v} visite${v > 1 ? 's' : ''}</title></circle>`).join('')}
-      ${labels.map((k, i) => i % every === 0 || i === labels.length - 1 ? `<text x="${px(i).toFixed(1)}" y="${H - 6}" class="ax" text-anchor="middle">${fmtDay(k)}</text>` : '').join('')}
-    </svg><div class="hint" style="margin-top:4px">Visites par jour sur la période.</div>`;
+      ${vals.map((v, i) => v > 0 ? `<circle cx="${px(i).toFixed(1)}" cy="${py(v).toFixed(1)}" r="3.5" class="dot"/>` : '').join('')}
+      ${labels.map((k, i) => `<rect x="${(px(i) - slot / 2).toFixed(1)}" y="${T}" width="${slot.toFixed(1)}" height="${h}" class="hit"><title>${fmtDay(k)} : ${vals[i]} visite${vals[i] > 1 ? 's' : ''}</title></rect>`).join('')}
+      ${labels.map((k, i) => labelIdx.has(i) ? `<text x="${px(i).toFixed(1)}" y="${H - 8}" class="ax" text-anchor="middle">${fmtDay(k)}</text>` : '').join('')}
+    </svg>`;
     // pages, sources, appareils
     const pv = {}, ps = {}; views.forEach(e => { pv[e.page] = (pv[e.page] || 0) + 1; }); sess.forEach(x => x.pages.forEach(p0 => { ps[p0] = (ps[p0] || 0) + 1; }));
     $('s-pages').querySelector('tbody').innerHTML = Object.keys(pv).sort((a, b) => pv[b] - pv[a]).slice(0, 10).map(p0 => `<tr><td>${esc(PAGE_LABEL[p0] || p0)}<small>${esc(p0)}</small></td><td class="r num">${pv[p0]}</td><td class="r num">${ps[p0] || 0}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">Aucune page vue.</td></tr>';
@@ -773,6 +779,7 @@
       ${x.data && x.data.total ? `<div class="msub">projet ${eur(x.data.total)} · renta ${pct1(x.data.brut || 0)}${x.data.cf != null ? ' · ' + cfHtml(x.data.cf) : ''}</div>` : ''}
     </div>`; }).join('') || '<p class="empty">Aucun parcours sur la période.</p>';
   }
+  let sResize = null; window.addEventListener('resize', () => { if (siteEvents && !$('tab-tunnel').classList.contains('hidden')) { clearTimeout(sResize); sResize = setTimeout(() => renderTraffic(+$('t-period').value), 150); } });
   $('t-cards').addEventListener('click', e => { if (e.target.closest('.mchk')) { e.stopPropagation(); return; } const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });
   function updateTBulk() {
     const n = tSelected.size, view = $('t-view').value;
