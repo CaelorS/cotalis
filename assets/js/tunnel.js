@@ -491,6 +491,20 @@
     $('p-body').classList.toggle('hidden', !ok);
     if (!ok) return;
     const R = C.compute(S);
+    // le chiffrage n'est dévoilé qu'une fois les coordonnées laissées (ou pour un compte connecté, ou un lien partagé)
+    const lock = !viewer && !S.leadSubmitted;
+    document.body.classList.toggle('locked', lock);
+    $('p-lock').classList.toggle('hidden', !lock);
+    $('panel').querySelector('.range').classList.toggle('hidden', lock);
+    $('p-body').classList.toggle('hidden', lock);
+    $('panel-toggle').classList.toggle('hidden', lock);
+    if (lock) {
+      const n = Object.keys(S.works).filter(k => S.works[k]).length;
+      $('p-central').innerHTML = '<span class="blur" aria-hidden="true">24 680 €</span><small>TTC</small>';
+      $('p-lock-txt').textContent = ` ${n} ouvrage${n > 1 ? 's' : ''} chiffré${n > 1 ? 's' : ''}, durée probable ${R.weeks} semaine${R.weeks > 1 ? 's' : ''}. Laissez vos coordonnées à l'étape Coordonnées et le montant s'affiche.`;
+      $('p-mini').innerHTML = '<span class="k">Travaux estimés</span><b class="num blur" aria-hidden="true">24 680 €</b><small>dévoilé après vos coordonnées</small>';
+      return;
+    }
     $('p-central').innerHTML = eur(R.ttc) + '<small>TTC</small>';
     $('p-low').textContent = eur(R.low); $('p-high').textContent = eur(R.high);
     $('p-mini').innerHTML = '<span class="k">Travaux estimés</span><b class="num">' + eur(R.ttc) + '</b><small>TTC</small>';

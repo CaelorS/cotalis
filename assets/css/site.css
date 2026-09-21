@@ -911,3 +911,10 @@ select.st { padding: 4px 26px 4px 10px; border-width: 1px; }
 .schart .dot { fill: var(--surface); stroke: var(--accent); stroke-width: 1.5; }
 .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
 @media (max-width: 980px) { .trio { grid-template-columns: 1fr; } .schart svg { height: 140px; } }
+
+/* chiffrage masqué tant que les coordonnées ne sont pas laissées */
+.blur { filter: blur(7px); user-select: none; opacity: .55; }
+.lockbox { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; padding: 10px 12px; background: var(--accent-soft); border-radius: 6px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.lockbox svg { width: 20px; height: 20px; flex-shrink: 0; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; margin-top: 2px; }
+.lockbox b { color: var(--ink); }
+body.locked .lot-head .sum { display: none; }
