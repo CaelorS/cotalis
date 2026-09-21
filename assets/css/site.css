@@ -900,3 +900,14 @@ select.st { padding: 4px 26px 4px 10px; border-width: 1px; }
 .slot { border: 1px solid var(--line); background: var(--surface); border-radius: 4px; padding: 6px 10px; font: inherit; font-size: 14px; font-family: "IBM Plex Mono", monospace; cursor: pointer; color: var(--ink); }
 .slot:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .vok { color: var(--good); }
+
+/* trafic du site */
+.schart { margin: 14px 0 4px; }
+.schart svg { width: 100%; height: 170px; display: block; }
+.schart .grid { stroke: var(--line-2); stroke-width: 1; }
+.schart .ax { font-size: 10px; fill: var(--ink-3); font-family: "IBM Plex Mono", monospace; }
+.schart .area { fill: var(--accent); opacity: .12; }
+.schart .line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.schart .dot { fill: var(--surface); stroke: var(--accent); stroke-width: 1.5; }
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+@media (max-width: 980px) { .trio { grid-template-columns: 1fr; } .schart svg { height: 140px; } }

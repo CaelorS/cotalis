@@ -641,7 +641,53 @@
   /* ---------- analyse du tunnel ---------- */
   const T_STEPS = [['kind', 'Bien'], ['bien', 'Descriptif'], ['finition', 'Finition'], ['travaux', 'Travaux'], ['financeQ', 'Financement'], ['acquisition', 'Acquisition'], ['situation', 'Situation'], ['contact', 'Coordonnées'], ['resultat', 'Estimation']];
   const T_LABEL = Object.fromEntries(T_STEPS);
-  let sessions = [], tSortKey = 'date', tSortDir = -1;
+  let sessions = [], tSortKey = 'date', tSortDir = -1, siteEvents = null;
+  const pct = (a, b) => b ? Math.round(a / b * 100) + ' %' : '—';
+  const PAGE_LABEL = { '/': 'Accueil', '/estimation/': 'Estimation', '/team/': 'À propos', '/mentions-legales.html': 'Mentions légales', '/confidentialite.html': 'Confidentialité' };
+  function renderTraffic(days) {
+    if (siteEvents === null) { $('s-kpis').innerHTML = '<div class="tile"><div class="eyebrow">Trafic</div><div class="d">Exécutez supabase/schema-v7.sql pour activer la mesure d\'audience.</div></div>'; $('s-chart').innerHTML = ''; return; }
+    const ev = siteEvents, views = ev.filter(e => e.event === 'view');
+    const bySess = {};
+    ev.forEach(e => { const s0 = bySess[e.session] || (bySess[e.session] = { views: 0, cta: 0, secs: 0, pages: new Set(), first: e.ts, device: e.device, referrer: '', visitor: e.visitor, home: false }); if (e.event === 'view') { s0.views++; s0.pages.add(e.page); if (e.page === '/') s0.home = true; if (e.referrer && !s0.referrer) s0.referrer = e.referrer; } if (e.event === 'cta') s0.cta++; if (e.event === 'leave') s0.secs += +((e.data || {}).secs) || 0; });
+    const sess = Object.values(bySess), nS = sess.length, nV = new Set(ev.map(e => e.visitor)).size;
+    const bounce = sess.filter(x => x.views <= 1 && !x.cta).length;
+    const homeS = sess.filter(x => x.home).length, ctaS = sess.filter(x => x.cta).length;
+    const started = sessions.filter(x => !x.archived_at).length, done = sessions.filter(x => !x.archived_at && x.completed_at).length;
+    const avg = nS ? sess.reduce((a, x) => a + x.secs, 0) / nS : 0;
+    $('s-kpis').innerHTML = [
+      ['Visites', nS, nV + ' visiteur' + (nV > 1 ? 's' : '') + ' unique' + (nV > 1 ? 's' : '')],
+      ['Pages vues', views.length, nS ? (views.length / nS).toFixed(1) + ' page(s) par visite' : ''],
+      ['Durée moyenne', dur(avg * 1000), 'temps passé par visite'],
+      ['Taux de rebond', pct(bounce, nS), 'une seule page, sans clic'],
+      ['Clics bouton principal', ctaS, homeS ? pct(ctaS, homeS) + ' des visites de l\'accueil' : ''],
+      ['Estimations commencées', started, nS ? pct(started, nS) + ' des visites' : ''],
+      ['Estimations complètes', done, started ? pct(done, started) + ' des parcours' : ''],
+    ].map(k => `<div class="tile"><div class="eyebrow">${k[0]}</div><div class="v num">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('');
+    // courbe des visites par jour
+    const dayKey = ts => new Date(ts).toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+    const perDay = {}; sess.forEach(x => { const k = dayKey(x.first); perDay[k] = (perDay[k] || 0) + 1; });
+    const labels = []; for (let i = days - 1; i >= 0; i--) { const d = new Date(Date.now() - i * 864e5); labels.push(dayKey(d)); }
+    const vals = labels.map(k => perDay[k] || 0), max = Math.max(1, ...vals);
+    const W = 640, H = 150, L = 30, R = 8, T = 10, B = 24, w = W - L - R, h = H - T - B;
+    const px = i => L + (labels.length > 1 ? i / (labels.length - 1) * w : w / 2), py = v => T + h - v / max * h;
+    const path = vals.map((v, i) => (i ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(v).toFixed(1)).join(' ');
+    const area = path + ` L${px(vals.length - 1).toFixed(1)} ${(T + h).toFixed(1)} L${px(0).toFixed(1)} ${(T + h).toFixed(1)} Z`;
+    const every = Math.max(1, Math.ceil(labels.length / 8));
+    const fmtDay = k => { const [y, m, d] = k.split('-'); return d + '/' + m; };
+    $('s-chart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Visites par jour">
+      ${[0, .5, 1].map(f => `<line x1="${L}" x2="${W - R}" y1="${(T + h - f * h).toFixed(1)}" y2="${(T + h - f * h).toFixed(1)}" class="grid"/><text x="${L - 6}" y="${(T + h - f * h + 4).toFixed(1)}" class="ax" text-anchor="end">${Math.round(f * max)}</text>`).join('')}
+      <path d="${area}" class="area"/><path d="${path}" class="line"/>
+      ${vals.map((v, i) => `<circle cx="${px(i).toFixed(1)}" cy="${py(v).toFixed(1)}" r="3" class="dot"><title>${fmtDay(labels[i])} : ${v} visite${v > 1 ? 's' : ''}</title></circle>`).join('')}
+      ${labels.map((k, i) => i % every === 0 || i === labels.length - 1 ? `<text x="${px(i).toFixed(1)}" y="${H - 6}" class="ax" text-anchor="middle">${fmtDay(k)}</text>` : '').join('')}
+    </svg><div class="hint" style="margin-top:4px">Visites par jour sur la période.</div>`;
+    // pages, sources, appareils
+    const pv = {}, ps = {}; views.forEach(e => { pv[e.page] = (pv[e.page] || 0) + 1; }); sess.forEach(x => x.pages.forEach(p0 => { ps[p0] = (ps[p0] || 0) + 1; }));
+    $('s-pages').querySelector('tbody').innerHTML = Object.keys(pv).sort((a, b) => pv[b] - pv[a]).slice(0, 10).map(p0 => `<tr><td>${esc(PAGE_LABEL[p0] || p0)}<small>${esc(p0)}</small></td><td class="r num">${pv[p0]}</td><td class="r num">${ps[p0] || 0}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">Aucune page vue.</td></tr>';
+    const src = {}; sess.forEach(x => { let k = 'Accès direct'; if (x.referrer && x.referrer !== 'interne') { try { k = new URL(x.referrer).hostname.replace(/^www\./, ''); } catch (e) { k = x.referrer; } } src[k] = (src[k] || 0) + 1; });
+    $('s-sources').querySelector('tbody').innerHTML = Object.keys(src).sort((a, b) => src[b] - src[a]).slice(0, 10).map(k => `<tr><td>${esc(k)}</td><td class="r num">${src[k]}</td><td class="r num">${pct(src[k], nS)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">—</td></tr>';
+    const dev = {}; sess.forEach(x => { const k = x.device || '?'; dev[k] = (dev[k] || 0) + 1; });
+    $('s-devices').querySelector('tbody').innerHTML = Object.keys(dev).sort((a, b) => dev[b] - dev[a]).map(k => `<tr><td>${esc(k)}</td><td class="r num">${dev[k]}</td><td class="r num">${pct(dev[k], nS)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">—</td></tr>';
+  }
   const tSelected = new Set(); let tRows = [];
   const median = arr => { const a = arr.filter(x => x != null && isFinite(x)).sort((x, y) => x - y); if (!a.length) return null; const m = Math.floor(a.length / 2); return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
   const dur = ms => { if (ms == null) return '—'; const s = Math.round(ms / 1000); if (s < 60) return s + ' s'; if (s < 3600) return Math.floor(s / 60) + ' min ' + String(s % 60).padStart(2, '0') + ' s'; return Math.floor(s / 3600) + ' h ' + String(Math.floor(s % 3600 / 60)).padStart(2, '0'); };
@@ -651,6 +697,7 @@
     const { data, error } = await sb.from('funnel_sessions').select('*').gte('started_at', since).order('started_at', { ascending: false }).limit(5000);
     if (error) { $('t-count').textContent = 'Lecture impossible : ' + error.message + (error.code === '42P01' ? ' (exécutez supabase/schema-v4.sql)' : ''); return; }
     sessions = data || [];
+    try { const { data: ev, error: e2 } = await sb.from('site_events').select('ts,visitor,session,event,page,referrer,device,ip,data').gte('ts', since).order('ts', { ascending: true }).limit(20000); siteEvents = e2 ? null : (ev || []); } catch (e) { siteEvents = null; }
     // profils des parcours faits par un compte connecté, pour afficher le vrai nom
     const ids = [...new Set(sessions.map(x => x.user_id).filter(id => id && !profilesById[id]))];
     if (ids.length) { try { const { data: pr } = await sb.from('profiles').select('id,prenom,nom,email').in('id', ids.slice(0, 500)); (pr || []).forEach(x => { profilesById[x.id] = x; }); } catch (e) {} }
@@ -664,6 +711,7 @@
     return Math.max.apply(null, t) - Math.min.apply(null, t);
   }
   function renderTunnel() {
+    renderTraffic(+$('t-period').value);
     const dev = $('t-device').value, st = $('t-state').value, tView = $('t-view').value;
     let rows = sessions.filter(x => !x.archived_at);   // les statistiques ne comptent que les parcours actifs
     if (dev) rows = rows.filter(x => x.device === dev);
@@ -699,6 +747,10 @@
     rows.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'fr')) * tSortDir; });
     document.querySelectorAll('#t-sessions th[data-sort]').forEach(th => { th.classList.toggle('asc', th.dataset.sort === tSortKey && tSortDir === 1); th.classList.toggle('desc', th.dataset.sort === tSortKey && tSortDir === -1); });
     const leadByRef = Object.fromEntries(leads.map(l => [l.project_id, l]));
+    // une même adresse IP garde le même nom : dès qu'un parcours est identifié (dossier ou compte), les parcours anonymes de cette IP le sont aussi
+    const known = {};
+    sessions.forEach(x => { if (!x.ip) return; const l = leadByRef[x.id]; const p = x.user_id && profilesById[x.user_id]; const name = l ? ((l.prenom || '') + ' ' + (l.nom || '')).trim() : p ? ([p.prenom, p.nom].filter(Boolean).join(' ') || p.email) : ''; if (name) known[x.ip] = { name, key: l ? (l.email || l.id) : (p.email || x.user_id), openId: l ? l.id : null }; });
+    const chipFor = (x, withOpen) => { const l = leadByRef[x.id]; if (l) return namedChip(((l.prenom || '') + ' ' + (l.nom || '')).trim(), l.email || l.id, x.ip, withOpen ? l.id : undefined); if (x.user_id) return accountChip(x); const k = x.ip && known[x.ip]; if (k) return namedChip(k.name, k.key, x.ip, withOpen ? k.openId : undefined); return x.ip ? ipChip(x.ip) : ''; };
     tRows = rows; updateTBulk();
     $('t-sessions').querySelector('tbody').innerHTML = rows.map(x => { const l = leadByRef[x.id]; return `<tr class="${tSelected.has(x.id) ? 'sel' : ''}">
       <td class="chk"><input type="checkbox" data-tsel="${esc(x.id)}"${tSelected.has(x.id) ? ' checked' : ''} aria-label="Sélectionner"></td>
@@ -712,10 +764,10 @@
       <td class="r num">${x.data && x.data.total ? eur(x.data.total) : '—'}</td>
       <td>${esc(FIN[x.finance] || '—')}</td>
       <td class="r num">${x.data && x.data.total ? pct1(x.data.brut || 0) + (x.data.cf != null ? '<small>' + cfHtml(x.data.cf) + '</small>' : '') : '—'}</td>
-      <td>${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip, l.id) : x.user_id ? accountChip(x) : x.ip ? ipChip(x.ip) : '—'}</td>
+      <td>${chipFor(x, true) || '—'}</td>
     </tr>`; }).join('') || '<tr><td colspan="12" class="empty">Aucun parcours sur la période.</td></tr>';
     $('t-cards').innerHTML = rows.map(x => { const l = leadByRef[x.id]; return `<div class="mcard${tSelected.has(x.id) ? ' sel' : ''}"${l ? ` data-open="${l.id}" role="button"` : ''}>
-      <div class="mrow"><label class="mchk"><input type="checkbox" data-tsel="${esc(x.id)}"${tSelected.has(x.id) ? ' checked' : ''} aria-label="Sélectionner"></label>${l ? namedChip((l.prenom || '') + ' ' + (l.nom || ''), l.email || l.id, x.ip) : x.user_id ? accountChip(x) : x.ip ? ipChip(x.ip) : '<span class="msub">anonyme</span>'}${x.completed_at ? '<span class="pill" style="background:var(--good-soft);color:var(--good)">complet</span>' : '<span class="pill">incomplet</span>'}</div>
+      <div class="mrow"><label class="mchk"><input type="checkbox" data-tsel="${esc(x.id)}"${tSelected.has(x.id) ? ' checked' : ''} aria-label="Sélectionner"></label>${chipFor(x, false) || '<span class="msub">anonyme</span>'}${x.completed_at ? '<span class="pill" style="background:var(--good-soft);color:var(--good)">complet</span>' : '<span class="pill">incomplet</span>'}</div>
       <div class="msub">${new Date(x.started_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · ${esc(x.device || '')} · ${esc(KIND[x.kind] || '')}${x.surface ? ' ' + x.surface + ' m²' : ''}</div>
       <div class="mrow"><span>${esc(T_LABEL[x.last_step] || x.last_step || '—')} · ${dur(sessionDuration(x))}</span><span class="num">${x.ttc ? eur(x.ttc) : ''}</span></div>
       ${x.data && x.data.total ? `<div class="msub">projet ${eur(x.data.total)} · renta ${pct1(x.data.brut || 0)}${x.data.cf != null ? ' · ' + cfHtml(x.data.cf) : ''}</div>` : ''}

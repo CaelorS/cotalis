@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/css/site.css?v=202609181220">
+  <link rel="stylesheet" href="/assets/css/site.css?v=202609211004">
 </head>
 <body class="admin">
   <div class="stick">
@@ -139,7 +139,20 @@
         <select id="t-view" aria-label="Vue"><option value="active">Parcours actifs</option><option value="archived">Archives</option></select>
         <span class="count" id="t-count"></span>
       </div>
-      <div class="kpis" id="t-kpis"></div>
+      <div class="panel">
+        <header><h2>Trafic du site</h2><span class="hint">Toutes les pages publiques : visites, pages vues, clics sur le bouton principal, temps passé. Une visite se termine après 30 minutes d'inactivité. Les adresses IP sont effacées après 90 jours.</span></header>
+        <div class="kpis" id="s-kpis"></div>
+        <div class="schart" id="s-chart"></div>
+        <div class="trio">
+          <div class="tablewrap"><table class="grid-table" id="s-pages"><thead><tr><th>Page</th><th class="r">Vues</th><th class="r">Visites</th></tr></thead><tbody></tbody></table></div>
+          <div class="tablewrap"><table class="grid-table" id="s-sources"><thead><tr><th>Source</th><th class="r">Visites</th><th class="r">%</th></tr></thead><tbody></tbody></table></div>
+          <div class="tablewrap"><table class="grid-table" id="s-devices"><thead><tr><th>Appareil</th><th class="r">Visites</th><th class="r">%</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+      <div class="panel">
+        <header><h2>Tunnel d'estimation</h2><span class="hint">Parcours commencés dans l'outil d'estimation.</span></header>
+        <div class="kpis" id="t-kpis"></div>
+      </div>
       <div class="panel">
         <header><h2>Entonnoir par étape</h2><span class="hint">Parcours ayant atteint chaque étape, perte par rapport à l'étape précédente, temps médian passé sur l'étape avant de passer à la suivante. La plus grosse perte est surlignée : c'est le goulot.</span></header>
         <div class="tablewrap"><table class="grid-table" id="t-funnel"><thead><tr><th>Étape</th><th class="r">Atteinte</th><th class="r">% du départ</th><th class="r">Perte vs précédente</th><th class="r">Abandons ici</th><th class="r">Temps médian</th><th class="r">Mobile</th><th class="r">Ordinateur</th></tr></thead><tbody></tbody></table></div>
@@ -190,11 +203,11 @@
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/config.js?v=202609181220"></script>
-  <script src="/assets/js/catalog.js?v=202609181220"></script>
-  <script src="/assets/js/engine.js?v=202609181220"></script>
-  <script src="/assets/js/pricing.js?v=202609181220"></script>
-  <script src="/assets/js/auth.js?v=202609181220"></script>
-  <script src="/assets/js/admin.js?v=202609181220"></script>
+  <script src="/config.js?v=202609211004"></script>
+  <script src="/assets/js/catalog.js?v=202609211004"></script>
+  <script src="/assets/js/engine.js?v=202609211004"></script>
+  <script src="/assets/js/pricing.js?v=202609211004"></script>
+  <script src="/assets/js/auth.js?v=202609211004"></script>
+  <script src="/assets/js/admin.js?v=202609211004"></script>
 </body>
 </html>
