@@ -17,6 +17,8 @@ create table if not exists public.site_events (
 create index if not exists site_events_ts_idx on public.site_events (ts);
 create index if not exists site_events_session_idx on public.site_events (session);
 alter table public.site_events enable row level security;
+grant select, delete on public.site_events to authenticated;
+grant usage, select on sequence public.site_events_id_seq to authenticated;
 drop policy if exists "trafic: admin lecture" on public.site_events;
 create policy "trafic: admin lecture" on public.site_events for select to authenticated using (public.is_admin());
 drop policy if exists "trafic: admin modification" on public.site_events;
