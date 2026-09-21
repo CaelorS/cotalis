@@ -641,7 +641,7 @@
   /* ---------- analyse du tunnel ---------- */
   const T_STEPS = [['kind', 'Bien'], ['bien', 'Descriptif'], ['finition', 'Finition'], ['travaux', 'Travaux'], ['financeQ', 'Financement'], ['acquisition', 'Acquisition'], ['situation', 'Situation'], ['contact', 'Coordonnées'], ['resultat', 'Estimation']];
   const T_LABEL = Object.fromEntries(T_STEPS);
-  let sessions = [], tSortKey = 'date', tSortDir = -1, siteEvents = null;
+  let sessions = [], tSortKey = 'date', tSortDir = -1, siteEvents = null, sMetric = 'visites';
   const pct = (a, b) => b ? Math.round(a / b * 100) + ' %' : '—';
   const PAGE_LABEL = { '/': 'Accueil', '/estimation/': 'Estimation', '/team/': 'À propos', '/mentions-legales.html': 'Mentions légales', '/confidentialite.html': 'Confidentialité' };
   function renderTraffic(days) {
@@ -656,18 +656,29 @@
     const started = sessions.filter(x => !x.archived_at && (!sinceTs || x.started_at >= sinceTs)).length;
     const avg = nS ? sess.reduce((a, x) => a + x.secs, 0) / nS : 0;
     $('s-kpis').innerHTML = [
-      ['Visites', nS, nV + ' visiteur' + (nV > 1 ? 's' : '') + ' unique' + (nV > 1 ? 's' : '')],
-      ['Pages vues', views.length, nS ? (views.length / nS).toFixed(1) + ' page(s) par visite' : ''],
-      ['Durée moyenne', dur(avg * 1000), 'temps passé par visite'],
-      ['Taux de rebond', pct(bounce, nS), 'une seule page, sans clic'],
-      ['Clics bouton principal', ctaS, homeS ? pct(ctaS, homeS) + ' des visites de l\'accueil' : ''],
-      ['Estimations commencées', started, nS ? pct(started, nS) + ' des visites' + (sinceTs ? ', depuis le ' + new Date(sinceTs).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '') : ''],
-    ].map(k => `<div class="tile"><div class="eyebrow">${k[0]}</div><div class="v num">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('');
+      ['visites', 'Visites', nS, nV + ' visiteur' + (nV > 1 ? 's' : '') + ' unique' + (nV > 1 ? 's' : '')],
+      ['pages', 'Pages vues', views.length, nS ? (views.length / nS).toFixed(1) + ' page(s) par visite' : ''],
+      ['duree', 'Durée moyenne', dur(avg * 1000), 'temps passé par visite'],
+      ['rebond', 'Taux de rebond', pct(bounce, nS), 'une seule page, sans clic'],
+      ['cta', 'Clics bouton principal', ctaS, homeS ? pct(ctaS, homeS) + ' des visites de l\'accueil' : ''],
+      ['estimations', 'Estimations commencées', started, nS ? pct(started, nS) + ' des visites' + (sinceTs ? ', depuis le ' + new Date(sinceTs).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '') : ''],
+    ].map(k => `<button type="button" class="tile${sMetric === k[0] ? ' sel' : ''}" data-metric="${k[0]}"><div class="eyebrow">${k[1]}</div><div class="v num">${k[2]}</div><div class="d">${k[3]}</div></button>`).join('');
     // courbe des visites par jour
     const dayKey = ts => new Date(ts).toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
-    const perDay = {}; sess.forEach(x => { const k = dayKey(x.first); perDay[k] = (perDay[k] || 0) + 1; });
     const labels = []; for (let i = days - 1; i >= 0; i--) { const d = new Date(Date.now() - i * 864e5); labels.push(dayKey(d)); }
-    const vals = labels.map(k => perDay[k] || 0);
+    const byDay = {}; labels.forEach(k => { byDay[k] = { s: 0, v: 0, secs: 0, bounce: 0, cta: 0, est: 0 }; });
+    sess.forEach(x => { const d = byDay[dayKey(x.first)]; if (!d) return; d.s++; d.secs += x.secs; if (x.views <= 1 && !x.cta) d.bounce++; if (x.cta) d.cta++; });
+    views.forEach(e => { const d = byDay[dayKey(e.ts)]; if (d) d.v++; });
+    sessions.forEach(x => { if (x.archived_at || (sinceTs && x.started_at < sinceTs)) return; const d = byDay[dayKey(x.started_at)]; if (d) d.est++; });
+    const M = {
+      visites: { title: 'Visites par jour', val: d => d.s, fmt: v => v + ' visite' + (v > 1 ? 's' : '') },
+      pages: { title: 'Pages vues par jour', val: d => d.v, fmt: v => v + ' page' + (v > 1 ? 's' : '') + ' vue' + (v > 1 ? 's' : '') },
+      duree: { title: 'Durée moyenne d\'une visite, en secondes', val: d => d.s ? Math.round(d.secs / d.s) : 0, fmt: v => dur(v * 1000) },
+      rebond: { title: 'Taux de rebond par jour, en %', val: d => d.s ? Math.round(d.bounce / d.s * 100) : 0, fmt: v => v + ' %' },
+      cta: { title: 'Visites avec clic sur le bouton principal, par jour', val: d => d.cta, fmt: v => v + ' clic' + (v > 1 ? 's' : '') },
+      estimations: { title: 'Estimations commencées par jour', val: d => d.est, fmt: v => v + ' estimation' + (v > 1 ? 's' : '') },
+    }[sMetric] || {};
+    const vals = labels.map(k => M.val(byDay[k]));
     const rawMax = Math.max(1, ...vals), step = rawMax <= 5 ? 1 : rawMax <= 10 ? 2 : rawMax <= 25 ? 5 : rawMax <= 50 ? 10 : rawMax <= 100 ? 20 : Math.pow(10, Math.floor(Math.log10(rawMax))) / 2;
     const max = Math.ceil(rawMax / step) * step;
     const W = Math.max(320, $('s-chart').clientWidth || 640), H = 200, L = 34, R = 16, T = 14, B = 28, w = W - L - R, h = H - T - B, n = labels.length;
@@ -683,9 +694,9 @@
       ${ticks.map(v => `<line x1="${L}" x2="${W - R}" y1="${py(v).toFixed(1)}" y2="${py(v).toFixed(1)}" class="grid"/><text x="${L - 8}" y="${(py(v) + 3.5).toFixed(1)}" class="ax" text-anchor="end">${v}</text>`).join('')}
       <path d="${area}" class="area"/><path d="${path}" class="line"/>
       ${vals.map((v, i) => v > 0 ? `<circle cx="${px(i).toFixed(1)}" cy="${py(v).toFixed(1)}" r="3.5" class="dot"/>` : '').join('')}
-      ${labels.map((k, i) => `<rect x="${(px(i) - slot / 2).toFixed(1)}" y="${T}" width="${slot.toFixed(1)}" height="${h}" class="hit"><title>${fmtDay(k)} : ${vals[i]} visite${vals[i] > 1 ? 's' : ''}</title></rect>`).join('')}
+      ${labels.map((k, i) => `<rect x="${(px(i) - slot / 2).toFixed(1)}" y="${T}" width="${slot.toFixed(1)}" height="${h}" class="hit"><title>${fmtDay(k)} : ${M.fmt(vals[i])}</title></rect>`).join('')}
       ${labels.map((k, i) => labelIdx.has(i) ? `<text x="${px(i).toFixed(1)}" y="${H - 8}" class="ax" text-anchor="middle">${fmtDay(k)}</text>` : '').join('')}
-    </svg>`;
+    </svg><div class="hint schart-title">${M.title}. Cliquez un indicateur pour changer la courbe.</div>`;
     // pages, sources, appareils
     const pv = {}, ps = {}; views.forEach(e => { pv[e.page] = (pv[e.page] || 0) + 1; }); sess.forEach(x => x.pages.forEach(p0 => { ps[p0] = (ps[p0] || 0) + 1; }));
     $('s-pages').querySelector('tbody').innerHTML = Object.keys(pv).sort((a, b) => pv[b] - pv[a]).slice(0, 10).map(p0 => `<tr><td>${esc(PAGE_LABEL[p0] || p0)}<small>${esc(p0)}</small></td><td class="r num">${pv[p0]}</td><td class="r num">${ps[p0] || 0}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">Aucune page vue.</td></tr>';
@@ -779,6 +790,7 @@
       ${x.data && x.data.total ? `<div class="msub">projet ${eur(x.data.total)} · renta ${pct1(x.data.brut || 0)}${x.data.cf != null ? ' · ' + cfHtml(x.data.cf) : ''}</div>` : ''}
     </div>`; }).join('') || '<p class="empty">Aucun parcours sur la période.</p>';
   }
+  $('s-kpis').addEventListener('click', e => { const t = e.target.closest('[data-metric]'); if (!t) return; sMetric = t.dataset.metric; renderTraffic(+$('t-period').value); });
   let sResize = null; window.addEventListener('resize', () => { if (siteEvents && !$('tab-tunnel').classList.contains('hidden')) { clearTimeout(sResize); sResize = setTimeout(() => renderTraffic(+$('t-period').value), 150); } });
   $('t-cards').addEventListener('click', e => { if (e.target.closest('.mchk')) { e.stopPropagation(); return; } const c = e.target.closest('[data-open]'); if (c) openLead(+c.dataset.open); });
   function updateTBulk() {
