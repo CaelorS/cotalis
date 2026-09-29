@@ -9,6 +9,7 @@ Deno.serve(async (req) => {
     const rules = await loadRules();
     const lead = await leadOf(body.project_id, body.token);
     const offers = await offersFor(lead, rules);
+    if (!offers.length) console.error("gcal-slots: aucun créneau, agendas sans autorisation complète ou sans disponibilité");
     const who: Record<string, string> = {};
     offers.forEach((o) => { who[new Date(o.t).toISOString()] = label(o.account); });
     return json({ slots: offers.map((o) => new Date(o.t).toISOString()), who, duration: rules.duration, tz: "Europe/Paris" });

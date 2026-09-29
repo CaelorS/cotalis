@@ -638,7 +638,7 @@
   function vShow(html, hint) { $('v-body').innerHTML = html; if (hint != null) $('v-hint').textContent = hint; }
   async function openVisite() {
     $('vmodal').classList.remove('hidden');
-    if (S.visiteAt) { vShow(`<p class="vok">Visite prévue le <b>${dfr(S.visiteAt, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</b>, à ${esc(S.adresse)}.</p><p class="hint">Pour la déplacer, répondez à l'invitation reçue par e-mail ou appelez-nous.</p>`, 'Tout est calé.'); return; }
+    if (S.visiteAt) { vShow(`<p class="vok">Visite prévue le <b>${dfr(S.visiteAt, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</b>, à ${esc(S.adresse)}.</p><p class="hint">Pour la déplacer, annulez ce rendez-vous puis choisissez un autre créneau.</p><div class="frow" style="margin-top:10px"><button type="button" class="btn" id="v-cancel">Annuler ce rendez-vous</button></div>`, 'Tout est calé.'); return; }
     vShow('<p class="hint">Recherche des créneaux disponibles…</p>', 'Choisissez un créneau : la visite dure environ une heure, sur place.');
     if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); }
     await saveProject();
@@ -663,7 +663,7 @@
       S.visiteAt = d.start; save(); track();
       if ($('btn-visite')) $('btn-visite').innerHTML = visiteBtn();
       vShow(`<p class="vok">C'est noté ! Visite le <b>${d.label}</b>${d.with ? ' avec ' + esc(d.with) : ''}. L'invitation part chez ${esc(d.email)}, avec l'adresse et le contact de votre interlocuteur.</p>`, 'À très vite sur place.');
-    } catch (e) { vShow('<p>La réservation n\'a pas abouti. Demandez à être rappelé, on fixe la visite par téléphone.</p>', ''); }
+    } catch (e) { console.warn('Cotalia : réservation refusée', e && e.message); vShow(`<p>La réservation n'a pas abouti. Demandez à être rappelé, on fixe la visite par téléphone.</p><p class="hint" style="font-size:12px">Motif technique : ${esc(String(e && e.message || 'inconnu').slice(0, 160))}</p>`, ''); }
   }
   /* ---------- accueil de l'estimation : fourchette et deux appels à l'action, à la première arrivée sur le rapport ---------- */
   function welcome() {
@@ -681,12 +681,22 @@
   $('w-rappel').addEventListener('click', () => { if ($('btn-rappel')) $('btn-rappel').click(); $('w-rappel').textContent = 'Rappel demandé ✓ On vous appelle très vite'; $('w-rappel').disabled = true; });
   $('w-visite').addEventListener('click', () => { closeWelcome(); openVisite(); });
 
+  async function cancelVisite() {
+    const b = $('v-cancel'); if (b) { b.disabled = true; b.textContent = 'Annulation…'; }
+    try {
+      const r = await fetch(BASE + '/functions/v1/gcal-cancel', { method: 'POST', headers: hdr(), body: JSON.stringify({ project_id: S.pid, token: S.token }) });
+      const d = await r.json(); if (!r.ok && r.status !== 400) throw new Error(d.error || r.status);
+      S.visiteAt = null; save(); if ($('btn-visite')) $('btn-visite').innerHTML = visiteBtn();
+      openVisite();
+    } catch (e) { vShow(`<p>L'annulation n'a pas abouti. Appelez-nous, on s'en occupe.</p><p class="hint" style="font-size:12px">Motif technique : ${esc(String(e && e.message || 'inconnu').slice(0, 160))}</p>`, ''); }
+  }
   $('v-close').addEventListener('click', () => $('vmodal').classList.add('hidden'));
   $('vmodal').addEventListener('click', e => {
     if (e.target === $('vmodal')) { $('vmodal').classList.add('hidden'); return; }
     const sl = e.target.closest('[data-slot]'); if (sl) { confirmVisite(sl.dataset.slot); return; }
     if (e.target.closest('#v-confirm')) bookVisite();
     if (e.target.closest('#v-back')) openVisite();
+    if (e.target.closest('#v-cancel')) cancelVisite();
   });
 
   async function saveProject() {

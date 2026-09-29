@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     const { project_id, token, start } = await req.json();
     if (!project_id || !token || !start) return json({ error: "paramètres manquants" }, 400);
     const lead = await leadOf(project_id, token);
-    if (!lead) return json({ error: "projet inconnu" }, 403);
+    if (!lead) { console.error("gcal-book: projet ou dossier introuvable", project_id); return json({ error: "projet inconnu" }, 403); }
     if (!lead.email) return json({ error: "coordonnées introuvables" }, 400);
 
     const rules = await loadRules();
@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     const offers = await offersFor(lead, rules, new Date(at.getTime() + 864e5));
     if (!offers.length) return json({ error: "agenda non connecté" }, 503);
     const offer = offers.find((o) => o.t === at.getTime());
-    if (!offer) return json({ error: "créneau plus disponible" }, 409);
+    if (!offer) { console.error("gcal-book: créneau indisponible", start, "offres", offers.length); return json({ error: "créneau plus disponible" }, 409); }
 
     const end = new Date(at.getTime() + rules.duration * 60e3);
     const who = [lead.prenom, lead.nom].filter(Boolean).join(" ");
@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
     await serviceClient().from("leads").update(patch).eq("id", lead.id);
     return json({ ok: true, start: at.toISOString(), end: end.toISOString(), label: fmt(at), email: lead.email, with: label(offer.account) });
   } catch (e) {
-    return json({ error: String(e?.message ?? e) }, 500);
+    console.error("gcal-book: échec", String(e?.message ?? e));
+    return json({ error: String(e?.message ?? e).slice(0, 300) }, 500);
   }
 });

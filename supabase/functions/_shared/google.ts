@@ -39,14 +39,23 @@ export async function listAccounts(): Promise<Account[]> {
   return (data ?? []) as Account[];
 }
 
-export async function tokenFor(a: Account): Promise<string | null> {
+/** Jeton d'accès et autorisations réellement accordées par la personne sur l'écran Google. */
+export async function grantFor(a: Account): Promise<{ token: string; canRead: boolean; canWrite: boolean; scope: string } | null> {
   const r = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ client_id: env("GOOGLE_CLIENT_ID"), client_secret: env("GOOGLE_CLIENT_SECRET"), refresh_token: a.refresh_token, grant_type: "refresh_token" }),
   });
   if (!r.ok) return null;
-  return (await r.json()).access_token ?? null;
+  const j = await r.json();
+  if (!j.access_token) return null;
+  const scope = String(j.scope ?? ""), full = /auth\/calendar(\s|$)/.test(scope);
+  return { token: j.access_token, scope, canRead: full || /calendar\.readonly|calendar\.events|calendar\.freebusy/.test(scope), canWrite: full || /auth\/calendar\.events(\s|$)/.test(scope) };
 }
+export async function tokenFor(a: Account): Promise<string | null> {
+  const g = await grantFor(a);
+  return g && g.canRead && g.canWrite ? g.token : null;   // un agenda où l'on ne peut pas écrire ne propose aucun créneau
+}
+export const GRANT_HELP = "autorisation incomplète : reconnectez cet agenda en cochant les deux cases sur l'écran Google (voir les agendas, créer des événements)";
 
 /** Département d'un code postal : 2 chiffres, 3 pour l'outre-mer. */
 export const dept = (cp?: string | null) => { const c = String(cp ?? "").trim(); return /^9[78]/.test(c) ? c.slice(0, 3) : c.slice(0, 2); };

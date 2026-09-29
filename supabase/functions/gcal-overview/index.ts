@@ -1,7 +1,7 @@
 // Planning pour le back-office : par agenda relié, les occupations Google et les créneaux réservables.
 // Réservé aux administrateurs (vérifié ici, la fonction est déployée sans contrôle de JWT).
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { CORS, json, env, loadRules, listAccounts, tokenFor, freeBusy, computeSlots, upcomingVisits, label } from "../_shared/google.ts";
+import { CORS, json, env, loadRules, listAccounts, grantFor, GRANT_HELP, freeBusy, computeSlots, upcomingVisits, label } from "../_shared/google.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -18,10 +18,13 @@ Deno.serve(async (req) => {
     const out = await Promise.all(accounts.map(async (a) => {
       const base = { id: a.id, name: label(a), email: a.email, zones: a.zones, buffer: a.buffer == null ? rules.buffer : a.buffer };
       try {
-        const token = await tokenFor(a);
-        if (!token) return { ...base, error: "connexion Google expirée, à reconnecter", busy: [], slots: [] };
-        const busy = await freeBusy(token, now, max);
-        return { ...base, busy, slots: computeSlots(busy, rules, base.buffer, up.perDay[a.id] || {}, now) };
+        const g = await grantFor(a);
+        if (!g) return { ...base, error: "connexion Google expirée, à reconnecter", busy: [], slots: [] };
+        if (!g.canRead) return { ...base, error: GRANT_HELP, busy: [], slots: [] };
+        const busy = await freeBusy(g.token, now, max);
+        if (!g.canWrite) return { ...base, error: GRANT_HELP, busy, slots: [] };
+        const token = g.token;
+        return { ...base, busy, slots: token ? computeSlots(busy, rules, base.buffer, up.perDay[a.id] || {}, now) : [] };
       } catch (e) {
         return { ...base, error: String(e?.message ?? e).slice(0, 120), busy: [], slots: [] };
       }

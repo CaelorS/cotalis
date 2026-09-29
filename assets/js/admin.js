@@ -270,7 +270,7 @@
           <tr><td>E-mail</td><td><a href="mailto:${esc(l.email)}">${esc(l.email)}</a></td></tr><tr><td>Téléphone</td><td><a href="tel:${esc(l.tel)}">${esc(l.tel)}</a></td></tr>
           <tr><td>Demande</td><td>${l.kind === 'rappel' ? 'Rappel pour visite technique' : 'Estimation'} · ${dt(l.created_at)}</td></tr>
           <tr><td>Stade</td><td>${esc(stadeLabel(l.stade))} · ${esc(demLabel(l.demarrage) || 'démarrage non précisé')}</td></tr>
-          <tr><td>Visite technique</td><td>${l.visite_at ? new Date(l.visite_at).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) + (l.visite_with ? ' · avec ' + esc(((agAccounts.find(x => x.id === l.visite_with) || {}).name) || adminName(l.visite_with) || 'un associé') : '') : '—'}</td></tr>
+          <tr><td>Visite technique</td><td>${l.visite_at ? new Date(l.visite_at).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) + (l.visite_with ? ' · avec ' + esc(((agAccounts.find(x => x.id === l.visite_with) || {}).name) || adminName(l.visite_with) || 'un associé') : '') + ` <button type="button" class="btn small" id="d-cancel-visite" style="margin-left:8px">Annuler la visite</button>` : '—'}</td></tr>
           <tr><td>Projet partagé</td><td>${l.project_id ? `<a href="/estimation/?p=${encodeURIComponent(l.project_id)}" target="_blank" rel="noopener">ouvrir l'estimation</a>` : '—'}</td></tr>
         </table></div>
         <div class="box"><h3>Bien</h3><table class="kv">
@@ -305,6 +305,18 @@
       </div>`;
     $('drawer').classList.remove('hidden');
     $('d-body').querySelectorAll('[data-photos]').forEach(b => b.addEventListener('click', () => openPhotos(+b.dataset.photos)));
+    if ($('d-cancel-visite')) $('d-cancel-visite').addEventListener('click', async () => {
+      if (!confirm('Annuler cette visite ? Le rendez-vous et les blocs de trajet sont supprimés de l\'agenda, le client est prévenu par Google.')) return;
+      $('d-cancel-visite').disabled = true; $('d-cancel-visite').textContent = 'Annulation…';
+      try {
+        const { data: sess } = await sb.auth.getSession();
+        const r = await fetch(FN + 'gcal-cancel', { method: 'POST', headers: { Authorization: 'Bearer ' + (sess && sess.session ? sess.session.access_token : ''), apikey: CFG.supabaseAnonKey || '', 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: id }) });
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        Object.assign(l, { visite_at: null, visite_event: null, visite_with: null, next_action: null }, l.status === 'visite' ? { status: 'contacte' } : {});
+        renderLeads(); if (plan) renderPlan(); openLead(id);
+        if (d.note) alert(d.note);
+      } catch (e) { alert('Annulation impossible : ' + e.message); $('d-cancel-visite').disabled = false; $('d-cancel-visite').textContent = 'Annuler la visite'; }
+    });
     $('d-save').addEventListener('click', async () => {
       const upd = { status: $('d-status').value, assigned_to: $('d-assign').value || null, next_action: $('d-next').value || null, notes: $('d-notes').value };
       const { error } = await sb.from('leads').update(upd).eq('id', id);

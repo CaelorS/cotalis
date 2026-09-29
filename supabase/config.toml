@@ -10,3 +10,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.gcal-overview]
 verify_jwt = false
+[functions.gcal-cancel]
+verify_jwt = false
