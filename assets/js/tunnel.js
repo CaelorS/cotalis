@@ -638,7 +638,7 @@
     if (S.visiteAt) return VICO + `<span class="l">Visite le ${dfr(S.visiteAt, { day: '2-digit', month: '2-digit' })}</span><span class="s">Visite ✓</span>`;
     return VICO + '<span class="l">Planifier la visite</span><span class="s">Visite</span>';
   }
-  let vSlot = null;
+  let vSlot = null, vWho = {};
   function vShow(html, hint) { $('v-body').innerHTML = html; if (hint != null) $('v-hint').textContent = hint; }
   async function openVisite() {
     $('vmodal').classList.remove('hidden');
@@ -647,7 +647,7 @@
     if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); }
     await saveProject();
     let data = null;
-    try { const r = await fetch(BASE + '/functions/v1/gcal-slots', { method: 'POST', headers: hdr(), body: '{}' }); data = await r.json(); if (!r.ok) throw new Error(data.error || r.status); }
+    try { const r = await fetch(BASE + '/functions/v1/gcal-slots', { method: 'POST', headers: hdr(), body: JSON.stringify({ project_id: S.pid, token: S.token }) }); data = await r.json(); if (!r.ok) throw new Error(data.error || r.status); vWho = data.who || {}; }
     catch (e) { vShow('<p>La prise de rendez-vous en ligne n\'est pas encore ouverte. Demandez à être rappelé : on fixe la visite ensemble.</p>', ''); return; }
     if (!data.slots.length) { vShow('<p>Aucun créneau libre sur les trois prochaines semaines. Demandez à être rappelé, on trouvera une date.</p>', ''); return; }
     const days = {};
@@ -656,7 +656,7 @@
   }
   function confirmVisite(iso) {
     vSlot = iso;
-    vShow(`<p><b>${dfr(iso, { weekday: 'long', day: 'numeric', month: 'long' })} à ${dfr(iso, { hour: '2-digit', minute: '2-digit' })}</b>, visite d'environ une heure à ${esc(S.adresse)}.</p><p class="hint">Une invitation sera envoyée à ${esc(S.contact.email)}.</p><div class="mrow" style="gap:8px;margin-top:10px"><button type="button" class="btn primary" id="v-confirm">Confirmer ce créneau</button><button type="button" class="btn" id="v-back">Autre créneau</button></div>`, 'On vérifie une dernière fois.');
+    vShow(`<p><b>${dfr(iso, { weekday: 'long', day: 'numeric', month: 'long' })} à ${dfr(iso, { hour: '2-digit', minute: '2-digit' })}</b>, visite d'environ une heure à ${esc(S.adresse)}${vWho[iso] ? ', avec ' + esc(vWho[iso]) : ''}.</p><p class="hint">Une invitation sera envoyée à ${esc(S.contact.email)}.</p><div class="mrow" style="gap:8px;margin-top:10px"><button type="button" class="btn primary" id="v-confirm">Confirmer ce créneau</button><button type="button" class="btn" id="v-back">Autre créneau</button></div>`, 'On vérifie une dernière fois.');
   }
   async function bookVisite() {
     const btn = $('v-confirm'); if (btn) { btn.disabled = true; btn.textContent = 'Réservation…'; }
@@ -666,7 +666,7 @@
       if (!r.ok) { if (r.status === 409) { vShow('<p>Ce créneau vient d\'être pris. Choisissez-en un autre.</p><p><button type="button" class="btn" id="v-back">Voir les créneaux</button></p>', ''); return; } throw new Error(d.error || r.status); }
       S.visiteAt = d.start; save(); track();
       if ($('btn-visite')) $('btn-visite').innerHTML = visiteBtn();
-      vShow(`<p class="vok">C'est noté ! Visite le <b>${d.label}</b>. L'invitation part chez ${esc(d.email)}, avec l'adresse et le contact de votre interlocuteur.</p>`, 'À très vite sur place.');
+      vShow(`<p class="vok">C'est noté ! Visite le <b>${d.label}</b>${d.with ? ' avec ' + esc(d.with) : ''}. L'invitation part chez ${esc(d.email)}, avec l'adresse et le contact de votre interlocuteur.</p>`, 'À très vite sur place.');
     } catch (e) { vShow('<p>La réservation n\'a pas abouti. Demandez à être rappelé, on fixe la visite par téléphone.</p>', ''); }
   }
   $('v-close').addEventListener('click', () => $('vmodal').classList.add('hidden'));

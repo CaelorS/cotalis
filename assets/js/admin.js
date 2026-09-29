@@ -269,7 +269,7 @@
           <tr><td>E-mail</td><td><a href="mailto:${esc(l.email)}">${esc(l.email)}</a></td></tr><tr><td>Téléphone</td><td><a href="tel:${esc(l.tel)}">${esc(l.tel)}</a></td></tr>
           <tr><td>Demande</td><td>${l.kind === 'rappel' ? 'Rappel pour visite technique' : 'Estimation'} · ${dt(l.created_at)}</td></tr>
           <tr><td>Stade</td><td>${esc(stadeLabel(l.stade))} · ${esc(demLabel(l.demarrage) || 'démarrage non précisé')}</td></tr>
-          <tr><td>Visite technique</td><td>${l.visite_at ? new Date(l.visite_at).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : '—'}</td></tr>
+          <tr><td>Visite technique</td><td>${l.visite_at ? new Date(l.visite_at).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) + (l.visite_with ? ' · avec ' + esc(((agAccounts.find(x => x.id === l.visite_with) || {}).name) || adminName(l.visite_with) || 'un associé') : '') : '—'}</td></tr>
           <tr><td>Projet partagé</td><td>${l.project_id ? `<a href="/estimation/?p=${encodeURIComponent(l.project_id)}" target="_blank" rel="noopener">ouvrir l'estimation</a>` : '—'}</td></tr>
         </table></div>
         <div class="box"><h3>Bien</h3><table class="kv">
@@ -830,21 +830,56 @@
   /* ---------- administrateurs ---------- */
   /* ---------- agenda des visites ---------- */
   const CFG = window.COTALIA_CONFIG || {}, FN = (CFG.supabaseUrl || '').replace(/\/$/, '') + '/functions/v1/';
-  const AG_DEFAULT = { duration: 60, buffer: 90, minDelayH: 48, maxPerDay: 2, days: { '1': [9, 18], '2': [9, 18], '3': [9, 18], '4': [9, 18], '5': [9, 18] } };
+  const AG_DEFAULT = { duration: 60, buffer: 90, minDelayH: 48, maxPerDay: 2, mode: 'zones', days: { '1': [9, 18], '2': [9, 18], '3': [9, 18], '4': [9, 18], '5': [9, 18] } };
   const AG_DAYS = [['1', 'Lundi'], ['2', 'Mardi'], ['3', 'Mercredi'], ['4', 'Jeudi'], ['5', 'Vendredi'], ['6', 'Samedi']];
+  let agAccounts = [];
   async function loadAgenda() {
-    try { const { data, error } = await sb.rpc('calendar_status'); $('agenda-status').textContent = error ? 'Exécutez supabase/schema-v6.sql pour activer l\'agenda.' : (data ? 'Agenda relié : ' + data : 'Aucun agenda relié pour l\'instant.'); $('agenda-connect').textContent = data ? 'Reconnecter l\'agenda Google' : 'Connecter l\'agenda Google'; } catch (e) { $('agenda-status').textContent = 'État indisponible.'; }
     let ag = AG_DEFAULT;
     try { const { data } = await sb.from('pricing_settings').select('value').eq('key', 'AGENDA').maybeSingle(); if (data && data.value) ag = Object.assign({}, AG_DEFAULT, data.value, { days: Object.assign({}, data.value.days || AG_DEFAULT.days) }); } catch (e) {}
     ['duration', 'buffer', 'minDelayH', 'maxPerDay'].forEach(k => { $('ag-' + k).value = ag[k]; });
     const first = Object.values(ag.days)[0] || [9, 18];
     $('ag-open').value = first[0]; $('ag-close').value = first[1];
+    $('ag-mode').value = ag.mode || 'zones';
     $('ag-days').innerHTML = AG_DAYS.map(d => `<label class="mchk" style="gap:6px"><input type="checkbox" value="${d[0]}"${ag.days[d[0]] ? ' checked' : ''}> ${d[1]}</label>`).join('');
+    try {
+      const { data, error } = await sb.rpc('calendar_list');
+      if (error) { $('agenda-status').textContent = 'Exécutez supabase/schema-v8.sql pour activer les agendas.'; agAccounts = []; }
+      else { agAccounts = data || []; $('agenda-status').textContent = agAccounts.length ? agAccounts.length + ' agenda' + (agAccounts.length > 1 ? 's reliés' : ' relié') + '.' : 'Aucun agenda relié pour l\'instant.'; }
+    } catch (e) { $('agenda-status').textContent = 'État indisponible.'; }
+    const mine = agAccounts.some(x => A.user && x.id === A.user.id);
+    $('agenda-connect').textContent = mine ? 'Reconnecter mon agenda Google' : 'Connecter mon agenda Google';
+    const upcoming = {}; const now = new Date().toISOString();
+    leads.forEach(l => { if (l.visite_at && l.visite_at >= now && l.visite_with) upcoming[l.visite_with] = (upcoming[l.visite_with] || 0) + 1; });
+    $('agenda-accounts').querySelector('tbody').innerHTML = agAccounts.map(x => `<tr data-ag="${esc(x.id)}">
+      <td><input type="checkbox" data-agf="active"${x.active ? ' checked' : ''} aria-label="Actif"></td>
+      <td><input class="inline" data-agf="name" value="${esc(x.name || '')}" style="width:150px" aria-label="Nom"></td>
+      <td><small>${esc(x.email || '')}</small></td>
+      <td class="r"><input class="inline num" type="number" data-agf="sort_order" value="${x.sort_order}" style="width:64px" aria-label="Ordre"></td>
+      <td><input class="inline" data-agf="zones" value="${esc(x.zones || '')}" placeholder="ex. 76, 27, 14" style="width:200px" aria-label="Départements"></td>
+      <td class="r"><input class="inline num" type="number" step="15" min="0" data-agf="buffer" value="${x.buffer == null ? '' : x.buffer}" placeholder="défaut" style="width:84px" aria-label="Trajet"></td>
+      <td class="r num">${upcoming[x.id] || 0}</td>
+      <td class="nowrap"><button type="button" class="btn small" data-agdel="${esc(x.id)}">Retirer</button></td>
+    </tr>`).join('') || '<tr><td colspan="8" class="empty">Aucun agenda relié. Chaque personne qui fait des visites clique « Connecter mon agenda Google » depuis son propre compte.</td></tr>';
   }
+  $('agenda-accounts').addEventListener('change', async e => {
+    const el = e.target.closest('[data-agf]'); if (!el) return;
+    const id = el.closest('tr').dataset.ag, f = el.dataset.agf;
+    const v = f === 'active' ? el.checked : f === 'sort_order' ? (+el.value || 0) : el.value;
+    const { error } = await sb.rpc('calendar_update', { p_id: id, p_patch: { [f]: v } });
+    $('agenda-msg').textContent = error ? 'Enregistrement impossible : ' + error.message : 'Agenda mis à jour.';
+    if (!error && (f === 'sort_order' || f === 'active')) loadAgenda();
+  });
+  $('agenda-accounts').addEventListener('click', async e => {
+    const b = e.target.closest('[data-agdel]'); if (!b) return;
+    if (!confirm('Retirer cet agenda ? Les rendez-vous déjà pris restent dans l\'agenda Google, mais plus aucun créneau ne sera proposé chez cette personne.')) return;
+    const { error } = await sb.rpc('calendar_remove', { p_id: b.dataset.agdel });
+    $('agenda-msg').textContent = error ? 'Impossible : ' + error.message : 'Agenda retiré.';
+    loadAgenda();
+  });
   $('agenda-save').addEventListener('click', async () => {
     const open = +$('ag-open').value || 9, close = +$('ag-close').value || 18, days = {};
     $('ag-days').querySelectorAll('input:checked').forEach(c => { days[c.value] = [open, close]; });
-    const value = { duration: +$('ag-duration').value || 60, buffer: +$('ag-buffer').value || 0, minDelayH: +$('ag-minDelayH').value || 0, maxPerDay: +$('ag-maxPerDay').value || 1, days };
+    const value = { duration: +$('ag-duration').value || 60, buffer: +$('ag-buffer').value || 0, minDelayH: +$('ag-minDelayH').value || 0, maxPerDay: +$('ag-maxPerDay').value || 1, mode: $('ag-mode').value, days };
     const { error } = await sb.from('pricing_settings').upsert([{ key: 'AGENDA', value, updated_at: new Date().toISOString() }]);
     $('agenda-msg').textContent = error ? 'Enregistrement impossible : ' + error.message : 'Règles enregistrées, appliquées aux prochains créneaux proposés.';
   });
