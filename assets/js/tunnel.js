@@ -690,8 +690,10 @@
   function welcome() {
     if (viewer || S.welcomeShown || S.step !== 'resultat') return;
     const R = C.compute(S);
-    $('w-range').textContent = eur(R.low) + ' à ' + eur(R.high);
+    const prenom = String((S.contact && S.contact.prenom) || '').trim();
+    $('w-title').textContent = prenom ? 'Félicitations ' + prenom + ' !' : 'Félicitations !';
     $('w-central').textContent = eur(R.ttc);
+    $('w-low').textContent = eur(R.low); $('w-high').textContent = eur(R.high);
     if (S.rappel) { $('w-rappel').textContent = 'Rappel demandé ✓'; $('w-rappel').disabled = true; }
     $('wmodal').classList.remove('hidden');
     S.welcomeShown = true; save();

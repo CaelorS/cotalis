@@ -1000,3 +1000,12 @@ body.locked .lot-head .sum { display: none; }   /* sous-totaux masqués tant que
 .w-opt .btn { margin-top: 6px; }
 @media (max-width: 640px) { .w-cta { grid-template-columns: 1fr; } .wbox h3 { font-size: 25px; } .w-amount .num { font-size: 24px; } }
 .w-amount small .num { display: inline; font-size: inherit; color: var(--ink); font-weight: 600; }
+
+/* accueil de l'estimation, deuxième version : félicitations en grand, estimation centrale en titre, fourchette dessous */
+.wbox h3.w-bravo { font-size: 44px; line-height: 1.02; color: var(--good); }
+.wbox .w-lead { font-size: 18px; color: var(--ink); margin-top: -6px; }
+.w-amount .num { font-size: 42px; }
+.w-amount small { display: block; }
+.w-amount small.w-range { margin-top: 8px; font-size: 15px; color: var(--ink); }
+.w-amount small.w-range .num { display: inline; font-size: inherit; font-weight: 600; color: var(--accent); }
+@media (max-width: 640px) { .wbox h3.w-bravo { font-size: 32px; } .w-amount .num { font-size: 32px; } }
