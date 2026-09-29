@@ -633,6 +633,25 @@
     if (S.visiteAt) return VICO + `<span class="l">Visite le ${dfr(S.visiteAt, { day: '2-digit', month: '2-digit' })}</span><span class="s">Visite ✓</span>`;
     return VICO + '<span class="l">Planifier la visite</span><span class="s">Visite</span>';
   }
+  /* ---------- ajout de la visite à l'agenda du client : Google, Apple / iCal, Outlook ---------- */
+  function visiteEvent() {
+    const a = new Date(S.visiteAt), b = S.visiteEnd ? new Date(S.visiteEnd) : new Date(a.getTime() + 60 * 60e3);
+    const z = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    return { a, b, za: z(a), zb: z(b), title: 'Visite technique Cotalia', where: S.adresse || '', text: 'Visite technique de votre bien' + (S.visiteWith ? ' avec ' + S.visiteWith : '') + '. Estimation : ' + location.origin + '/estimation/?p=' + S.pid };
+  }
+  function calButtons() {
+    const e = visiteEvent(), q = encodeURIComponent;
+    const g = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + q(e.title) + '&dates=' + e.za + '/' + e.zb + '&details=' + q(e.text) + '&location=' + q(e.where);
+    const o = 'https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=' + q(e.title) + '&startdt=' + q(e.a.toISOString()) + '&enddt=' + q(e.b.toISOString()) + '&body=' + q(e.text) + '&location=' + q(e.where);
+    return `<div class="calrow"><span class="hint">Ajouter à mon agenda :</span><a class="btn small" href="${g}" target="_blank" rel="noopener">Google Agenda</a><button type="button" class="btn small" id="v-ics">Apple / iCal</button><a class="btn small" href="${o}" target="_blank" rel="noopener">Outlook</a></div>`;
+  }
+  function downloadIcs() {
+    const e = visiteEvent(), x = v => String(v).replace(/\\/g, '\\\\').replace(/[,;]/g, m => '\\' + m).replace(/\n/g, '\\n');
+    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Cotalia//Visite technique//FR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT', 'UID:visite-' + S.pid + '@cotalia.fr', 'DTSTAMP:' + e.za, 'DTSTART:' + e.za, 'DTEND:' + e.zb, 'SUMMARY:' + x(e.title), 'LOCATION:' + x(e.where), 'DESCRIPTION:' + x(e.text), 'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', 'DESCRIPTION:' + x(e.title), 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+    const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'visite-cotalia.ics'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
   let vSlot = null, vWho = {};
   var slotsCache = null;   // var : lu par showStep, appelé avant cette ligne au démarrage
   // créneaux : chargés dès l'arrivée sur le rapport, gardés trois minutes, avec délai maximum et un second essai
@@ -654,7 +673,7 @@
   function vShow(html, hint) { $('v-body').innerHTML = html; if (hint != null) $('v-hint').textContent = hint; }
   async function openVisite() {
     $('vmodal').classList.remove('hidden');
-    if (S.visiteAt) { vShow(`<p class="vok">Visite prévue le <b>${dfr(S.visiteAt, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</b>, à ${esc(S.adresse)}.</p><p class="hint">Pour la déplacer, annulez ce rendez-vous puis choisissez un autre créneau.</p><div class="frow" style="margin-top:10px"><button type="button" class="btn" id="v-cancel">Annuler ce rendez-vous</button></div>`, 'Tout est calé.'); return; }
+    if (S.visiteAt) { vShow(`<p class="vok">Visite prévue le <b>${dfr(S.visiteAt, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</b>${S.visiteWith ? ' avec ' + esc(S.visiteWith) : ''}, à ${esc(S.adresse)}.</p>${calButtons()}<p class="hint">Pour la déplacer, annulez ce rendez-vous puis choisissez un autre créneau.</p><div class="frow" style="margin-top:10px"><button type="button" class="btn" id="v-cancel">Annuler ce rendez-vous</button></div>`, 'Tout est calé.'); return; }
     vShow('<p class="hint">Recherche des créneaux disponibles…</p>', 'Choisissez un créneau : la visite dure environ une heure, sur place.');
     if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); }
     await saveProject();
@@ -681,9 +700,9 @@
       const r = await fetch(BASE + '/functions/v1/gcal-book', { method: 'POST', headers: hdr(), body: JSON.stringify({ project_id: S.pid, token: S.token, start: vSlot }) });
       const d = await r.json();
       if (!r.ok) { if (r.status === 409) { slotsCache = null; vShow('<p>Ce créneau vient d\'être pris. Choisissez-en un autre.</p><p><button type="button" class="btn" id="v-back">Voir les créneaux</button></p>', ''); return; } throw new Error(d.error || r.status); }
-      S.visiteAt = d.start; slotsCache = null; save(); track();
+      S.visiteAt = d.start; S.visiteEnd = d.end || null; S.visiteWith = d.with || ''; slotsCache = null; save(); track();
       if ($('btn-visite')) $('btn-visite').innerHTML = visiteBtn();
-      vShow(`<p class="vok">C'est noté ! Visite le <b>${d.label}</b>${d.with ? ' avec ' + esc(d.with) : ''}. L'invitation part chez ${esc(d.email)}, avec l'adresse et le contact de votre interlocuteur.</p>`, 'À très vite sur place.');
+      vShow(`<p class="vok">C'est noté ! Visite le <b>${d.label}</b>${d.with ? ' avec ' + esc(d.with) : ''}. L'invitation part chez ${esc(d.email)}, avec l'adresse et le contact de votre interlocuteur.</p>${calButtons()}`, 'À très vite sur place.');
     } catch (e) { console.warn('Cotalia : réservation refusée', e && e.message); vShow(`<p>La réservation n'a pas abouti. Demandez à être rappelé, on fixe la visite par téléphone.</p><p class="hint" style="font-size:12px">Motif technique : ${esc(String(e && e.message || 'inconnu').slice(0, 160))}</p>`, ''); }
   }
   /* ---------- accueil de l'estimation : fourchette et deux appels à l'action, à la première arrivée sur le rapport ---------- */
@@ -709,7 +728,7 @@
     try {
       const r = await fetch(BASE + '/functions/v1/gcal-cancel', { method: 'POST', headers: hdr(), body: JSON.stringify({ project_id: S.pid, token: S.token }) });
       const d = await r.json(); if (!r.ok && r.status !== 400) throw new Error(d.error || r.status);
-      S.visiteAt = null; slotsCache = null; save(); if ($('btn-visite')) $('btn-visite').innerHTML = visiteBtn();
+      S.visiteAt = null; S.visiteEnd = null; S.visiteWith = ''; slotsCache = null; save(); if ($('btn-visite')) $('btn-visite').innerHTML = visiteBtn();
       openVisite();
     } catch (e) { vShow(`<p>L'annulation n'a pas abouti. Appelez-nous, on s'en occupe.</p><p class="hint" style="font-size:12px">Motif technique : ${esc(String(e && e.message || 'inconnu').slice(0, 160))}</p>`, ''); }
   }
@@ -720,6 +739,7 @@
     if (e.target.closest('#v-confirm')) bookVisite();
     if (e.target.closest('#v-back')) openVisite();
     if (e.target.closest('#v-cancel')) cancelVisite();
+    if (e.target.closest('#v-ics')) downloadIcs();
   });
 
   async function saveProject() {

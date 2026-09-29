@@ -1009,3 +1009,8 @@ body.locked .lot-head .sum { display: none; }   /* sous-totaux masqués tant que
 .w-amount small.w-range { margin-top: 8px; font-size: 15px; color: var(--ink); }
 .w-amount small.w-range .num { display: inline; font-size: inherit; font-weight: 600; color: var(--accent); }
 @media (max-width: 640px) { .wbox h3.w-bravo { font-size: 32px; } .w-amount .num { font-size: 32px; } }
+
+/* ajout de la visite à l'agenda du client */
+.calrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; padding-top: 12px; border-top: 1px solid var(--line-2); }
+.calrow .hint { margin-right: 2px; }
+.calrow .btn { text-decoration: none; }
