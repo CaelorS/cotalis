@@ -510,8 +510,8 @@
   function tilesHtml(R, compact) {
     const t = [];
     const fin = (S.finance === 'oui' || S.finance === 'renta') && R.total > 0;
+    if (!compact) { t.push(['Durée probable', R.weeks + ' sem.', 'chantier']); t.push(['Prix au m²', fmt(R.ttc / R.ctx.surface) + ' €', 'travaux TTC']); }
     if (fin) t.push(['Coût total du projet', eur(R.total), 'bien + notaire + travaux + ameublement']);
-    if (!compact) { t.push(['Travaux estimés', eur(R.ttc), 'TTC, estimation centrale']); t.push(['Travaux au m²', fmt(R.ttc / R.ctx.surface) + ' €', 'TTC']); t.push(['Durée probable', R.weeks + ' sem.', 'chantier']); }
     if (fin && S.strat !== 'revente') {
       t.push(['Rendement brut', pct(R.brut), 'loyer annuel / coût total']);
       if (!compact) t.push(['Rendement net', pct(R.net), 'après charges et taxe foncière']);
@@ -586,11 +586,6 @@
           <div class="range"><div class="track"><div class="band" style="left:${(R.low / (R.high * 1.08) * 100).toFixed(1)}%;width:${((R.high - R.low) / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin mark" style="left:${(R.low / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin" style="left:${(R.ttc / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin mark" style="left:${(R.high / (R.high * 1.08) * 100).toFixed(1)}%"></div></div>
           <div class="range-lbl"><span>Basse <b class="num">${eur(R.low)}</b></span><span>Haute <b class="num">${eur(R.high)}</b></span></div></div>
           <div class="tiles inbox" style="margin-top:16px">${tilesHtml(R, false)}</div>
-          <table class="kv" style="margin-top:14px">
-            <tr class="total"><td>Total HT</td><td class="num">${eur(R.ht)}</td></tr>
-            <tr><td>${tvaLabel(R)}</td><td class="num">${eur(R.tva)}</td></tr>
-            <tr class="total"><td>Total TTC</td><td class="num">${eur(R.ttc)}</td></tr>
-          </table>
         </div>
       </div>
       <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Quantité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody><tfoot><tr class="tot"><td colspan="3">Total HT</td><td class="r num">${eur(R.ht)}</td></tr><tr><td colspan="3">${tvaLabel(R)}</td><td class="r num">${eur(R.tva)}</td></tr><tr class="tot ttc"><td colspan="3">Total TTC</td><td class="r num">${eur(R.ttc)}</td></tr></tfoot></table></div>${Math.abs(R.ht - R.direct) > 1 ? '<p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Les lignes sont en coûts directs HT. Le total HT ajoute frais généraux, pilotage, marge et provision pour aléas.</p>' : ''}</div>
