@@ -46,7 +46,7 @@
     if (name === 'selection') loadSelectionTab();
     if (name === 'scoring') loadScoring();
     if (name === 'tunnel') { if (!leads.length && sb) sb.from('leads').select('id,project_id,prenom,nom').then(r => { leads = r.data || leads; loadTunnel(); }); else loadTunnel(); }
-    if (name === 'agenda') { if (!leads.length && sb) sb.from('leads').select('id,project_id,prenom,nom,visite_at,visite_with').then(r => { leads = r.data || leads; loadAgenda(); }); else loadAgenda(); }
+    if (name === 'agenda') { if (!admins.length) loadAdminsList(); if ((!leads.length || leads[0].email === undefined) && sb) sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000).then(r => { leads = r.data || leads; loadAgenda(); }); else loadAgenda(); }
     if (name === 'admins') loadAdmins();
   }
 
@@ -833,8 +833,78 @@
   const CFG = window.COTALIA_CONFIG || {}, FN = (CFG.supabaseUrl || '').replace(/\/$/, '') + '/functions/v1/';
   const AG_DEFAULT = { duration: 60, buffer: 90, minDelayH: 48, maxPerDay: 2, mode: 'zones', days: { '1': [9, 18], '2': [9, 18], '3': [9, 18], '4': [9, 18], '5': [9, 18] } };
   const AG_DAYS = [['1', 'Lundi'], ['2', 'Mardi'], ['3', 'Mercredi'], ['4', 'Jeudi'], ['5', 'Vendredi'], ['6', 'Samedi']];
+  /* ---------- planning visuel ---------- */
+  const PTZ = 'Europe/Paris', HOUR_PX = 46;
+  let plan = null, planWho = 'all', planWeek = 0;
+  const pParts = ts => { const p = new Intl.DateTimeFormat('en-CA', { timeZone: PTZ, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', weekday: 'short' }).formatToParts(new Date(ts)); const g = t => (p.find(x => x.type === t) || {}).value; return { key: g('year') + '-' + g('month') + '-' + g('day'), min: +g('hour') * 60 + +g('minute'), wd: { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[g('weekday')] }; };
+  const pMidnight = key => { const guess = Date.parse(key + 'T00:00:00Z'); const p = pParts(guess); const delta = (p.key === key ? p.min : p.min - 1440) * 60e3; return guess - delta; };   // minuit à Paris, en temps universel
+  const addDays = (key, n) => { const d = new Date(Date.parse(key + 'T12:00:00Z') + n * 864e5); return d.toISOString().slice(0, 10); };
+  const hhmm = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  const P_HUES = [215, 22, 275, 330, 190, 45];   // bleu, orange, violet, rose, turquoise, ocre : jamais le vert des plages réservables
+  const personHue = id => { const i = plan ? plan.accounts.findIndex(a => a.id === id) : -1; return P_HUES[(i < 0 ? 0 : i) % P_HUES.length]; };
+  async function loadPlan() {
+    $('plan-msg').textContent = 'Chargement du planning…';
+    try {
+      const { data: sess } = await sb.auth.getSession();
+      const r = await fetch(FN + 'gcal-overview', { method: 'POST', headers: { Authorization: 'Bearer ' + (sess && sess.session ? sess.session.access_token : ''), apikey: CFG.supabaseAnonKey || '', 'Content-Type': 'application/json' }, body: '{}' });
+      const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      plan = d; $('plan-msg').textContent = d.accounts.filter(a => a.error).map(a => a.name + ' : ' + a.error).join(' · ');
+    } catch (e) { plan = null; $('plan-msg').textContent = 'Planning indisponible : ' + e.message; }
+    renderPlan();
+  }
+  function renderPlan() {
+    const accs = plan ? plan.accounts : [], rules = plan ? plan.rules : AG_DEFAULT;
+    if (planWho !== 'all' && !accs.some(a => a.id === planWho)) planWho = 'all';
+    $('plan-people').innerHTML = [['all', 'Tous']].concat(accs.map(a => [a.id, a.name])).map(([id, n]) => `<button type="button" class="pchip${planWho === id ? ' sel' : ''}" data-who="${esc(id)}"${id !== 'all' ? ` style="--h:${personHue(id)}"` : ''}>${id !== 'all' ? '<i></i>' : ''}${esc(n)}</button>`).join('');
+    const today = pParts(Date.now());
+    const monday = addDays(today.key, -((today.wd + 6) % 7) + planWeek * 7);
+    const openDays = Object.keys(rules.days || {}).map(Number);
+    const cols = [1, 2, 3, 4, 5, 6, 0].filter(wd => wd >= 1 && wd <= 5 || openDays.includes(wd)).map(wd => addDays(monday, (wd + 6) % 7));
+    const wins = Object.values(rules.days || { 1: [9, 18] });
+    const h0 = Math.max(6, Math.min(...wins.map(w => w[0])) - 1), h1 = Math.min(22, Math.max(...wins.map(w => w[1])) + 1);
+    const m0 = h0 * 60, m1 = h1 * 60, H = (h1 - h0) * HOUR_PX;
+    const fmtD = k => new Date(Date.parse(k + 'T12:00:00Z')).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+    $('plan-week').textContent = 'du ' + fmtD(cols[0]) + ' au ' + fmtD(cols[cols.length - 1]);
+    $('plan-prev').disabled = planWeek <= 0; $('plan-next').disabled = planWeek >= Math.ceil(((rules.horizonDays || 21) + 7) / 7) - 1;
+    const dur = (rules.duration || 60);
+    const shown = planWho === 'all' ? accs : accs.filter(a => a.id === planWho);
+    // un bloc positionné dans la colonne du jour
+    const block = (cls, a, b, html, style, title) => { const t = Math.max(a, m0), e = Math.min(b, m1); if (e <= t) return ''; return `<div class="pb ${cls}" style="top:${((t - m0) / 60 * HOUR_PX).toFixed(1)}px;height:${Math.max(3, (e - t) / 60 * HOUR_PX - 1).toFixed(1)}px;${style || ''}"${title ? ` title="${esc(title)}"` : ''}>${html || ''}</div>`; };
+    const visits = leads.filter(l => l.visite_at && !l.archived_at);
+    const colsHtml = cols.map(key => {
+      const d0 = pMidnight(key), d1 = pMidnight(addDays(key, 1));
+      let html = '';
+      // plages réservables : créneaux de départ consécutifs fusionnés
+      const starts = [...new Set(shown.flatMap(a => a.slots).filter(t => t >= d0 && t < d1))].sort((x, y) => x - y).map(t => pParts(t).min);
+      const step = rules.step || 30; let i = 0;
+      while (i < starts.length) { let j = i; while (j + 1 < starts.length && starts[j + 1] - starts[j] <= step) j++; html += block('free', starts[i], starts[j] + dur, `<span>${hhmm(starts[i])} - ${hhmm(starts[j] + dur)}</span>`, '', 'Réservable : une visite peut commencer entre ' + hhmm(starts[i]) + ' et ' + hhmm(starts[j])); i = j + 1; }
+      // occupations Google, pour une personne à la fois
+      if (planWho !== 'all') shown.forEach(a => a.busy.forEach(([s0, e0]) => { if (e0 <= d0 || s0 >= d1) return; const a1 = s0 <= d0 ? 0 : pParts(s0).min, b1 = e0 >= d1 ? 1440 : pParts(e0).min; html += block('busy', a1, b1, '', '', 'Occupé dans l\'agenda, ' + hhmm(a1) + ' - ' + hhmm(b1)); }));
+      // visites Cotalia
+      visits.forEach(l => { const t = Date.parse(l.visite_at); if (t < d0 || t >= d1) return; if (planWho !== 'all' && l.visite_with !== planWho) return; const acc = accs.find(a => a.id === l.visite_with); const m = pParts(t).min, buf = acc ? acc.buffer : (rules.buffer || 0), hue = personHue(l.visite_with || l.id);
+        if (buf > 0) { html += block('trip', m - buf, m, '', `--h:${hue}`, 'Trajet aller'); html += block('trip', m + dur, m + dur + buf, '', `--h:${hue}`, 'Trajet retour'); }
+        html += block('visit', m, m + dur, `<b>${hhmm(m)}</b> ${esc(((l.prenom || '') + ' ' + (l.nom || '')).trim())}${acc && planWho === 'all' ? `<small>${esc(acc.name)}</small>` : ''}`, `--h:${hue}`, 'Visite · ' + (l.adresse || '')).replace('<div class="pb visit"', `<div class="pb visit" data-open="${l.id}" role="button"`); });
+      const isToday = key === today.key, past = key < today.key;
+      if (isToday) html += `<div class="pnow" style="top:${(Math.min(Math.max(today.min, m0), m1) - m0) / 60 * HOUR_PX}px"></div>`;
+      return `<div class="pcol${isToday ? ' today' : ''}${past ? ' past' : ''}"><div class="phead">${fmtD(key)}</div><div class="pbody" style="height:${H}px">${html}</div></div>`;
+    }).join('');
+    const hours = []; for (let h = h0; h <= h1; h++) hours.push(`<span style="top:${(h - h0) * HOUR_PX}px">${h} h</span>`);
+    $('plan').style.setProperty('--hp', HOUR_PX + 'px');
+    $('plan').style.gridTemplateColumns = accs.length ? '46px repeat(' + cols.length + ', minmax(118px, 1fr))' : '1fr';
+    $('plan').innerHTML = accs.length ? `<div class="paxis"><div class="phead"></div><div class="pbody" style="height:${H}px">${hours.join('')}</div></div>${colsHtml}` : '<p class="empty">Aucun agenda relié : le planning apparaîtra dès qu\'une personne aura connecté son agenda Google ci-dessous.</p>';
+    // liste des rendez-vous à venir
+    const nowIso = new Date().toISOString();
+    const up = visits.filter(l => l.visite_at >= nowIso && (planWho === 'all' || l.visite_with === planWho)).sort((a, b) => a.visite_at.localeCompare(b.visite_at));
+    $('plan-visits').querySelector('tbody').innerHTML = up.map(l => { const acc = accs.find(a => a.id === l.visite_with); return `<tr><td class="num">${new Date(l.visite_at).toLocaleString('fr-FR', { timeZone: PTZ, weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td><td><b>${esc(l.prenom || '')} ${esc(l.nom || '')}</b><small>${esc(l.tel || '')}</small></td><td>${esc(KIND[l.type_bien] || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}<small>${esc(l.adresse || l.ville || '')}</small></td><td>${acc ? `<span class="pchip static" style="--h:${personHue(acc.id)}"><i></i>${esc(acc.name)}</span>` : '—'}</td><td class="nowrap"><button type="button" class="btn small" data-open="${l.id}">Ouvrir</button></td></tr>`; }).join('') || '<tr><td colspan="5" class="empty">Aucune visite à venir.</td></tr>';
+  }
+  $('plan-people').addEventListener('click', e => { const b = e.target.closest('[data-who]'); if (b) { planWho = b.dataset.who; renderPlan(); } });
+  $('plan-prev').addEventListener('click', () => { planWeek = Math.max(0, planWeek - 1); renderPlan(); });
+  $('plan-next').addEventListener('click', () => { planWeek++; renderPlan(); });
+  $('tab-agenda').addEventListener('click', e => { const o = e.target.closest('[data-open]'); if (o) openLead(+o.dataset.open); });
+
   let agAccounts = [];
   async function loadAgenda() {
+    loadPlan();
     let ag = AG_DEFAULT;
     try { const { data } = await sb.from('pricing_settings').select('value').eq('key', 'AGENDA').maybeSingle(); if (data && data.value) ag = Object.assign({}, AG_DEFAULT, data.value, { days: Object.assign({}, data.value.days || AG_DEFAULT.days) }); } catch (e) {}
     ['duration', 'buffer', 'minDelayH', 'maxPerDay'].forEach(k => { $('ag-' + k).value = ag[k]; });

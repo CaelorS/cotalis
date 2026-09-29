@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/css/site.css?v=202609291334">
+  <link rel="stylesheet" href="/assets/css/site.css?v=202609291434">
 </head>
 <body>
   <div class="stick">
@@ -287,6 +287,18 @@
     </aside>
   </main>
 
+  <div class="modal hidden" id="wmodal" role="dialog" aria-modal="true" aria-labelledby="w-title">
+    <div class="modal-box wbox">
+      <div class="eyebrow">Félicitations</div>
+      <h3 id="w-title">Votre estimation vient d'arriver</h3>
+      <div class="w-amount"><span class="num" id="w-range"></span><small>fourchette de travaux TTC, estimation centrale <b class="num" id="w-central"></b></small></div>
+      <div class="w-cta">
+        <div class="w-opt"><b>Souhaitez-vous être rappelé ?</b><span>Un membre de l'équipe vous appelle pour affiner le projet avec vous.</span><button type="button" class="btn primary" id="w-rappel">Être rappelé</button></div>
+        <div class="w-opt"><b>Vous pouvez aussi prendre rendez-vous directement avec notre équipe</b><span>Choisissez le créneau de visite qui vous arrange.</span><button type="button" class="btn" id="w-visite">Prendre rendez-vous</button></div>
+      </div>
+      <button type="button" class="btn wide" id="w-close">Voir le détail de l'estimation</button>
+    </div>
+  </div>
   <div class="modal hidden" id="vmodal" role="dialog" aria-modal="true" aria-labelledby="v-title">
     <div class="modal-box vbox">
       <h3 id="v-title">Planifier la visite technique</h3>
@@ -305,12 +317,12 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/config.js?v=202609291334"></script>
-  <script src="/assets/js/catalog.js?v=202609291334"></script>
-  <script src="/assets/js/engine.js?v=202609291334"></script>
-  <script src="/assets/js/pricing.js?v=202609291334"></script>
-  <script src="/assets/js/auth.js?v=202609291334"></script>
-  <script src="/assets/js/track.js?v=202609291334"></script>
-  <script src="/assets/js/tunnel.js?v=202609291334"></script>
+  <script src="/config.js?v=202609291434"></script>
+  <script src="/assets/js/catalog.js?v=202609291434"></script>
+  <script src="/assets/js/engine.js?v=202609291434"></script>
+  <script src="/assets/js/pricing.js?v=202609291434"></script>
+  <script src="/assets/js/auth.js?v=202609291434"></script>
+  <script src="/assets/js/track.js?v=202609291434"></script>
+  <script src="/assets/js/tunnel.js?v=202609291434"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/css/site.css?v=202609291334">
+  <link rel="stylesheet" href="/assets/css/site.css?v=202609291434">
 </head>
 <body class="admin">
   <div class="stick">
@@ -174,6 +174,13 @@
 
     <section id="tab-agenda" class="tabpane hidden">
       <div class="panel">
+        <header><h2>Planning des visites</h2><span class="hint">En vert, les plages où un client peut réserver une visite. En gris, ce qui est déjà occupé dans l'agenda Google. En couleur, les visites Cotalia prises, avec leurs temps de trajet.</span></header>
+        <div class="frow plan-bar"><div class="frow" id="plan-people" style="gap:6px"></div><span class="spacer" style="flex:1"></span><button type="button" class="btn small" id="plan-prev" aria-label="Semaine précédente">‹</button><b id="plan-week" class="num"></b><button type="button" class="btn small" id="plan-next" aria-label="Semaine suivante">›</button></div>
+        <div class="plan-wrap"><div class="plan" id="plan"></div></div>
+        <div class="frow plan-legend"><span><i class="lg free"></i>Réservable</span><span><i class="lg busy"></i>Occupé dans l'agenda</span><span><i class="lg visit"></i>Visite Cotalia</span><span><i class="lg trip"></i>Trajet</span><span id="plan-msg" class="hint"></span></div>
+        <div class="tablewrap"><table class="grid-table" id="plan-visits"><thead><tr><th>Date</th><th>Client</th><th>Bien</th><th>Avec</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="panel">
         <header><h2>Agenda des visites</h2><span class="hint">Les clients choisissent un créneau de visite technique depuis leur estimation. Chaque administrateur peut relier son propre agenda Google ; le rendez-vous est créé chez la personne désignée par la règle d'attribution, avec l'adresse du bien, le client invité et deux blocs de trajet.</span></header>
         <div class="body">
           <div class="frow"><span id="agenda-status" class="hint">Vérification…</span><button type="button" class="btn primary" id="agenda-connect">Connecter mon agenda Google</button></div>
@@ -217,11 +224,11 @@
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/config.js?v=202609291334"></script>
-  <script src="/assets/js/catalog.js?v=202609291334"></script>
-  <script src="/assets/js/engine.js?v=202609291334"></script>
-  <script src="/assets/js/pricing.js?v=202609291334"></script>
-  <script src="/assets/js/auth.js?v=202609291334"></script>
-  <script src="/assets/js/admin.js?v=202609291334"></script>
+  <script src="/config.js?v=202609291434"></script>
+  <script src="/assets/js/catalog.js?v=202609291434"></script>
+  <script src="/assets/js/engine.js?v=202609291434"></script>
+  <script src="/assets/js/pricing.js?v=202609291434"></script>
+  <script src="/assets/js/auth.js?v=202609291434"></script>
+  <script src="/assets/js/admin.js?v=202609291434"></script>
 </body>
 </html>

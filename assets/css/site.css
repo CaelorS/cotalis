@@ -950,3 +950,53 @@ body.locked .lot-head .sum { display: none; }   /* sous-totaux masqués tant que
 /* rangée souple : éléments alignés avec un vrai espace entre eux, sur tous les écrans */
 .frow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .frow .mchk { gap: 6px; cursor: pointer; }
+
+/* planning des visites */
+.plan-bar { margin-top: 18px; }
+.plan-bar b { font-size: 14px; min-width: 210px; text-align: center; }
+.plan-wrap { overflow-x: auto; }
+.plan { display: grid; min-width: 720px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); overflow: hidden; }
+.plan .phead { height: 34px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; text-transform: capitalize; color: var(--ink-2); border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.plan .pcol { border-left: 1px solid var(--line-2); min-width: 0; }
+.plan .pcol.today .phead { color: var(--accent); background: var(--accent-soft); }
+.plan .pcol.past .pbody { opacity: .45; }
+.plan .pbody { position: relative; background-image: linear-gradient(var(--line-2) 1px, transparent 1px); background-size: 100% var(--hp, 46px); }
+.plan .paxis .pbody { background: none; }
+.plan .paxis span { position: absolute; right: 6px; transform: translateY(-50%); font-size: 10.5px; color: var(--ink-3); font-family: "IBM Plex Mono", monospace; white-space: nowrap; }
+.plan .paxis span:first-child { transform: none; }
+.pb { position: absolute; left: 3px; right: 3px; border-radius: 4px; font-size: 11.5px; line-height: 1.25; padding: 2px 5px; overflow: hidden; box-sizing: border-box; }
+.pb.free { background: rgba(47,133,90,.14); border: 1px solid rgba(47,133,90,.35); color: #2F855A; z-index: 1; }
+.pb.free span { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; }
+.pb.busy { left: 50%; background: repeating-linear-gradient(135deg, rgba(123,135,148,.28) 0 5px, rgba(123,135,148,.12) 5px 10px); border: 1px solid rgba(123,135,148,.35); z-index: 2; }
+.pb.trip { background: hsl(var(--h) 60% 92%); border: 1px dashed hsl(var(--h) 45% 62%); z-index: 3; }
+.pb.visit { background: hsl(var(--h) 62% 45%); color: #fff; z-index: 4; cursor: pointer; box-shadow: 0 1px 3px rgba(23,33,43,.25); }
+.pb.visit small { display: block; opacity: .85; font-size: 10.5px; }
+.pb.visit:hover { filter: brightness(1.08); }
+.pnow { position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid #C0392B; z-index: 5; }
+.pchip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; }
+.pchip i { width: 9px; height: 9px; border-radius: 50%; background: hsl(var(--h) 62% 45%); }
+.pchip.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.pchip.static { cursor: default; font-weight: 500; }
+.plan-legend { gap: 6px 18px; font-size: 12.5px; color: var(--ink-2); }
+.plan-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.plan-legend .lg { width: 16px; height: 11px; border-radius: 3px; display: inline-block; }
+.lg.free { background: rgba(47,133,90,.14); border: 1px solid rgba(47,133,90,.35); }
+.lg.busy { background: repeating-linear-gradient(135deg, rgba(123,135,148,.28) 0 4px, rgba(123,135,148,.12) 4px 8px); border: 1px solid rgba(123,135,148,.35); }
+.lg.visit { background: var(--accent); }
+.lg.trip { background: var(--accent-soft); border: 1px dashed var(--accent-bar); }
+
+/* accueil de l'estimation */
+.modal-box.wbox { max-width: 600px; gap: 14px; max-height: 92vh; overflow: auto; }
+.wbox .eyebrow { color: var(--good); }
+.wbox h3 { font-size: 30px; line-height: 1.1; }
+.w-amount { background: var(--accent-soft); border-radius: 8px; padding: 14px 18px; }
+.w-amount .num { display: block; font-size: 30px; font-weight: 500; color: var(--accent); line-height: 1.15; }
+.w-amount small { color: var(--ink-2); font-size: 13px; }
+.w-amount small b { color: var(--ink); font-weight: 600; }
+.w-cta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.w-opt { border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.w-opt b { font-size: 15px; line-height: 1.3; }
+.w-opt span { color: var(--ink-2); font-size: 13.5px; flex: 1; }
+.w-opt .btn { margin-top: 6px; }
+@media (max-width: 640px) { .w-cta { grid-template-columns: 1fr; } .wbox h3 { font-size: 25px; } .w-amount .num { font-size: 24px; } }
+.w-amount small .num { display: inline; font-size: inherit; color: var(--ink); font-weight: 600; }

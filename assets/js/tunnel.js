@@ -104,7 +104,7 @@
 
     if (S.step === 'acquisition') proposeAcquisition();
     if (S.step === 'travaux') renderLots();
-    if (S.step === 'resultat') renderReport();
+    if (S.step === 'resultat') { renderReport(); if (pricingReady) welcome(); }
     renderPanel();
     track();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -634,6 +634,7 @@
     return VICO + '<span class="l">Planifier la visite</span><span class="s">Visite</span>';
   }
   let vSlot = null, vWho = {};
+  var pricingReady = false;   // var : lu par showStep, appelé avant cette ligne au démarrage
   function vShow(html, hint) { $('v-body').innerHTML = html; if (hint != null) $('v-hint').textContent = hint; }
   async function openVisite() {
     $('vmodal').classList.remove('hidden');
@@ -664,6 +665,22 @@
       vShow(`<p class="vok">C'est noté ! Visite le <b>${d.label}</b>${d.with ? ' avec ' + esc(d.with) : ''}. L'invitation part chez ${esc(d.email)}, avec l'adresse et le contact de votre interlocuteur.</p>`, 'À très vite sur place.');
     } catch (e) { vShow('<p>La réservation n\'a pas abouti. Demandez à être rappelé, on fixe la visite par téléphone.</p>', ''); }
   }
+  /* ---------- accueil de l'estimation : fourchette et deux appels à l'action, à la première arrivée sur le rapport ---------- */
+  function welcome() {
+    if (viewer || S.welcomeShown || S.step !== 'resultat') return;
+    const R = C.compute(S);
+    $('w-range').textContent = eur(R.low) + ' à ' + eur(R.high);
+    $('w-central').textContent = eur(R.ttc);
+    if (S.rappel) { $('w-rappel').textContent = 'Rappel demandé ✓'; $('w-rappel').disabled = true; }
+    $('wmodal').classList.remove('hidden');
+    S.welcomeShown = true; save();
+  }
+  const closeWelcome = () => $('wmodal').classList.add('hidden');
+  $('w-close').addEventListener('click', closeWelcome);
+  $('wmodal').addEventListener('click', e => { if (e.target === $('wmodal')) closeWelcome(); });
+  $('w-rappel').addEventListener('click', () => { if ($('btn-rappel')) $('btn-rappel').click(); $('w-rappel').textContent = 'Rappel demandé ✓ On vous appelle très vite'; $('w-rappel').disabled = true; });
+  $('w-visite').addEventListener('click', () => { closeWelcome(); openVisite(); });
+
   $('v-close').addEventListener('click', () => $('vmodal').classList.add('hidden'));
   $('vmodal').addEventListener('click', e => {
     if (e.target === $('vmodal')) { $('vmodal').classList.add('hidden'); return; }
@@ -836,7 +853,7 @@
   $('btn-login').addEventListener('click', () => { if (C.auth) C.auth.open('login'); });
   $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.add('hidden'); });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { $('modal').classList.add('hidden'); $('vmodal').classList.add('hidden'); }
+    if (e.key === 'Escape') { $('modal').classList.add('hidden'); $('vmodal').classList.add('hidden'); $('wmodal').classList.add('hidden'); }
     if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox' && S.step !== 'travaux' && S.step !== 'resultat' && !viewer) { e.preventDefault(); goNext(); }
   });
 
@@ -844,6 +861,7 @@
   if (params.has('new')) { S = newState(); save(); history.replaceState(null, '', location.pathname); }
   fillForm();
   if (params.get('p')) { openProject(params.get('p')); } else { showStep(); try { history.replaceState({ step: S.step }, '', location.pathname + location.search); } catch (e) {} }
-  if (C.loadPricing) C.loadPricing().then(ok => { if (!ok) return; lotsBuilt = false; if (!S.worksTouched && S.kind) S.works = C.preselect(S); renderPanel(); if (S.step === 'travaux') renderLots(); if (S.step === 'resultat' && !viewer) renderReport(); });
+  if (C.loadPricing) C.loadPricing().then(ok => { pricingReady = true; if (ok) { lotsBuilt = false; if (!S.worksTouched && S.kind) S.works = C.preselect(S); renderPanel(); if (S.step === 'travaux') renderLots(); if (S.step === 'resultat' && !viewer) renderReport(); } welcome(); }).catch(() => { pricingReady = true; welcome(); });
+  else { pricingReady = true; welcome(); }
   if (C.auth) C.auth.onChange(A => { if (!viewer) applyProfile(A); });
 })();
