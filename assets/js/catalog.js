@@ -202,9 +202,12 @@
 
   root.COTALIA = Object.assign(root.COTALIA || {}, {
     CATALOG, ITEMS, WHY, LOT_ICONS, lotIcon, PRESET, RULES, RULE_FIELDS, RULE_OPS, QTY, QTY_MODES, qtyFn, REGION, GAMME, PIECES, EAU_DEFAULT, zoneFromAddress,
-    MARGE: 0.18,      // marge brute sur le prix HT hors aléas
-    PILOTAGE: 0.03,   // pilotage de chantier, sur les coûts directs
-    FG: 0.08,         // frais généraux, sur les coûts directs
+    // Depuis le 29/09/2026 le devis est établi sur les coûts directs seuls : marge, frais généraux, pilotage et aléas à zéro.
+    // Ils restent réglables dans le back-office (onglet Prix). Valeurs d'origine : marge 18 %, pilotage 3 %, frais généraux 8 %, aléas 100 %.
+    MARGE: 0,         // marge brute sur le prix HT hors aléas
+    PILOTAGE: 0,      // pilotage de chantier, sur les coûts directs
+    FG: 0,            // frais généraux, sur les coûts directs
+    ALEA: 0,          // part appliquée de la provision pour aléas calculée (0 = aucune, 1 = entière)
     NOTAIRE: 0.075,   // frais d'acquisition dans l'ancien
     AMEUBLEMENT: { nue: 0, meuble: 120, coloc: 150, revente: 0 }, // €/m²
     LOYER_M2: { nue: 13, meuble: 16, coloc: 20, revente: 0 },      // repère national, ajusté par zone ci-dessous

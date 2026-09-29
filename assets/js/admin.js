@@ -254,6 +254,14 @@
     const files = p.files || [];
     const fileLinks = await Promise.all(files.map(async f => { try { const { data } = await sb.storage.from('plans').createSignedUrl(f, 60 * 60 * 24 * 365); return `<li><a href="${data.signedUrl}" target="_blank" rel="noopener">${esc(f.split('/').pop())}</a></li>`; } catch (e) { return `<li>${esc(f)}</li>`; } }));
     const works = Object.keys(p.works || {}).filter(k => p.works[k]).map(k => C.ITEMS[k] ? C.ITEMS[k].label + (p.qty && p.qty[k] != null ? ' (' + p.qty[k] + ' ' + C.ITEMS[k].unit + ')' : '') : k);
+    // mini-devis : le moteur rejoue le dossier au tarif en vigueur, avec les quantités retenues par le client
+    let devisHtml = '';
+    try {
+      const S2 = Object.assign({ type: 't2', apts: [], eau: 1, etage: '', niveaux: 1, annee: '', dpe: '', etat: '', zone: 'moy' }, b, { kind: l.type_bien, surface: l.surface, gamme: l.gamme || 'std', works: p.works || {}, qty: p.qty || {}, files: p.files || [], finance: 'non', situation: {} });
+      const R2 = C.compute(S2);
+      const rowsHtml = C.CATALOG.map(lot => { const rows = R2.lines.filter(x => x.on && x.it.lotName === lot.lot && x.amount > 0); if (!rows.length) return ''; return `<tr class="lot"><td colspan="3">${C.lotIcon(lot.lot)}${esc(lot.lot)}</td><td class="r num">${eur(R2.lots[lot.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}</td><td class="r num">${(+x.q).toLocaleString('fr-FR', { maximumFractionDigits: 1 })}&nbsp;${esc(x.it.unit)}</td><td class="r num">${eur(x.unitPrice)}${x.it.unit === 'forfait' ? '' : '/' + esc(x.it.unit)}</td><td class="r num">${eur(x.amount)}</td></tr>`).join(''); }).join('');
+      if (rowsHtml) devisHtml = `<div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Quantité</th><th class="r">Prix unitaire HT</th><th class="r">Total HT</th></tr></thead><tbody>${rowsHtml}</tbody><tfoot><tr class="tot"><td colspan="3">Total HT</td><td class="r num">${eur(R2.ht)}</td></tr><tr><td colspan="3">TVA</td><td class="r num">${eur(R2.tva)}</td></tr><tr class="tot ttc"><td colspan="3">Total TTC</td><td class="r num">${eur(R2.ttc)}</td></tr></tfoot></table></div>${Math.abs(R2.ttc - (+l.estimation_ttc || 0)) > 1 ? `<p class="hint" style="margin:8px 0 0">Recalculé au tarif en vigueur. Montant communiqué au client le ${dt(l.created_at)} : ${eur(l.estimation_ttc)} TTC.</p>` : ''}`;
+    } catch (e) { devisHtml = ''; }
     $('d-title').textContent = (l.prenom || '') + ' ' + (l.nom || '') + ' · ' + (l.ref || '');
     $('d-body').innerHTML = `
       <div class="two">
@@ -282,10 +290,8 @@
           <tr><td>Situation</td><td>${esc(s.statut || '—')} · revenus ${s.revenus ? eur(s.revenus) : '?'} · crédits ${s.credits ? eur(s.credits) : '0 €'} · apport dispo ${s.apportDispo ? eur(s.apportDispo) : '?'} · ${esc(s.proprietaire || '')}</td></tr>
         </table></div>
       </div>
-      <div class="two">
-        <div class="box"><h3>Travaux retenus</h3><ul class="plain">${works.map(w => `<li>${esc(w)}</li>`).join('') || '<li>—</li>'}</ul></div>
-        <div class="box"><h3>Plans et photos ${files.length ? `<button type="button" class="btn small" data-photos="${l.id}" style="margin-left:8px">Voir les photos</button>` : ''}</h3><ul class="plain">${fileLinks.join('') || '<li>aucun fichier</li>'}</ul><p class="hint" style="margin:8px 0 0">Fichiers conservés avec le dossier, sans limite de durée. Liens valables un an.</p></div>
-      </div>
+      <div class="box"><h3>Travaux retenus</h3>${devisHtml || `<ul class="plain">${works.map(w => `<li>${esc(w)}</li>`).join('') || '<li>—</li>'}</ul>`}</div>
+      <div class="box"><h3>Plans et photos ${files.length ? `<button type="button" class="btn small" data-photos="${l.id}" style="margin-left:8px">Voir les photos</button>` : ''}</h3><ul class="plain">${fileLinks.join('') || '<li>aucun fichier</li>'}</ul><p class="hint" style="margin:8px 0 0">Fichiers conservés avec le dossier, sans limite de durée. Liens valables un an.</p></div>
       ${(() => { const sc = scoreLead(l); return `<div class="box"><h3>Score ${scoreBadge(sc)}</h3><div class="gauges">${['valeur', 'maturite', 'engagement'].map(k => `<div class="gauge"><div class="eyebrow">${{ valeur: 'Valeur du dossier', maturite: 'Maturité', engagement: 'Engagement' }[k]} · ${sc[k]} / 100</div><div class="track"><i style="width:${sc[k]}%"></i></div><ul class="plain">${sc.why[k].map(w => `<li>${esc(w)}</li>`).join('') || '<li>aucun signal</li>'}</ul></div>`).join('')}</div>${sc.rule ? `<p class="hint" style="margin:8px 0 0">Règle appliquée : ${esc(sc.rule)}</p>` : ''}</div>`; })()}
       <div class="box"><h3>Suivi</h3>
         <div class="grid">
@@ -310,7 +316,7 @@
 
   /* ---------- prix ---------- */
   const SETTINGS = [
-    ['MARGE', 'Marge par défaut', '%', 100], ['FG', 'Frais généraux', '%', 100], ['PILOTAGE', 'Pilotage de chantier', '%', 100], ['NOTAIRE', 'Frais de notaire', '%', 100],
+    ['MARGE', 'Marge par défaut', '%', 100], ['FG', 'Frais généraux', '%', 100], ['PILOTAGE', 'Pilotage de chantier', '%', 100], ['ALEA', 'Aléas : part appliquée de la provision', '%', 100], ['NOTAIRE', 'Frais de notaire', '%', 100],
     ['REGION.paris', 'Coef. Paris', '', 1], ['REGION.pc', 'Coef. petite couronne', '', 1], ['REGION.gc', 'Coef. grande couronne', '', 1], ['REGION.lyon', 'Coef. Lyon, Bordeaux, Nice', '', 1], ['REGION.metro', 'Coef. autre métropole', '', 1], ['REGION.moy', 'Coef. ville moyenne', '', 1], ['REGION.rural', 'Coef. rural', '', 1],
     ['GAMME.eco', 'Coef. matériaux économique', '', 1], ['GAMME.std', 'Coef. matériaux standard', '', 1], ['GAMME.prem', 'Coef. matériaux premium', '', 1],
   ];

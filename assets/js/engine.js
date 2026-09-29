@@ -62,7 +62,7 @@
     if (S.visite === 'oui') score += 20;
     score = Math.min(100, score);
 
-    const alea = 0.05 + (100 - score) / 100 * 0.10 + (S.etat === 'degrade' || S.etat === 'total' ? 0.02 : 0);
+    const alea = (C.ALEA == null ? 1 : Math.max(0, +C.ALEA)) * (0.05 + (100 - score) / 100 * 0.10 + (S.etat === 'degrade' || S.etat === 'total' ? 0.02 : 0));
     const spread = 0.03 + (100 - score) / 100 * 0.15;
     const fg = direct * (C.FG + C.PILOTAGE);
     const htSans = sell;

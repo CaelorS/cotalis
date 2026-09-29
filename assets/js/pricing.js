@@ -7,7 +7,7 @@
 
   // Valeurs d'origine, conservées pour l'affichage « par défaut » du back-office et pour réinitialiser.
   C.DEFAULTS = {
-    MARGE: C.MARGE, FG: C.FG, PILOTAGE: C.PILOTAGE, NOTAIRE: C.NOTAIRE,
+    MARGE: C.MARGE, FG: C.FG, PILOTAGE: C.PILOTAGE, ALEA: C.ALEA, NOTAIRE: C.NOTAIRE,
     REGION: JSON.parse(JSON.stringify(C.REGION)), GAMME: JSON.parse(JSON.stringify(C.GAMME)),
     items: {},
   };
@@ -45,6 +45,7 @@
       if (row.key === 'MARGE' && typeof v === 'number') C.MARGE = v;
       if (row.key === 'FG' && typeof v === 'number') C.FG = v;
       if (row.key === 'PILOTAGE' && typeof v === 'number') C.PILOTAGE = v;
+      if (row.key === 'ALEA' && typeof v === 'number') C.ALEA = v;
       if (row.key === 'NOTAIRE' && typeof v === 'number') C.NOTAIRE = v;
       if (row.key === 'REGION' && v && typeof v === 'object') Object.keys(v).forEach(k => { if (C.REGION[k] && typeof v[k] === 'number') C.REGION[k][0] = v[k]; });
       if (row.key === 'GAMME' && v && typeof v === 'object') Object.keys(v).forEach(k => { if (C.GAMME[k] && typeof v[k] === 'number') C.GAMME[k][0] = v[k]; });

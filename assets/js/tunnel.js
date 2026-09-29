@@ -568,7 +568,7 @@
       R.ancien ? 'Logement achevé depuis plus de deux ans : TVA à 10 %, à 5,5 % pour les travaux d\'amélioration énergétique sur attestation.' : 'Logement de moins de deux ans : TVA à 20 % sur l\'ensemble.',
       'Réseaux existants supposés réutilisables sauf ouvrages retenus ; structure et planchers supposés sains.',
       S.visite === 'oui' ? 'Visite technique réalisée : métrés et réseaux vérifiés sur place.' : 'Aucune visite technique : quantités déduites de la surface et de la typologie.',
-      `Fourchette de ±${pct(R.spread, 0)} liée au score de confiance de ${R.score} / 100.`,
+      `Fourchette de ±${pct(R.spread, 0)} tant que la visite technique n'a pas eu lieu.`,
     ];
     const who = viewer ? `Estimation partagée par ${esc(c.prenom)} ${esc(c.nom)}` : `Préparée pour ${esc(c.prenom)} ${esc(c.nom)}`;
     $('report').innerHTML = `
@@ -580,44 +580,35 @@
       </div>
       <div class="two">
         <div class="box"><h3>Le bien</h3><table class="kv">${bien.map(b => `<tr><td>${esc(b[0])}</td><td>${esc(b[1])}</td></tr>`).join('')}</table></div>
-        <div class="box"><h3>Résumé du projet</h3><div class="tiles inbox">${tilesHtml(R, false)}</div></div>
-      </div>
-      <div class="box">
-        <h3>Estimation des travaux</h3>
-        <div class="two">
-          <div>
-            <div class="eyebrow">Estimation centrale · travaux TTC</div>
-            <div class="big num">${eur(R.ttc)}<small>TTC</small></div>
-            <div class="range"><div class="track"><div class="band" style="left:${(R.low / (R.high * 1.08) * 100).toFixed(1)}%;width:${((R.high - R.low) / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin mark" style="left:${(R.low / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin" style="left:${(R.ttc / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin mark" style="left:${(R.high / (R.high * 1.08) * 100).toFixed(1)}%"></div></div>
-            <div class="range-lbl"><span>Basse <b class="num">${eur(R.low)}</b></span><span>Haute <b class="num">${eur(R.high)}</b></span></div></div>
-          </div>
-          <table class="kv">
-            <tr><td>Coût au m²</td><td class="num">${fmt(R.ttc / R.ctx.surface)} €/m² TTC</td></tr>
-            <tr><td>Durée probable des travaux</td><td class="num">${R.weeks} semaines</td></tr>
-            <tr><td>Score de confiance</td><td class="num">${R.score} / 100</td></tr>
+        <div class="box"><h3>Résumé du projet</h3>
+          <div class="eyebrow">Estimation centrale · travaux TTC</div>
+          <div class="big num">${eur(R.ttc)}<small>TTC</small></div>
+          <div class="range"><div class="track"><div class="band" style="left:${(R.low / (R.high * 1.08) * 100).toFixed(1)}%;width:${((R.high - R.low) / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin mark" style="left:${(R.low / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin" style="left:${(R.ttc / (R.high * 1.08) * 100).toFixed(1)}%"></div><div class="pin mark" style="left:${(R.high / (R.high * 1.08) * 100).toFixed(1)}%"></div></div>
+          <div class="range-lbl"><span>Basse <b class="num">${eur(R.low)}</b></span><span>Haute <b class="num">${eur(R.high)}</b></span></div></div>
+          <div class="tiles inbox" style="margin-top:16px">${tilesHtml(R, false)}</div>
+          <table class="kv" style="margin-top:14px">
             <tr class="total"><td>Total HT</td><td class="num">${eur(R.ht)}</td></tr>
             <tr><td>${tvaLabel(R)}</td><td class="num">${eur(R.tva)}</td></tr>
             <tr class="total"><td>Total TTC</td><td class="num">${eur(R.ttc)}</td></tr>
           </table>
         </div>
       </div>
-      <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Quantité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody></table></div><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Montants HT hors provision pour aléas. Le total ci-dessus inclut frais généraux, pilotage, marge, aléas et TVA.</p></div>
+      <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Quantité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody><tfoot><tr class="tot"><td colspan="3">Total HT</td><td class="r num">${eur(R.ht)}</td></tr><tr><td colspan="3">${tvaLabel(R)}</td><td class="r num">${eur(R.tva)}</td></tr><tr class="tot ttc"><td colspan="3">Total TTC</td><td class="r num">${eur(R.ttc)}</td></tr></tfoot></table></div>${Math.abs(R.ht - R.direct) > 1 ? '<p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Les lignes sont en coûts directs HT. Le total HT ajoute frais généraux, pilotage, marge et provision pour aléas.</p>' : ''}</div>
       ${fin ? `<div class="box"><h3>${S.finance === 'oui' ? 'Synthèse pour la banque' : 'Synthèse du projet'}</h3><table class="kv">${bank.map(b => `<tr${b[2] ? ' class="total"' : ''}><td>${esc(b[0])}</td><td class="num">${esc(b[1])}</td></tr>`).join('')}</table><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">${S.finance === 'oui' ? 'Estimation indicative à distinguer du devis contractuel. Un courtier Cotalia reprend contact pour instruire le dossier.' : 'Estimation indicative à distinguer du devis contractuel. Vous pouvez la joindre à votre dossier de financement.'}</p></div>` : ''}
       <div class="two">
-        <div class="box"><h3>Points de vigilance</h3><div class="alerts">${A.length ? A.map(a => `<div class="alert ${a[0]}"><i></i><div><b><span class="k">${{ crit: 'Bloquant', warn: 'À vérifier', info: 'Information', good: 'Avantage' }[a[0]]}</span>${esc(a[1])}</b>${esc(a[2])}</div></div>`).join('') : '<p style="color:var(--ink-3);margin:0">Aucune incohérence détectée.</p>'}</div></div>
-        <div class="box"><h3>Hypothèses retenues</h3><ul class="plain">${hyp.map(h => `<li>${esc(h)}</li>`).join('')}</ul>
-          <h3 style="margin-top:16px">Non compris</h3><ul class="plain">
+        <div class="box"><h3>Hypothèses retenues</h3><ul class="plain">${hyp.map(h => `<li>${esc(h)}</li>`).join('')}</ul></div>
+        <div class="box"><h3>Non compris</h3><ul class="plain">
             <li>Diagnostics réglementaires avant travaux (amiante, plomb, termites) et études de structure.</li>
             <li>Honoraires d'architecte, de bureau d'études et autorisations d'urbanisme.</li>
             <li>Parties communes, raccordements aux réseaux et interventions des concessionnaires.</li>
             <li>Désamiantage, traitement de structures non visibles, humidité chronique.</li>
             <li>Mobilier hors cuisine, compté séparément en ameublement locatif.</li>
-            <li>Dépassements au-delà de la provision pour aléas : tout écart est chiffré en avenant.</li>
+            <li>Imprévus découverts en cours de chantier : tout écart est chiffré en avenant.</li>
           </ul></div>
       </div>
       <div><div class="eyebrow" style="margin-bottom:8px">Et ensuite</div><div class="steps">
         <div class="stepc now"><div class="display">Estimation en ligne</div>Fourchette, hypothèses, rentabilité. Sans engagement.</div>
-        <div class="stepc"><div class="display">Visite technique</div>Un chiffreur contrôle métrés, réseaux et structure. Le score de confiance passe au maximum.</div>
+        <div class="stepc"><div class="display">Visite technique</div>Un chiffreur contrôle métrés, réseaux et structure. La fourchette se resserre.</div>
         <div class="stepc"><div class="display">Devis contractuel</div>Prix et délais fermes, écarts avec l'estimation expliqués ligne à ligne, signature et acompte.</div>
         <div class="stepc"><div class="display">Chantier suivi</div>Planning, jalons, appels de fonds, réception.</div>
       </div></div>

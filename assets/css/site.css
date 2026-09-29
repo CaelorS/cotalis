@@ -940,3 +940,9 @@ body.locked .lot-head .sum { display: none; }   /* sous-totaux masqués tant que
 .kpis button.tile.sel { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
 .kpis button.tile.sel .v { color: var(--accent); }
 .schart-title { margin-top: 6px; }
+
+/* pied de devis : totaux */
+.devis tfoot td { padding: 8px 0; border-bottom: 1px solid var(--line-2); }
+.devis tfoot tr.tot td { font-weight: 600; border-top: 2px solid var(--line); }
+.devis tfoot tr.ttc td { font-size: 15.5px; border-bottom: 0; }
+.devis tfoot td[colspan] { padding-left: 6px; }
