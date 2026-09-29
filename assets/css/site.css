@@ -946,3 +946,7 @@ body.locked .lot-head .sum { display: none; }   /* sous-totaux masqués tant que
 .devis tfoot tr.tot td { font-weight: 600; border-top: 2px solid var(--line); }
 .devis tfoot tr.ttc td { font-size: 15.5px; border-bottom: 0; }
 .devis tfoot td[colspan] { padding-left: 6px; }
+
+/* rangée souple : éléments alignés avec un vrai espace entre eux, sur tous les écrans */
+.frow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.frow .mchk { gap: 6px; cursor: pointer; }

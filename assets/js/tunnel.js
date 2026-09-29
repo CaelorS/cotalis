@@ -651,7 +651,7 @@
   }
   function confirmVisite(iso) {
     vSlot = iso;
-    vShow(`<p><b>${dfr(iso, { weekday: 'long', day: 'numeric', month: 'long' })} à ${dfr(iso, { hour: '2-digit', minute: '2-digit' })}</b>, visite d'environ une heure à ${esc(S.adresse)}${vWho[iso] ? ', avec ' + esc(vWho[iso]) : ''}.</p><p class="hint">Une invitation sera envoyée à ${esc(S.contact.email)}.</p><div class="mrow" style="gap:8px;margin-top:10px"><button type="button" class="btn primary" id="v-confirm">Confirmer ce créneau</button><button type="button" class="btn" id="v-back">Autre créneau</button></div>`, 'On vérifie une dernière fois.');
+    vShow(`<p><b>${dfr(iso, { weekday: 'long', day: 'numeric', month: 'long' })} à ${dfr(iso, { hour: '2-digit', minute: '2-digit' })}</b>, visite d'environ une heure à ${esc(S.adresse)}${vWho[iso] ? ', avec ' + esc(vWho[iso]) : ''}.</p><p class="hint">Une invitation sera envoyée à ${esc(S.contact.email)}.</p><div class="frow" style="gap:8px;margin-top:10px"><button type="button" class="btn primary" id="v-confirm">Confirmer ce créneau</button><button type="button" class="btn" id="v-back">Autre créneau</button></div>`, 'On vérifie une dernière fois.');
   }
   async function bookVisite() {
     const btn = $('v-confirm'); if (btn) { btn.disabled = true; btn.textContent = 'Réservation…'; }
