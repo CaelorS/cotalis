@@ -32,13 +32,14 @@ Deno.serve(async (req) => {
   // 2. retour de Google avec le code
   const code = url.searchParams.get("code"), state = url.searchParams.get("state") ?? "";
   const [ts, uid, sig] = state.split(".");
-  if (!code || !ts || !uid || sig !== await hmac(ts + "." + uid) || Date.now() - +ts > 15 * 60e3) return Response.redirect(site() + "/admin/?agenda=erreur", 302);
+  if (!code || !ts || !uid || sig !== await hmac(ts + "." + uid) || Date.now() - +ts > 15 * 60e3) return Response.redirect(site() + "/admin/?agenda=erreur&raison=" + encodeURIComponent(url.searchParams.get("error") || "etat_invalide"), 302);
   const r = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ code, client_id: env("GOOGLE_CLIENT_ID"), client_secret: env("GOOGLE_CLIENT_SECRET"), redirect_uri: redirectUri(), grant_type: "authorization_code" }),
   });
   const tok = await r.json();
-  if (!tok.refresh_token) return Response.redirect(site() + "/admin/?agenda=erreur", 302);
+  // la raison renvoyée par Google (invalid_client, invalid_grant…) est affichée dans le back-office pour le diagnostic
+  if (!tok.refresh_token) { console.error("gcal-auth: échange refusé", r.status, tok.error, tok.error_description); return Response.redirect(site() + "/admin/?agenda=erreur&raison=" + encodeURIComponent(tok.error || ("http_" + r.status)), 302); }
   const info = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: "Bearer " + tok.access_token } }).then((x) => x.json()).catch(() => ({}));
   const db = serviceClient();
   const { data: prof } = await db.from("profiles").select("prenom, nom").eq("id", uid).maybeSingle();
@@ -47,7 +48,8 @@ Deno.serve(async (req) => {
     await db.from("calendar_accounts").update({ email: info.email ?? null, refresh_token: tok.refresh_token, updated_at: new Date().toISOString() }).eq("id", uid);
   } else {
     const { count } = await db.from("calendar_accounts").select("id", { count: "exact", head: true });
-    await db.from("calendar_accounts").insert({ id: uid, user_id: uid, email: info.email ?? null, name: [prof?.prenom, prof?.nom].filter(Boolean).join(" ") || (info.email ?? null), refresh_token: tok.refresh_token, active: true, sort_order: count ?? 0, updated_at: new Date().toISOString() });
+    const { error } = await db.from("calendar_accounts").insert({ id: uid, user_id: uid, email: info.email ?? null, name: [prof?.prenom, prof?.nom].filter(Boolean).join(" ") || (info.email ?? null), refresh_token: tok.refresh_token, active: true, sort_order: count ?? 0, updated_at: new Date().toISOString() });
+    if (error) { console.error("gcal-auth: enregistrement impossible", error.message); return Response.redirect(site() + "/admin/?agenda=erreur&raison=" + encodeURIComponent("base:" + error.message.slice(0, 80)), 302); }
   }
   return Response.redirect(site() + "/admin/?agenda=ok", 302);
 });

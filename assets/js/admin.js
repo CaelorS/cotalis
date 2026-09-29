@@ -896,7 +896,9 @@
   if (/[?&]agenda=(ok|erreur)/.test(location.search)) {
     const ok = /agenda=ok/.test(location.search);
     document.querySelector('.tab.selected').classList.remove('selected'); document.querySelector('.tab[data-tab="admins"]').classList.add('selected');
-    setTimeout(() => { $('agenda-msg').textContent = ok ? 'Agenda Google connecté.' : 'La connexion à Google n\'a pas abouti. Réessayez.'; }, 800);
+    const raison = (location.search.match(/[?&]raison=([^&]*)/) || [])[1];
+    const RAISONS = { invalid_client: 'le code secret du client Google enregistré dans Supabase n\'est pas le bon', invalid_grant: 'le code de connexion a expiré, recommencez', access_denied: 'l\'autorisation a été refusée sur l\'écran Google', etat_invalide: 'la demande a expiré, recommencez depuis ce bouton' };
+    setTimeout(() => { const r = raison ? decodeURIComponent(raison) : ''; $('agenda-msg').textContent = ok ? 'Agenda Google connecté.' : 'La connexion à Google n\'a pas abouti' + (r ? ' : ' + (RAISONS[r] || r) + '.' : '. Réessayez.'); $('agenda-msg').scrollIntoView({ block: 'center' }); }, 800);
     history.replaceState(null, '', location.pathname);
   }
 
