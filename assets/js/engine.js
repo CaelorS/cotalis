@@ -41,7 +41,7 @@
       if (it.inactive || (it.only && !it.only.includes(S.kind))) return;
       const on = !!S.works[it.id];
       const q = S.qty[it.id] != null ? +S.qty[it.id] : it.qty(ctx);
-      const unitPrice = it.pu * (it.lab * cReg * cx.c + (1 - it.lab) * cGamme);
+      const unitPrice = it.pu * (it.lab * cReg * cx.c + (1 - it.lab) * (it.nofin ? 1 : cGamme));   // nofin : la part hors main-d'œuvre ne suit pas la finition
       const amount = on ? q * unitPrice : 0;
       lines.push({ it, on, q, unitPrice, amount });
       if (on && amount > 0) {

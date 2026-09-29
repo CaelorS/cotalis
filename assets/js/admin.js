@@ -339,13 +339,14 @@
     if (!pricingLoaded) { await C.loadPricing(); pricingLoaded = true; }
     dirty.clear(); $('prix-msg').textContent = '';
     $('settings').innerHTML = SETTINGS.map(([k, label, unit, mult]) => { const v = getSetting(k), d = getDefault(k); return `<div class="field"><label>${label} <span class="optsub">défaut ${(d * mult).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}${unit}</span></label><div class="unit"><input type="number" step="${mult === 100 ? 0.5 : 0.01}" data-set="${k}" value="${+(v * mult).toFixed(3)}">${unit ? `<span>${unit}</span>` : ''}</div></div>`; }).join('');
-    $('items').querySelector('tbody').innerHTML = C.CATALOG.map(l => `<tr class="lot"><td colspan="10">${C.lotIcon(l.lot)}${esc(l.lot)}</td></tr>` + l.items.map(it => { const d = C.DEFAULTS.items[it.id] || { pu: '—' }; return `<tr data-item="${it.id}"${it.custom ? ' data-custom="1"' : ''}>
+    $('items').querySelector('tbody').innerHTML = C.CATALOG.map(l => `<tr class="lot"><td colspan="11">${C.lotIcon(l.lot)}${esc(l.lot)}</td></tr>` + l.items.map(it => { const d = C.DEFAULTS.items[it.id] || { pu: '—' }; return `<tr data-item="${it.id}"${it.custom ? ' data-custom="1"' : ''}>
       <td><input type="checkbox" data-f="active"${it.inactive ? '' : ' checked'}></td>
       <td><input type="text" data-f="label" value="${esc(it.label)}" class="wide"><input type="text" data-f="sub" value="${esc(it.sub || '')}" class="wide sub" placeholder="précision"></td>
       <td>${esc(it.unit)}</td>
       <td class="r"><input type="number" step="1" data-f="pu" value="${it.pu}"></td>
       <td class="r hint num">${d.pu}</td>
       <td class="r"><input type="number" step="5" min="0" max="100" data-f="lab" value="${Math.round(it.lab * 100)}"></td>
+      <td class="c"><input type="checkbox" data-f="nofin"${it.nofin ? ' checked' : ''} aria-label="Insensible à la finition"></td>
       <td><select data-f="tva"><option value="10"${it.tva === 5.5 ? '' : ' selected'}>10 %</option><option value="5.5"${it.tva === 5.5 ? ' selected' : ''}>5,5 %</option></select></td>
       <td class="r"><input type="number" step="0.5" min="0" max="60" data-f="marge" value="${it.marge == null ? '' : +(it.marge * 100).toFixed(2)}" placeholder="défaut"></td>
       <td class="qtycell"><select data-f="qty_mode" class="inline">${Object.keys(C.QTY_MODES).map(k => `<option value="${k}"${it.qm === k ? ' selected' : ''}>${C.QTY_MODES[k]}</option>`).join('')}</select> <input type="number" step="0.01" data-f="qty_coef" value="${it.qc == null ? 1 : it.qc}" style="width:72px" aria-label="Coefficient">${d.qm ? `<small>défaut : ${esc(C.QTY_MODES[d.qm])} ${d.qc}</small>` : ''}</td>
@@ -387,12 +388,13 @@
       <div class="field"><label>Marge % <span class="optsub">vide : défaut</span></label><input id="ie-marge" type="number" step="0.5" min="0" max="60" value="${it.marge == null ? '' : +(it.marge * 100).toFixed(2)}" placeholder="défaut"></div>
       <div class="field"><label>Quantité proposée</label><select id="ie-qm">${Object.keys(C.QTY_MODES).map(k => `<option value="${k}"${it.qm === k ? ' selected' : ''}>${C.QTY_MODES[k]}</option>`).join('')}</select></div>
       <div class="field"><label>Coefficient</label><input id="ie-qc" type="number" step="0.01" value="${it.qc == null ? 1 : it.qc}"></div>
+      <div class="field wide"><label class="check"><input type="checkbox" id="ie-nofin"${it.nofin ? ' checked' : ''}> Insensible à la finition <span class="optsub">dépose, gravats, nettoyage…</span></label></div>
       <div class="field wide"><label class="check"><input type="checkbox" id="ie-active"${it.inactive ? '' : ' checked'}> Actif dans le tunnel</label></div>
     </div><div class="savebar"><span class="hint" id="ie-msg"></span><button type="button" class="btn primary" id="ie-save">Enregistrer</button></div></div>`;
     $('drawer').classList.remove('hidden');
     $('ie-save').addEventListener('click', async () => {
       const g = i => document.getElementById(i);
-      const row = { id: it.id, lot: it.lotName, label: g('ie-label').value.trim() || it.label, sub: g('ie-sub').value.trim(), unit: it.unit, pu: +g('ie-pu').value, lab: Math.min(1, Math.max(0, +g('ie-lab').value / 100)), tva: +g('ie-tva').value, marge: g('ie-marge').value === '' ? null : +g('ie-marge').value / 100, active: g('ie-active').checked, qty_mode: g('ie-qm').value, qty_coef: g('ie-qc').value === '' ? 1 : +g('ie-qc').value, updated_by: A.user.id, updated_at: new Date().toISOString() };
+      const row = { id: it.id, lot: it.lotName, label: g('ie-label').value.trim() || it.label, sub: g('ie-sub').value.trim(), unit: it.unit, pu: +g('ie-pu').value, lab: Math.min(1, Math.max(0, +g('ie-lab').value / 100)), nofin: g('ie-nofin').checked, tva: +g('ie-tva').value, marge: g('ie-marge').value === '' ? null : +g('ie-marge').value / 100, active: g('ie-active').checked, qty_mode: g('ie-qm').value, qty_coef: g('ie-qc').value === '' ? 1 : +g('ie-qc').value, updated_by: A.user.id, updated_at: new Date().toISOString() };
       if (it.custom) { row.custom = true; row.presets = it.presets || []; }
       const { error } = await sb.from('pricing_items').upsert(row);
       if (error) { $('ie-msg').textContent = 'Enregistrement impossible : ' + error.message; return; }
@@ -416,7 +418,7 @@
       const rows = [...document.querySelectorAll('tr[data-item]')].filter(tr => dirty.has(tr.dataset.item)).map(tr => {
         const g = f => tr.querySelector(`[data-f="${f}"]`);
         const it = C.ITEMS[tr.dataset.item];
-        const row = { id: tr.dataset.item, lot: it.lotName, label: g('label').value.trim() || it.label, sub: g('sub').value.trim(), unit: it.unit, pu: +g('pu').value, lab: Math.min(1, Math.max(0, +g('lab').value / 100)), tva: +g('tva').value, marge: g('marge').value === '' ? null : +g('marge').value / 100, active: g('active').checked, updated_by: uid, updated_at: new Date().toISOString() };
+        const row = { id: tr.dataset.item, lot: it.lotName, label: g('label').value.trim() || it.label, sub: g('sub').value.trim(), unit: it.unit, pu: +g('pu').value, lab: Math.min(1, Math.max(0, +g('lab').value / 100)), nofin: g('nofin').checked, tva: +g('tva').value, marge: g('marge').value === '' ? null : +g('marge').value / 100, active: g('active').checked, updated_by: uid, updated_at: new Date().toISOString() };
         row.qty_mode = g('qty_mode').value; row.qty_coef = g('qty_coef').value === '' ? 1 : +g('qty_coef').value;
         if (it.custom) { row.custom = true; row.presets = it.presets || []; }
         return row;

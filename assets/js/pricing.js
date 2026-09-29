@@ -11,7 +11,7 @@
     REGION: JSON.parse(JSON.stringify(C.REGION)), GAMME: JSON.parse(JSON.stringify(C.GAMME)),
     items: {},
   };
-  C.CATALOG.forEach(l => l.items.forEach(it => { C.DEFAULTS.items[it.id] = { pu: it.pu, lab: it.lab, tva: it.tva || 10, label: it.label, sub: it.sub || '', unit: it.unit, qm: it.qm, qc: it.qc }; }));
+  C.CATALOG.forEach(l => l.items.forEach(it => { C.DEFAULTS.items[it.id] = { pu: it.pu, lab: it.lab, tva: it.tva || 10, label: it.label, sub: it.sub || '', unit: it.unit, qm: it.qm, qc: it.qc, nofin: !!it.nofin }; }));
   C.DEFAULTS.PRESET = JSON.parse(JSON.stringify(C.PRESET)); C.DEFAULTS.RULES = JSON.parse(JSON.stringify(C.RULES));
 
   const qtyFn = C.qtyFn;
@@ -21,7 +21,7 @@
     const it = { id: row.id, label: row.label || row.id, sub: row.sub || '', unit: row.unit || 'u', pu: +row.pu || 0, lab: row.lab == null ? 0.5 : +row.lab, custom: true, qm: row.qty_mode || 'units', qc: row.qty_coef == null ? 1 : +row.qty_coef, presets: row.presets || [], lotName: lot.lot, qty: qtyFn(row.qty_mode || 'units', row.qty_coef) };
     if (+row.tva === 5.5) it.tva = 5.5;
     it.marge = (row.marge == null || row.marge === '') ? null : +row.marge;
-    it.inactive = row.active === false;
+    it.inactive = row.active === false; it.nofin = !!row.nofin;
     lot.items.push(it); C.ITEMS[it.id] = it;
     (row.presets || []).forEach(k => { if (C.PRESET[k] && !C.PRESET[k].includes(it.id)) C.PRESET[k].push(it.id); });
     return it;
@@ -38,6 +38,7 @@
       it.marge = (row.marge == null || row.marge === '') ? null : +row.marge;
       if (row.label) it.label = row.label;
       if (row.sub != null) it.sub = row.sub;
+      if (row.nofin != null) it.nofin = !!row.nofin;
       it.inactive = row.active === false;
     });
     (settings || []).forEach(row => {

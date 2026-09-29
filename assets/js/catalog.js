@@ -220,3 +220,10 @@
     PRIX_ETAT: { bon: 1, correct: 0.94, degrade: 0.85, total: 0.76, '': 0.9 },
   });
 })(window);
+
+/* Ouvrages insensibles à la finition : leur part hors main-d'œuvre est de la location, du transport ou des frais,
+   pas un matériau dont la gamme change. Réglable ouvrage par ouvrage dans le back-office. */
+(function () {
+  var C = (typeof window !== 'undefined' ? window : globalThis).COTALIA; if (!C || !C.ITEMS) return;
+  ['dep_rev', 'dep_eq', 'benne', 'mur_np', 'mur_p', 'ragr', 'nett', 'colonne_elec', 'colonne_plomb'].forEach(function (id) { if (C.ITEMS[id]) C.ITEMS[id].nofin = true; });
+})();
