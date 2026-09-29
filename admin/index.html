@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/css/site.css?v=202609291321">
+  <link rel="stylesheet" href="/assets/css/site.css?v=202609291334">
 </head>
 <body class="admin">
   <div class="stick">
@@ -23,6 +23,7 @@
       <button type="button" class="tab" data-tab="selection">Algo des devis</button>
       <button type="button" class="tab" data-tab="scoring">Scoring</button>
       <button type="button" class="tab" data-tab="tunnel">Analyse du tunnel</button>
+      <button type="button" class="tab" data-tab="agenda">Agenda</button>
       <button type="button" class="tab" data-tab="admins">Administrateurs</button>
     </nav>
     <span class="spacer"></span>
@@ -171,15 +172,7 @@
       </div>
     </section>
 
-    <section id="tab-admins" class="tabpane hidden">
-      <div class="panel">
-        <header><h2>Administrateurs</h2><span class="hint">Un administrateur accède aux dossiers, aux prix et à cette liste. Le compte propriétaire ne peut pas être retiré.</span></header>
-        <div class="body">
-          <form class="addrow" id="admin-add"><input id="admin-email" type="email" placeholder="prenom@cotalia.fr" aria-label="E-mail du nouvel administrateur"><button type="submit" class="btn primary">Ajouter</button></form>
-          <p class="hint" id="admin-msg"></p>
-          <table class="grid-table" id="admins"><thead><tr><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Depuis</th><th></th></tr></thead><tbody></tbody></table>
-        </div>
-      </div>
+    <section id="tab-agenda" class="tabpane hidden">
       <div class="panel">
         <header><h2>Agenda des visites</h2><span class="hint">Les clients choisissent un créneau de visite technique depuis leur estimation. Chaque administrateur peut relier son propre agenda Google ; le rendez-vous est créé chez la personne désignée par la règle d'attribution, avec l'adresse du bien, le client invité et deux blocs de trajet.</span></header>
         <div class="body">
@@ -207,17 +200,28 @@
         </div>
       </div>
     </section>
+
+    <section id="tab-admins" class="tabpane hidden">
+      <div class="panel">
+        <header><h2>Administrateurs</h2><span class="hint">Un administrateur accède aux dossiers, aux prix et à cette liste. Le compte propriétaire ne peut pas être retiré.</span></header>
+        <div class="body">
+          <form class="addrow" id="admin-add"><input id="admin-email" type="email" placeholder="prenom@cotalia.fr" aria-label="E-mail du nouvel administrateur"><button type="submit" class="btn primary">Ajouter</button></form>
+          <p class="hint" id="admin-msg"></p>
+          <table class="grid-table" id="admins"><thead><tr><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Depuis</th><th></th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div class="lightbox hidden" id="lightbox"><div class="lb-head"><span id="lb-title"></span><button type="button" class="btn small" id="lb-close">Fermer</button></div><div class="lb-body" id="lb-body"></div></div>
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/config.js?v=202609291321"></script>
-  <script src="/assets/js/catalog.js?v=202609291321"></script>
-  <script src="/assets/js/engine.js?v=202609291321"></script>
-  <script src="/assets/js/pricing.js?v=202609291321"></script>
-  <script src="/assets/js/auth.js?v=202609291321"></script>
-  <script src="/assets/js/admin.js?v=202609291321"></script>
+  <script src="/config.js?v=202609291334"></script>
+  <script src="/assets/js/catalog.js?v=202609291334"></script>
+  <script src="/assets/js/engine.js?v=202609291334"></script>
+  <script src="/assets/js/pricing.js?v=202609291334"></script>
+  <script src="/assets/js/auth.js?v=202609291334"></script>
+  <script src="/assets/js/admin.js?v=202609291334"></script>
 </body>
 </html>

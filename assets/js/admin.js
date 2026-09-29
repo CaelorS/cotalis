@@ -46,6 +46,7 @@
     if (name === 'selection') loadSelectionTab();
     if (name === 'scoring') loadScoring();
     if (name === 'tunnel') { if (!leads.length && sb) sb.from('leads').select('id,project_id,prenom,nom').then(r => { leads = r.data || leads; loadTunnel(); }); else loadTunnel(); }
+    if (name === 'agenda') { if (!leads.length && sb) sb.from('leads').select('id,project_id,prenom,nom,visite_at,visite_with').then(r => { leads = r.data || leads; loadAgenda(); }); else loadAgenda(); }
     if (name === 'admins') loadAdmins();
   }
 
@@ -895,7 +896,7 @@
   });
   if (/[?&]agenda=(ok|erreur)/.test(location.search)) {
     const ok = /agenda=ok/.test(location.search);
-    document.querySelector('.tab.selected').classList.remove('selected'); document.querySelector('.tab[data-tab="admins"]').classList.add('selected');
+    document.querySelector('.tab.selected').classList.remove('selected'); document.querySelector('.tab[data-tab="agenda"]').classList.add('selected');
     const raison = (location.search.match(/[?&]raison=([^&]*)/) || [])[1];
     const RAISONS = { invalid_client: 'le code secret du client Google enregistré dans Supabase n\'est pas le bon', invalid_grant: 'le code de connexion a expiré, recommencez', access_denied: 'l\'autorisation a été refusée sur l\'écran Google', etat_invalide: 'la demande a expiré, recommencez depuis ce bouton' };
     setTimeout(() => { const r = raison ? decodeURIComponent(raison) : ''; $('agenda-msg').textContent = ok ? 'Agenda Google connecté.' : 'La connexion à Google n\'a pas abouti' + (r ? ' : ' + (RAISONS[r] || r) + '.' : '. Réessayez.'); $('agenda-msg').scrollIntoView({ block: 'center' }); }, 800);
@@ -903,7 +904,6 @@
   }
 
   async function loadAdmins() {
-    loadAgenda();
     await loadAdminsList();
     const { data: inv } = await sb.from('admin_invites').select('*').order('created_at');
     const me = A.user.id;
