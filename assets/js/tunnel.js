@@ -104,7 +104,7 @@
 
     if (S.step === 'acquisition') proposeAcquisition();
     if (S.step === 'travaux') renderLots();
-    if (S.step === 'resultat') { renderReport(); if (pricingReady) welcome(); }
+    if (S.step === 'resultat') { renderReport(); if (pricingReady) welcome(); if (!viewer && hasDb() && S.leadSubmitted && !S.visiteAt) loadSlots().catch(() => {}); }
     renderPanel();
     track();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -634,6 +634,22 @@
     return VICO + '<span class="l">Planifier la visite</span><span class="s">Visite</span>';
   }
   let vSlot = null, vWho = {};
+  var slotsCache = null;   // var : lu par showStep, appelé avant cette ligne au démarrage
+  // créneaux : chargés dès l'arrivée sur le rapport, gardés trois minutes, avec délai maximum et un second essai
+  async function fetchSlots() {
+    const c = new AbortController(), t = setTimeout(() => c.abort(), 12000);
+    try {
+      const r = await fetch(BASE + '/functions/v1/gcal-slots', { method: 'POST', headers: hdr(), body: JSON.stringify({ project_id: S.pid, token: S.token }), signal: c.signal });
+      const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status); return d;
+    } finally { clearTimeout(t); }
+  }
+  function loadSlots(force) {
+    if (!force && slotsCache && Date.now() - slotsCache.at < 3 * 60e3) return slotsCache.p;
+    const p = fetchSlots().catch(e => { if (/non connecté/.test(String(e && e.message))) throw e; return fetchSlots(); });
+    slotsCache = { at: Date.now(), p };
+    p.catch(() => { if (slotsCache && slotsCache.p === p) slotsCache = null; });
+    return p;
+  }
   var pricingReady = false;   // var : lu par showStep, appelé avant cette ligne au démarrage
   function vShow(html, hint) { $('v-body').innerHTML = html; if (hint != null) $('v-hint').textContent = hint; }
   async function openVisite() {
@@ -643,8 +659,13 @@
     if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); }
     await saveProject();
     let data = null;
-    try { const r = await fetch(BASE + '/functions/v1/gcal-slots', { method: 'POST', headers: hdr(), body: JSON.stringify({ project_id: S.pid, token: S.token }) }); data = await r.json(); if (!r.ok) throw new Error(data.error || r.status); vWho = data.who || {}; }
-    catch (e) { vShow('<p>La prise de rendez-vous en ligne n\'est pas encore ouverte. Demandez à être rappelé : on fixe la visite ensemble.</p>', ''); return; }
+    try { data = await loadSlots(); vWho = data.who || {}; }
+    catch (e) {
+      console.warn('Cotalia : créneaux indisponibles', e && e.message);
+      const off = /non connecté/.test(String(e && e.message));
+      vShow(off ? '<p>La prise de rendez-vous en ligne n\'est pas encore ouverte. Demandez à être rappelé : on fixe la visite ensemble.</p>' : '<p>L\'agenda met trop de temps à répondre.</p><div class="frow" style="margin-top:10px"><button type="button" class="btn primary" id="v-back">Réessayer</button></div>', '');
+      return;
+    }
     if (!data.slots.length) { vShow('<p>Aucun créneau libre sur les trois prochaines semaines. Demandez à être rappelé, on trouvera une date.</p>', ''); return; }
     const days = {};
     data.slots.forEach(iso => { const k = dfr(iso, { weekday: 'long', day: 'numeric', month: 'long' }); (days[k] = days[k] || []).push(iso); });
@@ -659,8 +680,8 @@
     try {
       const r = await fetch(BASE + '/functions/v1/gcal-book', { method: 'POST', headers: hdr(), body: JSON.stringify({ project_id: S.pid, token: S.token, start: vSlot }) });
       const d = await r.json();
-      if (!r.ok) { if (r.status === 409) { vShow('<p>Ce créneau vient d\'être pris. Choisissez-en un autre.</p><p><button type="button" class="btn" id="v-back">Voir les créneaux</button></p>', ''); return; } throw new Error(d.error || r.status); }
-      S.visiteAt = d.start; save(); track();
+      if (!r.ok) { if (r.status === 409) { slotsCache = null; vShow('<p>Ce créneau vient d\'être pris. Choisissez-en un autre.</p><p><button type="button" class="btn" id="v-back">Voir les créneaux</button></p>', ''); return; } throw new Error(d.error || r.status); }
+      S.visiteAt = d.start; slotsCache = null; save(); track();
       if ($('btn-visite')) $('btn-visite').innerHTML = visiteBtn();
       vShow(`<p class="vok">C'est noté ! Visite le <b>${d.label}</b>${d.with ? ' avec ' + esc(d.with) : ''}. L'invitation part chez ${esc(d.email)}, avec l'adresse et le contact de votre interlocuteur.</p>`, 'À très vite sur place.');
     } catch (e) { console.warn('Cotalia : réservation refusée', e && e.message); vShow(`<p>La réservation n'a pas abouti. Demandez à être rappelé, on fixe la visite par téléphone.</p><p class="hint" style="font-size:12px">Motif technique : ${esc(String(e && e.message || 'inconnu').slice(0, 160))}</p>`, ''); }
@@ -686,7 +707,7 @@
     try {
       const r = await fetch(BASE + '/functions/v1/gcal-cancel', { method: 'POST', headers: hdr(), body: JSON.stringify({ project_id: S.pid, token: S.token }) });
       const d = await r.json(); if (!r.ok && r.status !== 400) throw new Error(d.error || r.status);
-      S.visiteAt = null; save(); if ($('btn-visite')) $('btn-visite').innerHTML = visiteBtn();
+      S.visiteAt = null; slotsCache = null; save(); if ($('btn-visite')) $('btn-visite').innerHTML = visiteBtn();
       openVisite();
     } catch (e) { vShow(`<p>L'annulation n'a pas abouti. Appelez-nous, on s'en occupe.</p><p class="hint" style="font-size:12px">Motif technique : ${esc(String(e && e.message || 'inconnu').slice(0, 160))}</p>`, ''); }
   }

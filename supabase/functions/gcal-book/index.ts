@@ -19,11 +19,10 @@ Deno.serve(async (req) => {
   try {
     const { project_id, token, start } = await req.json();
     if (!project_id || !token || !start) return json({ error: "paramètres manquants" }, 400);
-    const lead = await leadOf(project_id, token);
+    const [lead, rules] = await Promise.all([leadOf(project_id, token), loadRules()]);
     if (!lead) { console.error("gcal-book: projet ou dossier introuvable", project_id); return json({ error: "projet inconnu" }, 403); }
     if (!lead.email) return json({ error: "coordonnées introuvables" }, 400);
 
-    const rules = await loadRules();
     const at = new Date(start);
     const offers = await offersFor(lead, rules, new Date(at.getTime() + 864e5));
     if (!offers.length) return json({ error: "agenda non connecté" }, 503);

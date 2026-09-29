@@ -35,13 +35,24 @@ export type Account = { id: string; email: string | null; name: string | null; u
 export const label = (a: Account) => (a.name || a.email || "Cotalia").trim();
 
 export async function listAccounts(): Promise<Account[]> {
-  const { data } = await serviceClient().from("calendar_accounts").select("*").eq("active", true).order("sort_order").order("updated_at");
+  const { data, error } = await serviceClient().from("calendar_accounts").select("*").eq("active", true).order("sort_order").order("updated_at");
+  if (error) throw new Error("lecture des agendas : " + error.message);
   return (data ?? []) as Account[];
 }
 
+/** fetch avec délai maximum : un service lent ne doit pas geler la réservation. */
+export async function fetchT(url: string, init: RequestInit = {}, ms = 6000): Promise<Response> {
+  const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
+  try { return await fetch(url, { ...init, signal: c.signal }); } finally { clearTimeout(t); }
+}
+// jetons d'accès gardés en mémoire tant que la fonction reste chaude (ils valent une heure chez Google)
+const GRANTS = new Map<string, { at: number; g: { token: string; canRead: boolean; canWrite: boolean; scope: string } }>();
+
 /** Jeton d'accès et autorisations réellement accordées par la personne sur l'écran Google. */
 export async function grantFor(a: Account): Promise<{ token: string; canRead: boolean; canWrite: boolean; scope: string } | null> {
-  const r = await fetch("https://oauth2.googleapis.com/token", {
+  const hit = GRANTS.get(a.id + ":" + a.refresh_token.slice(-12));
+  if (hit && Date.now() - hit.at < 45 * 60e3) return hit.g;
+  const r = await fetchT("https://oauth2.googleapis.com/token", {
     method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ client_id: env("GOOGLE_CLIENT_ID"), client_secret: env("GOOGLE_CLIENT_SECRET"), refresh_token: a.refresh_token, grant_type: "refresh_token" }),
   });
@@ -49,7 +60,9 @@ export async function grantFor(a: Account): Promise<{ token: string; canRead: bo
   const j = await r.json();
   if (!j.access_token) return null;
   const scope = String(j.scope ?? ""), full = /auth\/calendar(\s|$)/.test(scope);
-  return { token: j.access_token, scope, canRead: full || /calendar\.readonly|calendar\.events|calendar\.freebusy/.test(scope), canWrite: full || /auth\/calendar\.events(\s|$)/.test(scope) };
+  const g = { token: j.access_token, scope, canRead: full || /calendar\.readonly|calendar\.events|calendar\.freebusy/.test(scope), canWrite: full || /auth\/calendar\.events(\s|$)/.test(scope) };
+  GRANTS.set(a.id + ":" + a.refresh_token.slice(-12), { at: Date.now(), g });
+  return g;
 }
 export async function tokenFor(a: Account): Promise<string | null> {
   const g = await grantFor(a);
@@ -91,7 +104,7 @@ export function parisParts(d: Date) {
 
 /* ---------- occupations et créneaux ---------- */
 export async function freeBusy(token: string, timeMin: Date, timeMax: Date): Promise<Array<[number, number]>> {
-  const r = await fetch("https://www.googleapis.com/calendar/v3/freeBusy", {
+  const r = await fetchT("https://www.googleapis.com/calendar/v3/freeBusy", {
     method: "POST", headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
     body: JSON.stringify({ timeMin: timeMin.toISOString(), timeMax: timeMax.toISOString(), timeZone: TZ, items: [{ id: "primary" }] }),
   });
@@ -135,10 +148,9 @@ export function computeSlots(busy: Array<[number, number]>, rules: Rules, buffer
 
 export type Offer = { t: number; account: Account; token: string; buffer: number };
 /** Créneaux proposés à un dossier : pour chaque heure, le premier agenda libre dans l'ordre de préférence. */
-export async function offersFor(lead: { cp?: string | null; assigned_to?: string | null } | null, rules: Rules, until?: Date): Promise<Offer[]> {
-  const accounts = await listAccounts();
+export async function offersFor(lead: { cp?: string | null; assigned_to?: string | null } | null, rules: Rules, until?: Date, known?: Account[]): Promise<Offer[]> {
+  const [accounts, up] = await Promise.all([known ? Promise.resolve(known) : listAccounts(), upcomingVisits()]);
   if (!accounts.length) return [];
-  const up = await upcomingVisits();
   const ordered = orderAccounts(accounts, lead, rules, up.total);
   const now = new Date(), max = until ?? new Date(now.getTime() + (rules.horizonDays + 1) * 864e5);
   const per = await Promise.all(ordered.map(async (a) => {
