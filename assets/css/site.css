@@ -1023,3 +1023,15 @@ body.locked .lot-head .sum { display: none; }   /* sous-totaux masqués tant que
 .wbox .w-phone { text-align: center; font-size: 15px; color: var(--ink-2); margin: -2px 0 0; }
 .wbox .w-phone a { color: var(--accent); font-weight: 600; text-decoration: none; white-space: nowrap; }
 @media print { .callus { color: #333; } .callus a { color: #000; } }
+
+/* back-office, ordinateur : la ligne de libellés des tableaux reste visible quand on défile la page.
+   Le conteneur ne doit pas être défilant, sinon l'en-tête se colle à lui et non à la fenêtre. */
+@media (min-width: 981px) {
+  .admin .tablewrap { overflow: visible; }
+  .admin .grid-table thead th { position: sticky; top: var(--stick-h, 0px); z-index: 6; background: var(--surface-2); box-shadow: inset 0 -1px 0 var(--line); }
+  .admin .grid-table thead th:first-child { border-top-left-radius: 6px; }
+  .admin .grid-table thead th:last-child { border-top-right-radius: 6px; }
+  /* quand la barre d'actions en masse est affichée, les libellés se placent juste dessous */
+  .admin .tabpane:has(> .bulkbar:not(.hidden)) .grid-table thead th,
+  .admin .panel:has(> .bulkbar:not(.hidden)) .grid-table thead th { top: calc(var(--stick-h, 0px) + 66px); }
+}
