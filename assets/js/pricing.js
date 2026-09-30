@@ -22,6 +22,7 @@
     if (+row.tva === 5.5) it.tva = 5.5;
     it.marge = (row.marge == null || row.marge === '') ? null : +row.marge;
     it.inactive = row.active === false; it.nofin = !!row.nofin;
+    if (row.gammes && typeof row.gammes === 'object') it.gammes = row.gammes;
     lot.items.push(it); C.ITEMS[it.id] = it;
     (row.presets || []).forEach(k => { if (C.PRESET[k] && !C.PRESET[k].includes(it.id)) C.PRESET[k].push(it.id); });
     return it;
@@ -39,6 +40,7 @@
       if (row.label) it.label = row.label;
       if (row.sub != null) it.sub = row.sub;
       if (row.nofin != null) it.nofin = !!row.nofin;
+      if (row.gammes && typeof row.gammes === 'object') it.gammes = row.gammes;   // null : catalogue ; {} : aucun prix par finition
       it.inactive = row.active === false;
     });
     (settings || []).forEach(row => {

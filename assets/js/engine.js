@@ -42,9 +42,12 @@
       if (it.inactive || (it.only && !it.only.includes(S.kind))) return;
       const on = !!S.works[it.id];
       const q = S.qty[it.id] != null ? +S.qty[it.id] : it.qty(ctx);
-      const unitPrice = it.pu * (it.lab * cReg * cx.c + (1 - it.lab) * (it.nofin ? 1 : cGamme));   // nofin : la part hors main-d'œuvre ne suit pas la finition
+      // prix propre à la finition choisie : il remplace le coût de base et le coefficient de finition (zone et complexité restent appliquées à la main-d'œuvre)
+      const g = it.gammes && it.gammes[S.gamme], gOn = !!g && g.pu != null && g.pu !== '' && isFinite(+g.pu);
+      const unitPrice = gOn ? +g.pu * (it.lab * cReg * cx.c + (1 - it.lab))
+        : it.pu * (it.lab * cReg * cx.c + (1 - it.lab) * (it.nofin ? 1 : cGamme));   // nofin : la part hors main-d'œuvre ne suit pas la finition
       const amount = on ? q * unitPrice : 0;
-      const m = (it.marge == null || it.marge === '') ? C.MARGE : +it.marge;   // marge par prestation, sinon marge par défaut
+      const m = gOn && g.marge != null && g.marge !== '' ? +g.marge : (it.marge == null || it.marge === '') ? C.MARGE : +it.marge;   // marge de la finition, sinon par prestation, sinon par défaut
       const k = (1 + C.FG + C.PILOTAGE) * (1 + Math.max(0, m));   // du coût au prix de vente : la marge s'ajoute au coût
       // amount et unitPrice sont des coûts ; sell et unitSell sont ce que voit le client
       lines.push({ it, on, q, unitPrice, amount, unitSell: unitPrice * k, sell: amount * k });

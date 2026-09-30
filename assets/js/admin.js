@@ -379,12 +379,12 @@
       <td><select data-f="tva"><option value="10"${it.tva === 5.5 ? '' : ' selected'}>10 %</option><option value="5.5"${it.tva === 5.5 ? ' selected' : ''}>5,5 %</option></select></td>
       <td class="qtycell"><select data-f="qty_mode" class="inline"${d.qm ? ` title="Par défaut : ${esc(C.QTY_MODES[d.qm])}"` : ''}>${Object.keys(C.QTY_MODES).map(k => `<option value="${k}"${it.qm === k ? ' selected' : ''}>${C.QTY_MODES[k]}</option>`).join('')}</select></td>
       <td class="r"><input type="number" step="0.01" data-f="qty_coef" value="${it.qc == null ? 1 : it.qc}" style="width:72px" aria-label="Coefficient"${d.qc != null ? ` title="Par défaut : ${d.qc}"` : ''}></td>
-      <td>${it.custom ? `<button type="button" class="btn small" data-del="${it.id}">Supprimer</button>` : ''}</td>
-    </tr>`; }).join('')).join('');
+      <td class="acts"><button type="button" class="btn small gbtn${gamCount(it) ? ' has' : ''}" data-gtoggle="${it.id}" aria-expanded="${gamCount(it) ? 'true' : 'false'}" title="Prix propres à une finition (économique, standard, premium), à la place du coefficient de finition">Gammes${gamCount(it) ? ' · ' + gamCount(it) : ''}</button>${it.custom ? `<button type="button" class="btn small" data-del="${it.id}">Supprimer</button>` : ''}</td>
+    </tr>${gamCount(it) ? gamRow(it) : ''}`; }).join('')).join('');
     $('items-cards').innerHTML = C.CATALOG.map(l => `<div class="mlot">${C.lotIcon(l.lot)}${esc(l.lot)}</div>` + l.items.map(it => `<div class="mcard${it.inactive ? ' off' : ''}">
       <div class="mrow"><b>${esc(it.label)}</b><button type="button" class="btn small" data-edit="${it.id}" aria-label="Modifier ${esc(it.label)}">✎</button></div>
       <div class="msub">${esc(it.sub || '')}</div>
-      <div class="mrow"><span class="num">coût ${eur(it.pu)} · vente ${eur(it.pu * (1 + mEff(it)))}${it.unit === 'forfait' ? '' : '/' + it.unit} HT</span><span>${it.inactive ? 'inactif' : 'MO ' + Math.round(it.lab * 100) + ' % · TVA ' + (it.tva === 5.5 ? '5,5' : '10') + ' % · marge ' + (it.marge == null ? fmtM(C.MARGE) + ' % (défaut)' : Math.round(it.marge * 100) + ' %')}</span></div>
+      <div class="mrow"><span class="num">coût ${eur(it.pu)} · vente ${eur(it.pu * (1 + mEff(it)))}${it.unit === 'forfait' ? '' : '/' + it.unit} HT${GAMS.filter(([g]) => gamOn((it.gammes || {})[g])).map(([g, n]) => ' · ' + n.toLowerCase() + ' ' + eur(+it.gammes[g].pu * (1 + (it.gammes[g].marge == null ? mEff(it) : +it.gammes[g].marge)))).join('')}</span><span>${it.inactive ? 'inactif' : 'MO ' + Math.round(it.lab * 100) + ' % · TVA ' + (it.tva === 5.5 ? '5,5' : '10') + ' % · marge ' + (it.marge == null ? fmtM(C.MARGE) + ' % (défaut)' : Math.round(it.marge * 100) + ' %')}</span></div>
     </div>`).join('')).join('');
     const lots = $('ni-lot'); lots.innerHTML = C.CATALOG.map(l => `<option value="${esc(l.lot)}">${esc(l.lot)}</option>`).join('') + '<option value="__new">Nouveau lot…</option>';
     $('ni-qmode').innerHTML = Object.keys(C.QTY_MODES).map(k => `<option value="${k}">${C.QTY_MODES[k]}</option>`).join('');
@@ -420,13 +420,16 @@
       <div class="field"><label>Coefficient</label><input id="ie-qc" type="number" step="0.01" value="${it.qc == null ? 1 : it.qc}"></div>
       <div class="field wide"><label class="check"><input type="checkbox" id="ie-nofin"${it.nofin ? ' checked' : ''}> Insensible à la finition <span class="optsub">dépose, gravats, nettoyage…</span></label></div>
       <div class="field wide"><label class="check"><input type="checkbox" id="ie-active"${it.inactive ? '' : ' checked'}> Actif dans le tunnel</label></div>
+      <div class="field wide"><label>Prix par gamme <span class="optsub">vide : coefficient de finition</span></label>${gamHtml(it)}</div>
     </div><div class="savebar"><span class="hint" id="ie-msg"></span><button type="button" class="btn primary" id="ie-save">Enregistrer</button></div></div>`;
     $('drawer').classList.remove('hidden');
+    $('d-body').querySelectorAll('[data-gclear]').forEach(b => b.addEventListener('click', () => clearGam(b.closest('.gam'))));
     ['ie-pu', 'ie-marge', 'ie-sell'].forEach(i2 => $(i2).addEventListener('input', () => relinkPrice($('ie-pu'), $('ie-marge'), $('ie-sell'), i2.slice(3))));
     $('ie-save').addEventListener('click', async () => {
       const g = i => document.getElementById(i);
-      const row = { id: it.id, lot: it.lotName, label: g('ie-label').value.trim() || it.label, sub: g('ie-sub').value.trim(), unit: it.unit, pu: +g('ie-pu').value, lab: Math.min(1, Math.max(0, +g('ie-lab').value / 100)), nofin: g('ie-nofin').checked, tva: +g('ie-tva').value, marge: margeOfInput(g('ie-marge')), active: g('ie-active').checked, qty_mode: g('ie-qm').value, qty_coef: g('ie-qc').value === '' ? 1 : +g('ie-qc').value, updated_by: A.user.id, updated_at: new Date().toISOString() };
+      const row = { id: it.id, lot: it.lotName, label: g('ie-label').value.trim() || it.label, sub: g('ie-sub').value.trim(), unit: it.unit, pu: +g('ie-pu').value, lab: Math.min(1, Math.max(0, +g('ie-lab').value / 100)), nofin: g('ie-nofin').checked, tva: +g('ie-tva').value, marge: margeOfInput(g('ie-marge')), active: g('ie-active').checked, qty_mode: g('ie-qm').value, qty_coef: g('ie-qc').value === '' ? 1 : +g('ie-qc').value, gammes: gamsOf($('d-body'), it), updated_by: A.user.id, updated_at: new Date().toISOString() };
       if (it.custom) { row.custom = true; row.presets = it.presets || []; }
+      if ($('d-body').querySelector('.gams .neg')) { $('ie-msg').textContent = 'Un prix de vente par gamme est inférieur au coût.'; return; }
       const { error } = await sb.from('pricing_items').upsert(row);
       if (error) { $('ie-msg').textContent = 'Enregistrement impossible : ' + error.message; return; }
       C.applyPricing([row], []); pricingLoaded = false; await loadPricingTab(); $('drawer').classList.add('hidden');
@@ -457,6 +460,65 @@
   const fmtM = m => String(+(m * 100).toFixed(1));
   function setMargeInput(inp, m) { inp.dataset.m = String(m); inp.value = fmtM(m); inp.classList.toggle('dflt', Math.abs(m - C.MARGE) < 0.0005); inp.classList.toggle('neg', m < 0); }
   function margeOfInput(inp) { if (inp.classList.contains('dflt')) return null; const m = inp.dataset.m !== undefined && inp.dataset.m !== '' ? +inp.dataset.m : +inp.value / 100; return Math.min(20, Math.max(0, m)); }
+  /* ---------- prix par gamme : un coût et une marge propres à une finition, à la place du coefficient ---------- */
+  const GAMS = [['eco', 'Économique'], ['std', 'Standard'], ['prem', 'Premium']];
+  const tvaOf = it => it.tva === 5.5 ? 0.055 : 0.10;
+  const gamOn = o => !!o && o.pu != null && o.pu !== '' && isFinite(+o.pu);
+  const gamCount = it => GAMS.filter(([g]) => gamOn((it.gammes || {})[g])).length;
+  const gamDefault = (it, g) => r2(it.pu * (it.lab + (1 - it.lab) * (it.nofin ? 1 : C.GAMME[g][0])));   // coût que donne le coefficient, hors zone et complexité
+  function gamHtml(it) {
+    const t = 1 + tvaOf(it), unit = it.unit === 'forfait' ? '' : ' /' + esc(it.unit);
+    return `<div class="gams" data-gams="${it.id}">` + GAMS.map(([g, name]) => {
+      const o = (it.gammes || {})[g], on = gamOn(o), dc = gamDefault(it, g), dm = mEff(it);
+      const m = on ? (o.marge == null || o.marge === '' ? dm : +o.marge) : null;
+      return `<div class="gam${on ? ' on' : ''}" data-g="${g}">
+        <div class="gam-h"><b>${name}</b><span class="hint">${on ? 'prix propre' : 'coefficient ' + String(it.nofin ? 1 : C.GAMME[g][0]).replace('.', ',')}</span><button type="button" class="gclear" data-gclear title="Revenir au coefficient" aria-label="Effacer le prix ${name}">×</button></div>
+        <label>Coût HT${unit}<input type="number" step="0.01" min="0" data-gf="pu" value="${on ? +o.pu : ''}" placeholder="${dc}"></label>
+        <label>Marge %<input type="number" step="0.1" min="0" data-gf="marge" data-m="${on ? m : ''}" value="${on ? fmtM(m) : ''}" placeholder="${fmtM(dm)}"></label>
+        <label>Vente HT<input type="number" step="0.01" min="0" data-gf="sell" value="${on ? sellOf(+o.pu, m) : ''}" placeholder="${sellOf(dc, dm)}"></label>
+        <label>Vente TTC<input type="number" step="0.01" min="0" data-gf="ttc" value="${on ? r2(+o.pu * (1 + m) * t) : ''}" placeholder="${r2(dc * (1 + dm) * t)}"></label>
+      </div>`; }).join('') + '</div>';
+  }
+  const gamRow = it => `<tr class="gamrow" data-gamrow="${it.id}"><td></td><td colspan="12">${gamHtml(it)}</td></tr>`;
+  // mêmes liens que la ligne principale : coût modifié, la marge s'ajuste ; marge modifiée, le prix de vente s'ajuste ; vente HT ou TTC modifiée, la marge s'ajuste
+  function relinkGam(el, changed, it) {
+    const f = k => el.querySelector(`[data-gf="${k}"]`), pu = f('pu'), mg = f('marge'), sl = f('sell'), tt = f('ttc'), t = 1 + tvaOf(it);
+    if (changed === 'pu' && pu.value === '') { clearGam(el); return; }
+    if (pu.value === '') pu.value = pu.placeholder;   // une vente saisie seule part du coût que donne le coefficient
+    const cost = +pu.value;
+    const sellIn = changed === 'ttc' ? (tt.value === '' ? null : +tt.value / t) : (sl.value === '' ? null : +sl.value);
+    let m;
+    if (changed === 'marge') m = mg.value === '' ? mEff(it) : Math.max(0, +mg.value / 100);
+    else if (sellIn != null && cost > 0) m = sellIn / cost - 1;
+    else m = mg.dataset.m ? +mg.dataset.m : mEff(it);
+    mg.dataset.m = String(m); mg.classList.toggle('neg', m < 0);
+    if (changed !== 'marge') mg.value = fmtM(m);
+    if (changed !== 'sell' || sl.value === '') sl.value = sellOf(cost, m);
+    if (changed !== 'ttc' || tt.value === '') tt.value = r2(cost * (1 + m) * t);
+    el.classList.add('on'); el.querySelector('.hint').textContent = 'prix propre';
+  }
+  function clearGam(el) {
+    el.querySelectorAll('input').forEach(i => { i.value = ''; }); const mg = el.querySelector('[data-gf="marge"]'); mg.dataset.m = ''; mg.classList.remove('neg');
+    el.classList.remove('on'); const it = C.ITEMS[el.closest('.gams').dataset.gams]; el.querySelector('.hint').textContent = 'coefficient ' + String(it && it.nofin ? 1 : C.GAMME[el.dataset.g][0]).replace('.', ',');
+  }
+  // lit les prix par gamme affichés ; si le bloc n'est pas ouvert, garde ceux de l'ouvrage
+  function gamsOf(root, it) {
+    const box = root && root.querySelector('.gams'); if (!box) return it.gammes || {};
+    const out = {};
+    box.querySelectorAll('.gam').forEach(el => { const pu = el.querySelector('[data-gf="pu"]'), mg = el.querySelector('[data-gf="marge"]'); if (pu.value === '' || !isFinite(+pu.value) || +pu.value < 0) return; out[el.dataset.g] = { pu: +pu.value, marge: mg.dataset.m ? Math.max(0, +mg.dataset.m) : mEff(it) }; });
+    return out;
+  }
+  const gamRowOf = tr => { const n = tr.nextElementSibling; return n && n.matches('tr[data-gamrow]') ? n : null; };
+  const itemTr = el => { const g = el.closest('tr[data-gamrow]'); return g ? g.previousElementSibling : el.closest('tr[data-item]'); };
+  function gamBtn(tr, it) { const b = tr.querySelector('[data-gtoggle]'); if (!b) return; const n = gamCount(it); b.textContent = 'Gammes' + (n ? ' · ' + n : ''); b.classList.toggle('has', !!n); b.setAttribute('aria-expanded', gamRowOf(tr) ? 'true' : 'false'); }
+  $('items').addEventListener('click', e => {
+    const b = e.target.closest('[data-gtoggle]');
+    if (b) { const tr = b.closest('tr'), it = C.ITEMS[b.dataset.gtoggle], open = gamRowOf(tr); if (open) open.remove(); else tr.insertAdjacentHTML('afterend', gamRow(it)); gamBtn(tr, it); return; }
+    const c = e.target.closest('[data-gclear]');
+    if (c) { clearGam(c.closest('.gam')); queueSave(c, 0); }
+  });
+  document.addEventListener('input', e => { const gf = e.target.dataset && e.target.dataset.gf, el = gf && e.target.closest('.gam'); if (el) relinkGam(el, gf, C.ITEMS[el.closest('.gams').dataset.gams]); });
+
   function relinkPrice(pu, mg, sl, changed) {
     const cost = +pu.value;
     if (changed === 'marge') {
@@ -471,6 +533,7 @@
     const g = f => tr.querySelector(`[data-f="${f}"]`), it = C.ITEMS[tr.dataset.item];
     const row = { id: tr.dataset.item, lot: it.lotName, label: g('label').value.trim() || it.label, sub: g('sub').value.trim(), unit: it.unit, pu: +g('pu').value, lab: Math.min(1, Math.max(0, +g('lab').value / 100)), nofin: g('nofin').checked, tva: +g('tva').value, marge: margeOfInput(g('marge')), active: g('active').checked, updated_by: A.user.id, updated_at: new Date().toISOString() };
     row.qty_mode = g('qty_mode').value; row.qty_coef = g('qty_coef').value === '' ? 1 : +g('qty_coef').value;
+    row.gammes = gamsOf(gamRowOf(tr), it);
     if (it.custom) { row.custom = true; row.presets = it.presets || []; }
     return row;
   }
@@ -479,10 +542,14 @@
     const pu = tr.querySelector('[data-f="pu"]').value;
     if (pu === '' || !isFinite(+pu) || +pu < 0) { toast('Coût invalide pour « ' + it.label + ' » : non enregistré.', 'err'); return; }
     if (tr.querySelector('[data-f="marge"]').classList.contains('neg')) { toast('« ' + it.label + ' » : le prix de vente est inférieur au coût. Non enregistré.', 'err'); return; }
+    const gr = gamRowOf(tr);
+    if (gr && gr.querySelector('.neg')) { toast('« ' + it.label + ' » : un prix de vente par gamme est inférieur au coût. Non enregistré.', 'err'); return; }
     const row = rowOf(tr);
     const { error } = await sb.from('pricing_items').upsert([row]);
     if (error) { toast('Enregistrement impossible : ' + error.message, 'err'); return; }
     C.applyPricing([row], []); tr.classList.add('saved'); setTimeout(() => tr.classList.remove('saved'), 1200);
+    gamBtn(tr, it);
+    if (gr) GAMS.forEach(([g]) => { const el = gr.querySelector(`.gam[data-g="${g}"]`), dc = gamDefault(it, g), dm = mEff(it), ph = { pu: dc, marge: fmtM(dm), sell: sellOf(dc, dm), ttc: r2(dc * (1 + dm) * (1 + tvaOf(it))) }; Object.keys(ph).forEach(k => { el.querySelector(`[data-gf="${k}"]`).placeholder = ph[k]; }); });
     toast('Enregistré · ' + row.label);
   }
   async function saveSettings() {
@@ -502,7 +569,7 @@
   // une valeur validée (sortie du champ, Entrée, case cochée, menu) s'enregistre aussitôt ; en cours de frappe, après une seconde de pause
   const saveTimers = {};
   function queueSave(target, delay) {
-    const tr = target.closest('tr[data-item]'), key = tr ? tr.dataset.item : (target.dataset.set ? 'settings' : null); if (!key) return;
+    const tr = itemTr(target), key = tr ? tr.dataset.item : (target.dataset.set ? 'settings' : null); if (!key) return;
     clearTimeout(saveTimers[key]);
     saveTimers[key] = setTimeout(() => { delete saveTimers[key]; if (tr) saveItemRow(tr); else saveSettings(); }, delay);
   }

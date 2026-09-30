@@ -4,6 +4,7 @@
   'use strict';
 
   // pu : prix de référence HT par unité (€) ; lab : part main-d'œuvre ; tva : 10 par défaut, 5.5 pour l'amélioration énergétique.
+  // gammes : prix propres à une finition, { eco|std|prem: { pu: coût HT, marge } }. Ils remplacent le coût de base et le coefficient de finition.
   // qty(s) reçoit s.surface, s.pieces, s.eau, s.units (nombre de logements : 1 sauf immeuble).
   const CATALOG = [
     { lot: 'Démolition et dépose', items: [
@@ -51,11 +52,11 @@
       { id: 'toit_neuf', label: 'Réfection complète de toiture', sub: 'dépose, écran, liteaux, couverture, zinguerie', unit: 'm²', pu: 150, lab: 0.6, qm: 'toiture', qc: 1 },
     ] },
     { lot: 'Salle de bain et WC', items: [
-      { id: 'sdb', label: 'Salle de bain complète', sub: 'douche à l\'italienne, meuble vasque, faïence, WC · réseau eau et évacuations compris', unit: 'forfait', pu: 5571.43, lab: 0.55, qm: 'units', qc: 1 },
+      { id: 'sdb', label: 'Salle de bain complète', sub: 'douche à l\'italienne, meuble vasque, faïence, WC · réseau eau et évacuations compris', unit: 'forfait', pu: 5571.43, lab: 0.55, qm: 'units', qc: 1, gammes: { eco: { pu: 3500, marge: 5000 / 1.1 / 3500 - 1 } } },   // éco : 5 000 € TTC
       { id: 'wc', label: 'WC séparé', sub: 'cuvette suspendue, lave-mains, faïence · réseau eau et évacuations compris', unit: 'forfait', pu: 1142.86, lab: 0.55, qm: 'eau_minus_units', qc: 1 },
     ]},
     { lot: 'Cuisine', items: [
-      { id: 'cuis', label: 'Cuisine équipée', sub: 'meubles, plan de travail, électroménager, pose · réseau eau et évacuations compris', unit: 'forfait', pu: 4642.86, lab: 0.3, qm: 'units', qc: 1 },
+      { id: 'cuis', label: 'Cuisine équipée', sub: 'meubles, plan de travail, électroménager, pose · réseau eau et évacuations compris', unit: 'forfait', pu: 4642.86, lab: 0.3, qm: 'units', qc: 1, gammes: { eco: { pu: 1300, marge: 3500 / 1.1 / 1300 - 1 } } },   // éco : 3 500 € TTC
     ]},
     { lot: 'Sols', items: [
       { id: 'ragr', label: 'Ragréage', unit: 'm²', pu: 10, lab: 0.6, qm: 'surface', qc: 1 },
