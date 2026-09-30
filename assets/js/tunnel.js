@@ -105,6 +105,7 @@
     if (S.step === 'acquisition') proposeAcquisition();
     if (S.step === 'travaux') renderLots();
     if (S.step === 'resultat') { renderReport(); if (pricingReady) welcome(); if (!viewer && hasDb() && S.leadSubmitted && !S.visiteAt) loadSlots().catch(() => {}); }
+    if (S.step === 'resultat' && !viewer && location.hash === '#visite') { history.replaceState(null, '', location.pathname + location.search); S.welcomeShown = true; setTimeout(openVisite, 300); }
     renderPanel();
     track();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -868,13 +869,18 @@
       user_agent: navigator.userAgent, page: location.href, user_id: (C.auth && C.auth.user) ? C.auth.user.id : null,
     };
   }
+  // e-mails du site (client et équipe) : le serveur n'envoie chaque type qu'une fois par dossier
+  function notifyMail(kind) {
+    if (viewer || !hasDb() || !S.pid) return;
+    fetch(BASE + '/functions/v1/mail-lead', { method: 'POST', headers: hdr(), body: JSON.stringify({ project_id: S.pid, token: S.token, kind }), keepalive: true }).catch(() => {});
+  }
   async function submitLead(kind) {
     const lead = leadPayload(kind);
     try { const all = JSON.parse(localStorage.getItem('cotalia-leads') || '[]'); all.push(Object.assign({ at: new Date().toISOString() }, lead)); localStorage.setItem('cotalia-leads', JSON.stringify(all.slice(-20))); } catch (e) {}
     if (!hasDb()) return;
     try {
       const r = await fetch(BASE + '/rest/v1/leads', { method: 'POST', headers: Object.assign(hdr(), { Prefer: 'return=minimal' }), body: JSON.stringify(lead) });
-      if (r.ok) { S.leadSent = true; save(); } else console.warn('Cotalia : envoi refusé', r.status);
+      if (r.ok) { S.leadSent = true; save(); saveProject().then(() => notifyMail(kind === 'rappel' ? 'rappel' : 'estimation')); } else console.warn('Cotalia : envoi refusé', r.status);
     } catch (e) { console.warn('Cotalia : envoi impossible', e); }
   }
 

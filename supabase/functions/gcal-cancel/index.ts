@@ -1,7 +1,8 @@
 // Annulation d'une visite : supprime le rendez-vous et ses deux blocs de trajet dans l'agenda, prévient le client,
 // et libère le dossier. Appelable par le client (projet + jeton) ou par un administrateur (dossier + session).
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { CORS, json, env, serviceClient, loadRules, grantFor, leadOf, Account } from "../_shared/google.ts";
+import { CORS, json, env, serviceClient, loadRules, grantFor, leadOf, Account, TZ } from "../_shared/google.ts";
+import { SITE, sendMail, layout, p, btn, esc, mailConfigured } from "../_shared/mail.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -40,7 +41,12 @@ Deno.serve(async (req) => {
     } else note = "agenda inaccessible : le rendez-vous reste à supprimer à la main dans Google Agenda";
     const patch: Record<string, unknown> = { visite_at: null, visite_event: null, visite_with: null, next_action: null };
     if (lead.status === "visite") patch.status = "contacte";
+    const when = new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(new Date(lead.visite_at));
     await db.from("leads").update(patch).eq("id", lead.id);
+    if (mailConfigured() && lead.email) {
+      const lien = SITE() + "/estimation/?p=" + encodeURIComponent(lead.project_id ?? "");
+      await sendMail({ to: lead.email, subject: "Visite technique annulée · " + when, html: layout("Visite annulée", p("Bonjour " + esc(lead.prenom || "") + ", la visite technique prévue le <b>" + esc(when) + "</b> est annulée.") + p("Vous pouvez choisir un nouveau créneau à tout moment depuis votre page d'estimation.") + btn(lien + "#visite", "Choisir un autre créneau")), text: "La visite du " + when + " est annulée. Nouveau créneau : " + lien, leadId: lead.id, kind: "annulation" });
+    }
     return json({ ok: true, removed, note });
   } catch (e) {
     console.error("gcal-cancel: échec", String(e?.message ?? e));

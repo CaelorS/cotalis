@@ -1,6 +1,7 @@
 // Réservation d'une visite technique : crée le rendez-vous et les blocs de trajet dans l'agenda attribué,
 // invite le client, met le dossier en « Visite planifiée ».
 import { CORS, json, env, TZ, serviceClient, loadRules, offersFor, leadOf, parisParts, label } from "../_shared/google.ts";
+import { SITE, sendMail, layout, p, btn, kv, icsFor, esc, leadBien, mailConfigured } from "../_shared/mail.ts";
 
 const KIND: Record<string, string> = { appart: "Appartement", maison: "Maison", immeuble: "Immeuble" };
 const fmt = (d: Date) => new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(d);
@@ -52,6 +53,19 @@ Deno.serve(async (req) => {
     if (rank.indexOf(lead.status ?? "nouveau") < rank.indexOf("visite")) patch.status = "visite";
     if (!lead.assigned_to && offer.account.user_id) patch.assigned_to = offer.account.user_id;
     await serviceClient().from("leads").update(patch).eq("id", lead.id);
+    // confirmation à la marque Cotalia, avec le fichier d'agenda ; l'invitation Google part en parallèle
+    if (mailConfigured()) {
+      const q = encodeURIComponent, z = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+      const title = "Visite technique Cotalia", txt = "Visite technique de votre bien avec " + label(offer.account) + ". Estimation : " + lien;
+      const gcal = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + q(title) + "&dates=" + z(at) + "/" + z(end) + "&details=" + q(txt) + "&location=" + q(lead.adresse ?? "");
+      const html = layout("Votre visite est confirmée",
+        p("Bonjour " + esc(lead.prenom || "") + ", rendez-vous est pris pour la visite technique de votre bien.") +
+        kv([["Date", esc(fmt(at))], ["Adresse", esc(lead.adresse || "—")], ["Avec", esc(label(offer.account))], ["Durée", "environ " + rules.duration + " min"]]) +
+        p("Le fichier joint ajoute la visite à votre agenda. Pour la déplacer ou l'annuler, passez par votre page d'estimation.") +
+        btn(lien, "Voir mon estimation") + btn(gcal, "Ajouter à Google Agenda", false),
+        "Visite le " + fmt(at));
+      await sendMail({ to: lead.email, subject: "Visite technique confirmée · " + fmt(at), html, text: `Visite technique confirmée le ${fmt(at)} à ${lead.adresse ?? ""}, avec ${label(offer.account)}. Estimation : ${lien}`, attachments: [{ filename: "visite-cotalia.ics", content: icsFor({ uid: "visite-" + project_id + "@cotalia.fr", start: at, end, title, location: lead.adresse ?? "", description: txt }) }], leadId: lead.id, kind: "visite" });
+    }
     return json({ ok: true, start: at.toISOString(), end: end.toISOString(), label: fmt(at), email: lead.email, with: label(offer.account) });
   } catch (e) {
     console.error("gcal-book: échec", String(e?.message ?? e));

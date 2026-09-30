@@ -39,3 +39,20 @@ de préférence ; le dossier garde la trace dans `leads.visite_with`.
 
 L'application Google doit être **en production** (Google Auth Platform → Audience → Publier l'application), sinon seuls
 les testeurs déclarés peuvent se connecter et les jetons expirent au bout de sept jours.
+
+## E-mails du site (schema-v10.sql, fonction `mail-lead`)
+
+Le site envoie ses propres e-mails via **Resend** : estimation prête (client + équipe), demande de rappel (client + équipe),
+visite confirmée (client, avec fichier iCal), visite annulée (client). Sans clé configurée, rien ne part et le journal
+`mail_log` le note.
+
+Mise en place, une fois :
+1. Compte sur resend.com, menu **Domains → Add domain** : `cotalia.fr`. Resend affiche trois enregistrements DNS
+   (DKIM en CNAME ou TXT, SPF en TXT, retour MX) à créer chez OVH, zone DNS de cotalia.fr. Attendre le statut « Verified ».
+2. **API Keys → Create** : une clé « Cotalia site », permission Sending.
+3. Supabase, Edge Functions → Secrets : `RESEND_API_KEY`, `MAIL_FROM` = `Cotalia <visites@cotalia.fr>`,
+   `MAIL_REPLY_TO` = adresse qui reçoit les réponses (facultatif), `MAIL_TEAM` = adresses supplémentaires de l'équipe,
+   séparées par des virgules (facultatif : les administrateurs du back-office sont prévenus d'office).
+4. `supabase functions deploy mail-lead gcal-book gcal-cancel`.
+
+Tant que le domaine n'est pas vérifié, Resend n'accepte que l'expéditeur `onboarding@resend.dev` vers l'adresse du compte.
