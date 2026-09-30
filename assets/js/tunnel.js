@@ -37,7 +37,8 @@
   let viewer = false;
 
   function newState() { const s = clone(DEFAULT); s.pid = rid(); s.token = rid(); return s; }
-  function load() { try { const r = localStorage.getItem(STORE); if (!r) return null; const s = Object.assign(clone(DEFAULT), JSON.parse(r)); if (!s.pid) { s.pid = rid(); s.token = rid(); } return s; } catch (e) { return null; } }
+  const normState = s => { if (s && s.works && C.normWorks && ('elec' in s.works)) { s.works = C.normWorks(s.works); s.qty = C.normQty(s.qty); } return s; };   // reprend une estimation d'avant le découpage de l'électricité
+  function load() { try { const r = localStorage.getItem(STORE); if (!r) return null; const s = Object.assign(clone(DEFAULT), JSON.parse(r)); if (!s.pid) { s.pid = rid(); s.token = rid(); } return normState(s); } catch (e) { return null; } }
   function save() { if (viewer) return; try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} updateIndex(); }
   function getPath(p) { return p.split('.').reduce((o, k) => (o == null ? undefined : o[k]), S); }
   function setPath(p, v) { const ks = p.split('.'); let o = S; for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = v; }
@@ -780,12 +781,12 @@
       const data = await fetchProject(id);
       if (!data) { notice('Ce lien ne correspond à aucun projet enregistré. Il a peut-être été créé sur un autre appareil sans être partagé.'); return; }
       if (mine) {
-        S = Object.assign(newState(), data, { pid: id, token: mine.token, step: 'resultat', maxIdx: 6, reopenedFlag: true });
+        S = normState(Object.assign(newState(), data, { pid: id, token: mine.token, step: 'resultat', maxIdx: 6, reopenedFlag: true }));
         const cur = load(); if (cur && cur.pid === id) { S.contact = cur.contact; S.situation = cur.situation; }
         save(); fillForm(); showStep();
       } else {
         viewer = true;
-        S = Object.assign(newState(), data, { pid: id, token: '', step: 'resultat', maxIdx: 6 });
+        S = normState(Object.assign(newState(), data, { pid: id, token: '', step: 'resultat', maxIdx: 6 }));
         fillForm(); showStep();
       }
     } catch (e) { console.warn(e); notice('Impossible de charger ce projet pour le moment. Réessayez dans quelques instants.'); }

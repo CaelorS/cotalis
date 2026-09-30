@@ -30,6 +30,7 @@
   function isAncien(S) { return !S.annee || +S.annee <= 2024; }
 
   function compute(S) {
+    if (C.normWorks && S.works && ("elec" in S.works)) S = Object.assign({}, S, { works: C.normWorks(S.works), qty: C.normQty(S.qty) });   // estimation d'avant le découpage de l'électricité
     const ctx = ctxOf(S);
     const cReg = C.REGION[S.zone] ? C.REGION[S.zone][0] : 0.97;
     const cGamme = C.GAMME[S.gamme] ? C.GAMME[S.gamme][0] : 1;
@@ -153,13 +154,13 @@
     if (an && an < 1997) A.push(['warn', 'Diagnostic amiante avant travaux', 'Immeuble antérieur à juillet 1997 : le repérage amiante avant travaux est obligatoire et n\'est pas compris. Un désamiantage, s\'il est nécessaire, se chiffre à part.']);
     if (an && an < 1949) A.push(['warn', 'Plomb dans les peintures', 'Bâti antérieur à 1949 : diagnostic plomb (CREP) à prévoir avant décapage ou dépose des revêtements.']);
     if (w.sdb && !w.plomb) A.push(['warn', 'Salle de bain sans reprise du réseau', 'Dans l\'ancien, les évacuations en plomb ou en fonte sont souvent à remplacer. Ajoutez « Réseau eau et évacuations à neuf » si leur état est inconnu.']);
-    if (w.cuis && !w.elec && !w.tableau) A.push(['warn', 'Cuisine neuve sans électricité', 'Four, plaques et lave-vaisselle exigent des circuits spécialisés : une mise en sécurité ou en conformité est presque toujours nécessaire.']);
+    if (w.cuis && !w.elec_cab && !w.tableau) A.push(['warn', 'Cuisine neuve sans électricité', 'Four, plaques et lave-vaisselle exigent des circuits spécialisés : une mise en sécurité ou en conformité est presque toujours nécessaire.']);
     if (w.mur_p) A.push(['warn', 'Mur porteur', 'Étude structure, accord de la copropriété et bureau de contrôle : 4 à 8 semaines de délai supplémentaire, déjà ajoutées à la durée.']);
     if (S.copro === 'oui' && w.fen) A.push(['info', 'Fenêtres en copropriété', 'Le remplacement doit respecter le cahier des charges des façades ou obtenir un vote en assemblée générale.']);
     if (S.kind === 'appart' && S.ascenseur === 'non' && +S.etage >= 2) A.push(['info', 'Logistique sans ascenseur', fmt(+S.etage) + 'ᵉ étage sans ascenseur : monte-matériaux ou portage manuel, majoration incluse dans le coefficient de complexité.']);
     if (w.parq && w.strat) A.push(['warn', 'Deux revêtements sur la même surface', 'Parquet et stratifié sont tous deux retenus : corrigez les quantités pour éviter un double compte.']);
     if (w.ballon && w.thermo) A.push(['warn', 'Deux chauffe-eau', 'Chauffe-eau électrique et thermodynamique sont retenus ensemble. Un seul est nécessaire.']);
-    if (w.elec && w.tableau) A.push(['warn', 'Électricité comptée deux fois', 'La mise en conformité complète comprend déjà le tableau. Retirez « Mise en sécurité seule ».']);
+    if (w.elec_app && !w.elec_cab) A.push(['info', 'Appareillage sans reprise des circuits', 'Prises et interrupteurs neufs sur un câblage ancien : à valider à la visite technique.']);
     if (R.share55 > 0 && R.ancien) A.push(['good', 'TVA réduite appliquée', Math.round(R.share55 * 100) + ' % des coûts directs relèvent de l\'amélioration énergétique à 5,5 %. Une attestation simplifiée signée sera demandée avec le devis.']);
     if (S.visite !== 'oui') A.push(['info', 'Score de confiance plafonné', 'Sans visite technique, la fourchette reste large. La visite fait passer le score au maximum et ouvre la voie au devis contractuel.']);
     if ((S.finance === 'oui' || S.finance === 'renta') && S.strat !== 'revente') {

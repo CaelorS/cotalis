@@ -50,8 +50,8 @@
       if (row.key === 'NOTAIRE' && typeof v === 'number') C.NOTAIRE = v;
       if (row.key === 'REGION' && v && typeof v === 'object') Object.keys(v).forEach(k => { if (C.REGION[k] && typeof v[k] === 'number') C.REGION[k][0] = v[k]; });
       if (row.key === 'GAMME' && v && typeof v === 'object') Object.keys(v).forEach(k => { if (C.GAMME[k] && typeof v[k] === 'number') C.GAMME[k][0] = v[k]; });
-      if (row.key === 'PRESET' && v && typeof v === 'object') Object.keys(v).forEach(k => { if (Array.isArray(v[k])) C.PRESET[k] = v[k].slice(); });
-      if (row.key === 'RULES' && Array.isArray(v)) { C.RULES.length = 0; v.forEach(r => C.RULES.push(r)); }
+      if (row.key === 'PRESET' && v && typeof v === 'object') Object.keys(v).forEach(k => { if (Array.isArray(v[k])) C.PRESET[k] = C.normIds(v[k]); });
+      if (row.key === 'RULES' && Array.isArray(v)) { C.RULES.length = 0; v.forEach(r => C.RULES.push(Object.assign({}, r, { add: C.normIds(r.add), remove: (r.remove || []).filter(id => !C.LEGACY_WORKS[id]) }))); }
     });
   };
 
