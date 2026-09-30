@@ -20,14 +20,14 @@
     { lot: 'Électricité', items: [
       // Depuis le 30/09/2026 l'électricité est découpée en trois postes. L'ancien « elec » (conformité complète à 95 €/m²)
       // équivaut aux trois réunis : voir LEGACY_WORKS plus bas, qui reprend les estimations déjà enregistrées.
-      { id: 'tableau', label: 'Tableau électrique', sub: 'tableau neuf, terre, différentiels', unit: 'forfait', pu: 1400, lab: 0.55, qm: 'units', qc: 1 },
+      // un tableau par logement : un seul pour un appartement ou une maison, un par appartement dans un immeuble
+      { id: 'tableau', label: 'Tableau électrique', sub: 'tableau neuf, terre, différentiels · un par logement', unit: 'u', pu: 1400, lab: 0.55, qm: 'units', qc: 1 },
       { id: 'elec_app', label: 'Appareillage', sub: 'prises, interrupteurs, points lumineux', unit: 'm²', pu: 26, lab: 0.45, qm: 'surface', qc: 1 },
       { id: 'elec_cab', label: 'Circuits et câblage', sub: 'gaines, câbles, saignées, circuits spécialisés', unit: 'm²', pu: 48, lab: 0.7, qm: 'surface', qc: 1 },
     ]},
     { lot: 'Parties communes et réseaux', only: ['immeuble'], items: [
       { id: 'colonne_elec', label: 'Colonne montante électrique', sub: 'gaine, câbles, coupe-circuits par niveau', unit: 'niveau', pu: 1900, lab: 0.65, qm: 'niveaux', qc: 1 },
       { id: 'colonne_plomb', label: 'Colonne montante plomberie', sub: 'eau froide, eau chaude, évacuation par niveau', unit: 'niveau', pu: 1700, lab: 0.7, qm: 'niveaux', qc: 1 },
-      { id: 'tableaux_apt', label: 'Tableau électrique par appartement', sub: 'tableau divisionnaire, différentiels, terre', unit: 'u', pu: 950, lab: 0.55, qm: 'units', qc: 1 },
     ] },
     { lot: 'Plomberie et chauffage', items: [
       // L'ancienne ligne « Réseau eau et évacuations à neuf » (plomb) est retirée depuis le 30/09/2026 : le réseau est compris
@@ -98,12 +98,11 @@
     mur_p: "Ouvrir un mur qui porte la maison demande une poutre, un bureau d'études et des mains sûres. Cher, mais parfois c'est ce qui rend le plan possible.",
     cloison: "Créer une pièce, isoler une chambre, fermer un coin bureau : les cloisons redessinent le plan. Indispensable pour une colocation ou un T2 tiré d'un grand T1.",
     plafond: "Un faux plafond cache les réseaux, isole du bruit du dessus et permet des spots encastrés. Utile quand le plafond d'origine est irrécupérable.",
-    tableau: "Le minimum vital quand l'installation est saine mais vieillotte : un tableau neuf, la terre, des différentiels. Ça sécurise sans tout refaire.",
+    tableau: "Le minimum vital quand l'installation est saine mais vieillotte : un tableau neuf, la terre, des différentiels. Ça sécurise sans tout refaire. Dans un immeuble, chaque appartement a le sien : chaque locataire coupe chez lui sans plonger l'immeuble dans le noir.",
     elec_app: "Tout ce qu'on touche du doigt : prises, interrupteurs, points lumineux. C'est là que le niveau de finition se voit, et qu'un logement paraît neuf ou fatigué.",
     elec_cab: "Ce qu'on ne voit pas mais qui compte : gaines, câbles et circuits dédiés pour le four, les plaques ou le lave-linge. C'est ce que le diagnostiqueur vérifie en premier.",
     colonne_elec: "Dans un immeuble, l'électricité monte par une colonne commune. Si elle date d'avant votre naissance, on la refait avant de brancher quoi que ce soit.",
     colonne_plomb: "Même logique pour l'eau : une colonne montante neuve évite les fuites entre étages et les dégâts des eaux qui pourrissent une copropriété.",
-    tableaux_apt: "Un tableau par appartement, avec ses propres protections. Chaque locataire coupe chez lui sans plonger l'immeuble dans le noir.",
     ballon: "Un chauffe-eau électrique simple, fiable, pas cher. Le bon choix pour un petit logement ou un budget serré.",
     thermo: "Le chauffe-eau thermodynamique consomme trois fois moins que l'électrique classique. Plus cher à l'achat, gagnant sur la facture et sur le DPE.",
     radia: "Des radiateurs à inertie chauffent doucement et coûtent moins à l'usage que les vieux convecteurs. Vos locataires vous en seront reconnaissants en janvier.",
@@ -154,7 +153,7 @@
     { id: 'avant_1975', label: 'Bâti antérieur à 1975 (époques « avant 1948 » et « 1948 à 1974 »), sans isolation d\'origine', when: [{ f: 'annee', op: 'lt', v: '1975' }], add: ['iti', 'fen'], remove: [] },
     { id: 'maison_total', label: 'Maison à rénover entièrement', when: [{ f: 'kind', op: 'eq', v: 'maison' }, { f: 'etat', op: 'eq', v: 'total' }], add: ['combles'], remove: [] },
     { id: 'maison_fg', label: 'Maison en passoire thermique', when: [{ f: 'kind', op: 'eq', v: 'maison' }, { f: 'dpe', op: 'in', v: 'F,G' }], add: ['combles'], remove: [] },
-    { id: 'immeuble_elec', label: 'Immeuble : conformité électrique complète et tableaux par appartement', when: [{ f: 'kind', op: 'eq', v: 'immeuble' }], add: ['elec_app', 'elec_cab', 'tableaux_apt'], remove: ['tableau'] },
+    { id: 'immeuble_elec', label: 'Immeuble : électricité complète, un tableau par appartement', when: [{ f: 'kind', op: 'eq', v: 'immeuble' }], add: ['tableau', 'elec_app', 'elec_cab'], remove: [] },
     { id: 'immeuble_colonnes', label: 'Immeuble dégradé ou à rénover : colonnes montantes', when: [{ f: 'kind', op: 'eq', v: 'immeuble' }, { f: 'etat', op: 'in', v: 'degrade,total' }], add: ['colonne_elec', 'colonne_plomb'], remove: [] },
     { id: 'ext_total', label: 'Maison ou immeuble à rénover entièrement : ravalement et reprise de toiture', when: [{ f: 'kind', op: 'in', v: 'maison,immeuble' }, { f: 'etat', op: 'eq', v: 'total' }], add: ['ravalement', 'toit_rep'], remove: [] },
     { id: 'coloc', label: 'Colocation : cloisons et salle d\'eau supplémentaire', when: [{ f: 'strat', op: 'eq', v: 'coloc' }], add: ['cloison', 'sdb'], remove: [] },
@@ -231,7 +230,7 @@
   var C = (typeof window !== 'undefined' ? window : globalThis).COTALIA; if (!C || !C.ITEMS) return;
   ['dep_rev', 'dep_eq', 'benne', 'mur_np', 'mur_p', 'ragr', 'nett', 'colonne_elec', 'colonne_plomb', 'elec_cab'].forEach(function (id) { if (C.ITEMS[id]) C.ITEMS[id].nofin = true; });
   /* Anciens ouvrages remplacés : une estimation enregistrée avant le découpage garde son contenu. */
-  C.LEGACY_WORKS = { elec: ['tableau', 'elec_app', 'elec_cab'], plomb: [] };   // plomb : ligne retirée, comprise dans salle de bain, WC et cuisine
+  C.LEGACY_WORKS = { elec: ['tableau', 'elec_app', 'elec_cab'], plomb: [], tableaux_apt: ['tableau'] };   // plomb : ligne retirée, comprise dans salle de bain, WC et cuisine
   C.normIds = function (ids) { var out = []; (ids || []).forEach(function (id) { (C.LEGACY_WORKS[id] || [id]).forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); }); }); return out; };
   C.normWorks = function (works) {
     var w = Object.assign({}, works || {});
