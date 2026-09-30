@@ -286,8 +286,8 @@
     try {
       const S2 = Object.assign({ type: 't2', apts: [], eau: 1, etage: '', niveaux: 1, annee: '', dpe: '', etat: '', zone: 'moy' }, b, { kind: l.type_bien, surface: l.surface, gamme: l.gamme || 'std', works: p.works || {}, qty: p.qty || {}, files: p.files || [], finance: 'non', situation: {} });
       const R2 = C.compute(S2);
-      const rowsHtml = C.CATALOG.map(lot => { const rows = R2.lines.filter(x => x.on && x.it.lotName === lot.lot && x.amount > 0); if (!rows.length) return ''; return `<tr class="lot"><td colspan="3">${C.lotIcon(lot.lot)}${esc(lot.lot)}</td><td class="r num">${eur(R2.lots[lot.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}</td><td class="r num">${(+x.q).toLocaleString('fr-FR', { maximumFractionDigits: 1 })}&nbsp;${esc(x.it.unit)}</td><td class="r num">${eur(x.unitPrice)}${x.it.unit === 'forfait' ? '' : '/' + esc(x.it.unit)}</td><td class="r num">${eur(x.amount)}</td></tr>`).join(''); }).join('');
-      if (rowsHtml) devisHtml = `<div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Quantité</th><th class="r">Prix unitaire HT</th><th class="r">Total HT</th></tr></thead><tbody>${rowsHtml}</tbody><tfoot><tr class="tot"><td colspan="3">Total HT</td><td class="r num">${eur(R2.ht)}</td></tr><tr><td colspan="3">TVA</td><td class="r num">${eur(R2.tva)}</td></tr><tr class="tot ttc"><td colspan="3">Total TTC</td><td class="r num">${eur(R2.ttc)}</td></tr></tfoot></table></div>${Math.abs(R2.ttc - (+l.estimation_ttc || 0)) > 1 ? `<p class="hint" style="margin:8px 0 0">Recalculé au tarif en vigueur. Montant communiqué au client le ${dt(l.created_at)} : ${eur(l.estimation_ttc)} TTC.</p>` : ''}`;
+      const rowsHtml = C.CATALOG.map(lot => { const rows = R2.lines.filter(x => x.on && x.it.lotName === lot.lot && x.amount > 0); if (!rows.length) return ''; return `<tr class="lot"><td colspan="3">${C.lotIcon(lot.lot)}${esc(lot.lot)}</td><td class="r num">${eur(R2.lots[lot.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}</td><td class="r num">${(+x.q).toLocaleString('fr-FR', { maximumFractionDigits: 1 })}&nbsp;${esc(x.it.unit)}</td><td class="r num">${eur(x.unitSell)}${x.it.unit === 'forfait' ? '' : '/' + esc(x.it.unit)}</td><td class="r num">${eur(x.sell)}</td></tr>`).join(''); }).join('');
+      if (rowsHtml) devisHtml = `<div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Quantité</th><th class="r">Prix de vente unitaire HT</th><th class="r">Total HT</th></tr></thead><tbody>${rowsHtml}</tbody><tfoot><tr><td colspan="3">dont coûts directs</td><td class="r num">${eur(R2.direct)}</td></tr><tr><td colspan="3">dont marge</td><td class="r num">${eur(R2.marge)}</td></tr><tr class="tot"><td colspan="3">Total HT</td><td class="r num">${eur(R2.ht)}</td></tr><tr><td colspan="3">TVA</td><td class="r num">${eur(R2.tva)}</td></tr><tr class="tot ttc"><td colspan="3">Total TTC</td><td class="r num">${eur(R2.ttc)}</td></tr></tfoot></table></div>${Math.abs(R2.ttc - (+l.estimation_ttc || 0)) > 1 ? `<p class="hint" style="margin:8px 0 0">Recalculé au tarif en vigueur. Montant communiqué au client le ${dt(l.created_at)} : ${eur(l.estimation_ttc)} TTC.</p>` : ''}`;
     } catch (e) { devisHtml = ''; }
     $('d-title').textContent = (l.prenom || '') + ' ' + (l.nom || '') + ' · ' + (l.ref || '');
     $('d-body').innerHTML = `${histHtml}
@@ -356,7 +356,7 @@
 
   /* ---------- prix ---------- */
   const SETTINGS = [
-    ['MARGE', 'Marge par défaut', '%', 100], ['FG', 'Frais généraux', '%', 100], ['PILOTAGE', 'Pilotage de chantier', '%', 100], ['ALEA', 'Aléas : part appliquée de la provision', '%', 100], ['NOTAIRE', 'Frais de notaire', '%', 100],
+    ['MARGE', 'Marge par défaut (sur le prix de vente)', '%', 100], ['FG', 'Frais généraux', '%', 100], ['PILOTAGE', 'Pilotage de chantier', '%', 100], ['ALEA', 'Aléas : part appliquée de la provision', '%', 100], ['NOTAIRE', 'Frais de notaire', '%', 100],
     ['REGION.paris', 'Coef. Paris', '', 1], ['REGION.pc', 'Coef. petite couronne', '', 1], ['REGION.gc', 'Coef. grande couronne', '', 1], ['REGION.lyon', 'Coef. Lyon, Bordeaux, Nice', '', 1], ['REGION.metro', 'Coef. autre métropole', '', 1], ['REGION.moy', 'Coef. ville moyenne', '', 1], ['REGION.rural', 'Coef. rural', '', 1],
     ['GAMME.eco', 'Coef. matériaux économique', '', 1], ['GAMME.std', 'Coef. matériaux standard', '', 1], ['GAMME.prem', 'Coef. matériaux premium', '', 1],
   ];
@@ -467,7 +467,7 @@
     const vals = {}; let bad = false;
     document.querySelectorAll('[data-set]').forEach(inp => { const [k, label, unit, mult] = SETTINGS.find(x => x[0] === inp.dataset.set); if (inp.value === '' || !isFinite(+inp.value)) bad = true; vals[k] = +inp.value / mult; });
     if (bad) { toast('Valeur invalide dans les paramètres : non enregistré.', 'err'); return; }
-    const setRows = [['MARGE', vals.MARGE], ['FG', vals.FG], ['PILOTAGE', vals.PILOTAGE], ['ALEA', vals.ALEA], ['NOTAIRE', vals.NOTAIRE],
+    const setRows = [['MARGE_VENTE', vals.MARGE], ['FG', vals.FG], ['PILOTAGE', vals.PILOTAGE], ['ALEA', vals.ALEA], ['NOTAIRE', vals.NOTAIRE],
       ['REGION', Object.fromEntries(Object.keys(C.REGION).map(k => [k, vals['REGION.' + k]]))], ['GAMME', Object.fromEntries(Object.keys(C.GAMME).map(k => [k, vals['GAMME.' + k]]))]]
       .map(([key, value]) => ({ key, value, updated_at: new Date().toISOString() }));
     const { error } = await sb.from('pricing_settings').upsert(setRows);

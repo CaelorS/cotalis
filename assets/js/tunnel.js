@@ -555,7 +555,7 @@
     const devisRows = C.CATALOG.map(l => {
       const rows = R.lines.filter(x => x.on && x.it.lotName === l.lot && x.amount > 0);
       if (!rows.length) return '';
-      return `<tr class="lot"><td colspan="3">${C.lotIcon(l.lot)}${esc(l.lot)}</td><td class="r num">${eur(R.lots[l.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}${x.it.sub ? `<small>${esc(x.it.sub)}</small>` : ''}</td><td class="r num">${fmt(x.q)}&nbsp;${x.it.unit}</td><td class="r num">${eur(x.unitPrice)}${x.it.unit === 'forfait' ? '' : '/' + x.it.unit}</td><td class="r num">${eur(x.amount)}</td></tr>`).join('');
+      return `<tr class="lot"><td colspan="3">${C.lotIcon(l.lot)}${esc(l.lot)}</td><td class="r num">${eur(R.lots[l.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}${x.it.sub ? `<small>${esc(x.it.sub)}</small>` : ''}</td><td class="r num">${fmt(x.q)}&nbsp;${x.it.unit}</td><td class="r num">${eur(x.unitSell)}${x.it.unit === 'forfait' ? '' : '/' + x.it.unit}</td><td class="r num">${eur(x.sell)}</td></tr>`).join('');
     }).join('');
     const fin = (S.finance === 'oui' || S.finance === 'renta') && R.total > 0;
     const bank = fin ? [
@@ -592,7 +592,7 @@
           <div class="tiles inbox" style="margin-top:16px">${tilesHtml(R, false)}</div>
         </div>
       </div>
-      <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Quantité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody><tfoot><tr class="tot"><td colspan="3">Total HT</td><td class="r num">${eur(R.ht)}</td></tr><tr><td colspan="3">${tvaLabel(R)}</td><td class="r num">${eur(R.tva)}</td></tr><tr class="tot ttc"><td colspan="3">Total TTC</td><td class="r num">${eur(R.ttc)}</td></tr></tfoot></table></div>${Math.abs(R.ht - R.direct) > 1 ? '<p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">Les lignes sont en coûts directs HT. Le total HT ajoute frais généraux, pilotage, marge et provision pour aléas.</p>' : ''}</div>
+      <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Quantité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody><tfoot>${R.aleaAmt > 0.5 ? `<tr><td colspan="3">Provision pour aléas (${pct(R.alea, 0)})</td><td class="r num">${eur(R.aleaAmt)}</td></tr>` : ''}<tr class="tot"><td colspan="3">Total HT</td><td class="r num">${eur(R.ht)}</td></tr><tr><td colspan="3">${tvaLabel(R)}</td><td class="r num">${eur(R.tva)}</td></tr><tr class="tot ttc"><td colspan="3">Total TTC</td><td class="r num">${eur(R.ttc)}</td></tr></tfoot></table></div></div>
       ${fin ? `<div class="box"><h3>${S.finance === 'oui' ? 'Synthèse pour la banque' : 'Synthèse du projet'}</h3><table class="kv">${bank.map(b => `<tr${b[2] ? ' class="total"' : ''}><td>${esc(b[0])}</td><td class="num">${esc(b[1])}</td></tr>`).join('')}</table><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">${S.finance === 'oui' ? 'Estimation indicative à distinguer du devis contractuel. Un courtier Cotalia reprend contact pour instruire le dossier.' : 'Estimation indicative à distinguer du devis contractuel. Vous pouvez la joindre à votre dossier de financement.'}</p></div>` : ''}
       <div class="two">
         <div class="box"><h3>Hypothèses retenues</h3><ul class="plain">${hyp.map(h => `<li>${esc(h)}</li>`).join('')}</ul></div>
@@ -865,7 +865,7 @@
       situation: S.situation,
       payload: {
         works: S.works, qty: S.qty, files: S.files.filter(f => f.path).map(f => f.path),
-        lines: R.lines.filter(x => x.on && x.amount > 0).map(x => ({ lot: x.it.lotName, label: x.it.label, q: +(+x.q).toFixed(1), unit: x.it.unit, pu: Math.round(x.unitPrice), amount: Math.round(x.amount) })),
+        lines: R.lines.filter(x => x.on && x.amount > 0).map(x => ({ lot: x.it.lotName, label: x.it.label, q: +(+x.q).toFixed(1), unit: x.it.unit, pu: Math.round(x.unitSell), amount: Math.round(x.sell) })),
         bien: { type: S.type, apts: S.apts, eau: S.eau, etage: S.etage, niveaux: S.niveaux, annee: S.annee, dpe: S.dpe, etat: S.etat, zone: S.zone, ascenseur: S.ascenseur, copro: S.copro, occupe: S.occupe, acces: S.acces, visite: S.visite },
         acquisition: { apport: S.apport, taux: S.taux, duree: S.duree, charges: S.charges },
         interne: { direct: Math.round(R.direct), fg: Math.round(R.fg), marge: Math.round(R.marge), alea: R.alea, aleaAmt: Math.round(R.aleaAmt), ht: Math.round(R.ht), tva: Math.round(R.tva), ttc: Math.round(R.ttc), weeks: R.weeks, cReg: R.cReg, cGamme: R.cGamme, cCx: R.cCx,

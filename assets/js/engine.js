@@ -44,13 +44,15 @@
       const q = S.qty[it.id] != null ? +S.qty[it.id] : it.qty(ctx);
       const unitPrice = it.pu * (it.lab * cReg * cx.c + (1 - it.lab) * (it.nofin ? 1 : cGamme));   // nofin : la part hors main-d'œuvre ne suit pas la finition
       const amount = on ? q * unitPrice : 0;
-      lines.push({ it, on, q, unitPrice, amount });
+      const m = (it.marge == null || it.marge === '') ? C.MARGE : +it.marge;   // marge par prestation, sinon marge par défaut
+      const k = (1 + C.FG + C.PILOTAGE) / (1 - Math.min(0.95, Math.max(0, m)));   // du coût au prix de vente
+      // amount et unitPrice sont des coûts ; sell et unitSell sont ce que voit le client
+      lines.push({ it, on, q, unitPrice, amount, unitSell: unitPrice * k, sell: amount * k });
       if (on && amount > 0) {
         direct += amount; labor += amount * it.lab;
         if (it.tva === 5.5) direct55 += amount;
-        lots[it.lotName] = (lots[it.lotName] || 0) + amount;
-        const m = (it.marge == null || it.marge === '') ? C.MARGE : +it.marge;   // marge par prestation, sinon marge par défaut
-        sell += amount * (1 + C.FG + C.PILOTAGE) / (1 - Math.min(0.95, Math.max(0, m)));
+        lots[it.lotName] = (lots[it.lotName] || 0) + amount * k;
+        sell += amount * k;
       }
     }));
 
