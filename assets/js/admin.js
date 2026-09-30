@@ -364,7 +364,7 @@
   const getDefault = k => { const [a, b] = k.split('.'); return b ? C.DEFAULTS[a][b][0] : C.DEFAULTS[a]; };
   async function loadPricingTab() {
     if (!pricingLoaded) { await C.loadPricing(); pricingLoaded = true; }
-    dirty.clear(); $('prix-msg').textContent = '';
+    dirty.clear();
     $('settings').innerHTML = SETTINGS.map(([k, label, unit, mult]) => { const v = getSetting(k), d = getDefault(k); return `<div class="field"><label>${label} <span class="optsub">défaut ${(d * mult).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}${unit}</span></label><div class="unit"><input type="number" step="${mult === 100 ? 0.5 : 0.01}" data-set="${k}" value="${+(v * mult).toFixed(3)}">${unit ? `<span>${unit}</span>` : ''}</div></div>`; }).join('');
     $('items').querySelector('tbody').innerHTML = C.CATALOG.map(l => `<tr class="lot"><td colspan="11">${C.lotIcon(l.lot)}${esc(l.lot)}</td></tr>` + l.items.map(it => { const d = C.DEFAULTS.items[it.id] || { pu: '—' }; return `<tr data-item="${it.id}"${it.custom ? ' data-custom="1"' : ''}>
       <td><input type="checkbox" data-f="active"${it.inactive ? '' : ' checked'}></td>
@@ -437,31 +437,51 @@
     const it = C.ITEMS[b.dataset.del]; if (it) { const lot = C.CATALOG.find(l => l.lot === it.lotName); if (lot) lot.items = lot.items.filter(x => x.id !== it.id); delete C.ITEMS[it.id]; Object.keys(C.PRESET).forEach(k => { C.PRESET[k] = C.PRESET[k].filter(x => x !== it.id); }); }
     await loadPricingTab();
   });
-  $('tab-prix').addEventListener('input', e => { const tr = e.target.closest('tr[data-item]'); if (tr) dirty.add(tr.dataset.item); if (e.target.dataset.set) dirty.add('settings'); $('prix-msg').textContent = 'Modifications non enregistrées.'; });
-  $('prix-save').addEventListener('click', async () => {
-    const btn = $('prix-save'); btn.disabled = true; $('prix-msg').textContent = 'Enregistrement…';
-    try {
-      const uid = A.user.id;
-      const rows = [...document.querySelectorAll('tr[data-item]')].filter(tr => dirty.has(tr.dataset.item)).map(tr => {
-        const g = f => tr.querySelector(`[data-f="${f}"]`);
-        const it = C.ITEMS[tr.dataset.item];
-        const row = { id: tr.dataset.item, lot: it.lotName, label: g('label').value.trim() || it.label, sub: g('sub').value.trim(), unit: it.unit, pu: +g('pu').value, lab: Math.min(1, Math.max(0, +g('lab').value / 100)), nofin: g('nofin').checked, tva: +g('tva').value, marge: g('marge').value === '' ? null : +g('marge').value / 100, active: g('active').checked, updated_by: uid, updated_at: new Date().toISOString() };
-        row.qty_mode = g('qty_mode').value; row.qty_coef = g('qty_coef').value === '' ? 1 : +g('qty_coef').value;
-        if (it.custom) { row.custom = true; row.presets = it.presets || []; }
-        return row;
-      });
-      if (rows.length) { const { error } = await sb.from('pricing_items').upsert(rows); if (error) throw error; }
-      if (dirty.has('settings')) {
-        const vals = {}; document.querySelectorAll('[data-set]').forEach(inp => { const [k, label, unit, mult] = SETTINGS.find(s => s[0] === inp.dataset.set); vals[k] = +inp.value / mult; });
-        const setRows = [['MARGE', vals.MARGE], ['FG', vals.FG], ['PILOTAGE', vals.PILOTAGE], ['NOTAIRE', vals.NOTAIRE],
-          ['REGION', Object.fromEntries(Object.keys(C.REGION).map(k => [k, vals['REGION.' + k]]))], ['GAMME', Object.fromEntries(Object.keys(C.GAMME).map(k => [k, vals['GAMME.' + k]]))]]
-          .map(([key, value]) => ({ key, value, updated_at: new Date().toISOString() }));
-        const { error } = await sb.from('pricing_settings').upsert(setRows); if (error) throw error;
-      }
-      pricingLoaded = false; await loadPricingTab(); $('prix-msg').textContent = 'Enregistré. Les nouvelles estimations utilisent ces valeurs.';
-    } catch (e) { $('prix-msg').textContent = 'Enregistrement impossible : ' + (e.message || e); }
-    btn.disabled = false;
-  });
+  /* ---------- enregistrement automatique des prix, avec une petite confirmation ---------- */
+  let toastTimer = null;
+  function toast(msg, kind) {
+    let el = $('toast'); if (!el) { el = document.createElement('div'); el.id = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.className = 'toast ' + (kind || 'ok'); el.innerHTML = (kind === 'err' ? '<i>!</i>' : '<i>✓</i>') + '<span>' + esc(msg) + '</span>';
+    requestAnimationFrame(() => el.classList.add('show'));
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), kind === 'err' ? 6000 : 2200);
+  }
+  function rowOf(tr) {
+    const g = f => tr.querySelector(`[data-f="${f}"]`), it = C.ITEMS[tr.dataset.item];
+    const row = { id: tr.dataset.item, lot: it.lotName, label: g('label').value.trim() || it.label, sub: g('sub').value.trim(), unit: it.unit, pu: +g('pu').value, lab: Math.min(1, Math.max(0, +g('lab').value / 100)), nofin: g('nofin').checked, tva: +g('tva').value, marge: g('marge').value === '' ? null : +g('marge').value / 100, active: g('active').checked, updated_by: A.user.id, updated_at: new Date().toISOString() };
+    row.qty_mode = g('qty_mode').value; row.qty_coef = g('qty_coef').value === '' ? 1 : +g('qty_coef').value;
+    if (it.custom) { row.custom = true; row.presets = it.presets || []; }
+    return row;
+  }
+  async function saveItemRow(tr) {
+    const it = C.ITEMS[tr.dataset.item]; if (!it) return;
+    const pu = tr.querySelector('[data-f="pu"]').value;
+    if (pu === '' || !isFinite(+pu) || +pu < 0) { toast('Prix invalide pour « ' + it.label + ' » : non enregistré.', 'err'); return; }
+    const row = rowOf(tr);
+    const { error } = await sb.from('pricing_items').upsert([row]);
+    if (error) { toast('Enregistrement impossible : ' + error.message, 'err'); return; }
+    C.applyPricing([row], []); tr.classList.add('saved'); setTimeout(() => tr.classList.remove('saved'), 1200);
+    toast('Enregistré · ' + row.label);
+  }
+  async function saveSettings() {
+    const vals = {}; let bad = false;
+    document.querySelectorAll('[data-set]').forEach(inp => { const [k, label, unit, mult] = SETTINGS.find(x => x[0] === inp.dataset.set); if (inp.value === '' || !isFinite(+inp.value)) bad = true; vals[k] = +inp.value / mult; });
+    if (bad) { toast('Valeur invalide dans les paramètres : non enregistré.', 'err'); return; }
+    const setRows = [['MARGE', vals.MARGE], ['FG', vals.FG], ['PILOTAGE', vals.PILOTAGE], ['ALEA', vals.ALEA], ['NOTAIRE', vals.NOTAIRE],
+      ['REGION', Object.fromEntries(Object.keys(C.REGION).map(k => [k, vals['REGION.' + k]]))], ['GAMME', Object.fromEntries(Object.keys(C.GAMME).map(k => [k, vals['GAMME.' + k]]))]]
+      .map(([key, value]) => ({ key, value, updated_at: new Date().toISOString() }));
+    const { error } = await sb.from('pricing_settings').upsert(setRows);
+    if (error) { toast('Enregistrement impossible : ' + error.message, 'err'); return; }
+    C.applyPricing([], setRows); toast('Paramètres enregistrés');
+  }
+  // une valeur validée (sortie du champ, Entrée, case cochée, menu) s'enregistre aussitôt ; en cours de frappe, après une seconde de pause
+  const saveTimers = {};
+  function queueSave(target, delay) {
+    const tr = target.closest('tr[data-item]'), key = tr ? tr.dataset.item : (target.dataset.set ? 'settings' : null); if (!key) return;
+    clearTimeout(saveTimers[key]);
+    saveTimers[key] = setTimeout(() => { delete saveTimers[key]; if (tr) saveItemRow(tr); else saveSettings(); }, delay);
+  }
+  $('tab-prix').addEventListener('change', e => { if (e.target.closest('#items, #settings')) queueSave(e.target, 0); });
+  $('tab-prix').addEventListener('input', e => { if (e.target.closest('#items, #settings') && e.target.matches('input[type="number"], input[type="text"]')) queueSave(e.target, 1000); });
   $('prix-reset').addEventListener('click', async () => {
     if (!confirm('Supprimer tous les prix personnalisés et revenir au catalogue par défaut ?')) return;
     try {

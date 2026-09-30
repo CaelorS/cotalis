@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/css/site.css?v=202609300944">
+  <link rel="stylesheet" href="/assets/css/site.css?v=202609300948">
 </head>
 <body class="admin">
   <div class="stick">
@@ -78,7 +78,7 @@
         <div class="tablewrap desk"><table class="grid-table" id="items"><thead><tr><th>Actif</th><th>Ouvrage</th><th>Unité</th><th class="r">Prix HT</th><th class="r">Défaut</th><th class="r" title="Part de main-d'œuvre dans le prix. Le reste : matériaux, fournitures, location, frais.">Part main-d'œuvre %</th><th title="Coché : le prix ne change pas avec le niveau de finition (dépose, gravats, nettoyage…)">Hors finition</th><th>TVA</th><th class="r">Marge %</th><th>Quantité proposée</th><th></th></tr></thead><tbody></tbody></table></div>
         <div class="mcards" id="items-cards"></div>
       </div>
-      <div class="savebar"><span id="prix-msg" class="hint"></span><button type="button" class="btn" id="prix-reset">Revenir aux prix par défaut</button><button type="button" class="btn primary" id="prix-save">Enregistrer les modifications</button></div>
+      <div class="savebar"><span id="prix-msg" class="hint">Enregistrement automatique : chaque valeur est sauvegardée dès qu'elle est saisie.</span><button type="button" class="btn" id="prix-reset">Revenir aux prix par défaut</button></div>
       <div class="panel">
         <header><h2>Nouvel ouvrage</h2><span class="hint">Il apparaît dans le tunnel dès l'enregistrement, dans le lot choisi. La règle de quantité calcule la valeur proposée au prospect ; il peut ensuite la corriger.</span></header>
         <div class="body">
@@ -224,11 +224,11 @@
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/config.js?v=202609300944"></script>
-  <script src="/assets/js/catalog.js?v=202609300944"></script>
-  <script src="/assets/js/engine.js?v=202609300944"></script>
-  <script src="/assets/js/pricing.js?v=202609300944"></script>
-  <script src="/assets/js/auth.js?v=202609300944"></script>
-  <script src="/assets/js/admin.js?v=202609300944"></script>
+  <script src="/config.js?v=202609300948"></script>
+  <script src="/assets/js/catalog.js?v=202609300948"></script>
+  <script src="/assets/js/engine.js?v=202609300948"></script>
+  <script src="/assets/js/pricing.js?v=202609300948"></script>
+  <script src="/assets/js/auth.js?v=202609300948"></script>
+  <script src="/assets/js/admin.js?v=202609300948"></script>
 </body>
 </html>
