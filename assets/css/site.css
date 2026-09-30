@@ -1052,3 +1052,20 @@ body.locked .lot-head .sum { display: none; }   /* sous-totaux masqués tant que
 /* libellés réservés au PDF */
 .print-only { display: none; }
 @media print { .print-only { display: inline !important; } }
+
+/* « Et ensuite » : chaque étape pointe vers la suivante par un triangle pris dans la bordure */
+.stepc { position: relative; background: var(--surface); padding: 16px 18px 16px 28px; }
+.stepc:first-child { padding-left: 18px; }
+.stepc.now { background: var(--accent-soft); }
+.stepc:not(:last-child)::after { content: ""; position: absolute; top: 50%; right: -10px; width: 18px; height: 18px; background: inherit; border-top: 1px solid var(--line); border-right: 1px solid var(--line); transform: translateY(-50%) rotate(45deg); z-index: 1; }
+@media (max-width: 980px) {
+  .steps { grid-template-columns: 1fr; }
+  .stepc, .stepc:first-child { border-right: 0; border-bottom: 1px solid var(--line-2); padding: 16px 16px 20px; }
+  .stepc:last-child { border-bottom: 0; padding-bottom: 16px; }
+  .stepc:not(:last-child)::after { top: auto; bottom: -10px; right: auto; left: 28px; transform: rotate(135deg); }
+}
+@media print {
+  .steps { grid-template-columns: repeat(4, 1fr); }
+  .stepc:not(:last-child)::after { border-color: #bbb; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .stepc, .stepc.now { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

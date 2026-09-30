@@ -37,7 +37,8 @@
   let viewer = false;
 
   function newState() { const s = clone(DEFAULT); s.pid = rid(); s.token = rid(); return s; }
-  const normState = s => { if (s && s.works && C.normWorks && ('elec' in s.works)) { s.works = C.normWorks(s.works); s.qty = C.normQty(s.qty); } return s; };   // reprend une estimation d'avant le découpage de l'électricité
+  // reprend une estimation d'avant le découpage de l'électricité. Déclaration de fonction, pas de const : load() est appelé plus haut, avant cette ligne.
+  function normState(s) { if (s && s.works && C.normWorks && ('elec' in s.works)) { s.works = C.normWorks(s.works); s.qty = C.normQty(s.qty); } return s; }
   function load() { try { const r = localStorage.getItem(STORE); if (!r) return null; const s = Object.assign(clone(DEFAULT), JSON.parse(r)); if (!s.pid) { s.pid = rid(); s.token = rid(); } return normState(s); } catch (e) { return null; } }
   function save() { if (viewer) return; try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} updateIndex(); }
   function getPath(p) { return p.split('.').reduce((o, k) => (o == null ? undefined : o[k]), S); }
