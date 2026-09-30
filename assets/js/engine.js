@@ -30,7 +30,7 @@
   function isAncien(S) { return !S.annee || +S.annee <= 2024; }
 
   function compute(S) {
-    if (C.normWorks && S.works && ("elec" in S.works)) S = Object.assign({}, S, { works: C.normWorks(S.works), qty: C.normQty(S.qty) });   // estimation d'avant le découpage de l'électricité
+    if (C.normWorks && S.works && Object.keys(C.LEGACY_WORKS || {}).some(k => k in S.works)) S = Object.assign({}, S, { works: C.normWorks(S.works), qty: C.normQty(S.qty) });   // estimation d'avant le découpage de l'électricité
     const ctx = ctxOf(S);
     const cReg = C.REGION[S.zone] ? C.REGION[S.zone][0] : 0.97;
     const cGamme = C.GAMME[S.gamme] ? C.GAMME[S.gamme][0] : 1;
@@ -153,7 +153,6 @@
     else if (S.dpe === 'F' || S.dpe === 'G') A.push(['warn', 'Objectif DPE à vérifier', 'Classe ' + S.dpe + ' au départ : un audit énergétique confirmera que les ouvrages retenus font sortir le logement du statut de passoire.']);
     if (an && an < 1997) A.push(['warn', 'Diagnostic amiante avant travaux', 'Immeuble antérieur à juillet 1997 : le repérage amiante avant travaux est obligatoire et n\'est pas compris. Un désamiantage, s\'il est nécessaire, se chiffre à part.']);
     if (an && an < 1949) A.push(['warn', 'Plomb dans les peintures', 'Bâti antérieur à 1949 : diagnostic plomb (CREP) à prévoir avant décapage ou dépose des revêtements.']);
-    if (w.sdb && !w.plomb) A.push(['warn', 'Salle de bain sans reprise du réseau', 'Dans l\'ancien, les évacuations en plomb ou en fonte sont souvent à remplacer. Ajoutez « Réseau eau et évacuations à neuf » si leur état est inconnu.']);
     if (w.cuis && !w.elec_cab && !w.tableau) A.push(['warn', 'Cuisine neuve sans électricité', 'Four, plaques et lave-vaisselle exigent des circuits spécialisés : une mise en sécurité ou en conformité est presque toujours nécessaire.']);
     if (w.mur_p) A.push(['warn', 'Mur porteur', 'Étude structure, accord de la copropriété et bureau de contrôle : 4 à 8 semaines de délai supplémentaire, déjà ajoutées à la durée.']);
     if (S.copro === 'oui' && w.fen) A.push(['info', 'Fenêtres en copropriété', 'Le remplacement doit respecter le cahier des charges des façades ou obtenir un vote en assemblée générale.']);

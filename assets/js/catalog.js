@@ -30,7 +30,8 @@
       { id: 'tableaux_apt', label: 'Tableau électrique par appartement', sub: 'tableau divisionnaire, différentiels, terre', unit: 'u', pu: 950, lab: 0.55, qm: 'units', qc: 1 },
     ] },
     { lot: 'Plomberie et chauffage', items: [
-      { id: 'plomb', label: 'Réseau eau et évacuations à neuf', sub: 'par pièce d\'eau et cuisine', unit: 'u', pu: 2400, lab: 0.65, qm: 'eau_units', qc: 1 },
+      // L'ancienne ligne « Réseau eau et évacuations à neuf » (plomb) est retirée depuis le 30/09/2026 : le réseau est compris
+      // dans la salle de bain, le WC et la cuisine. Voir LEGACY_WORKS pour les estimations déjà enregistrées.
       { id: 'ballon', label: 'Chauffe-eau électrique', unit: 'u', pu: 690, lab: 0.35, qm: 'units', qc: 1 },
       { id: 'thermo', label: 'Chauffe-eau thermodynamique', unit: 'u', pu: 2650, lab: 0.3, qm: 'units', qc: 1 },
       { id: 'radia', label: 'Radiateurs électriques à inertie', unit: 'u', pu: 420, lab: 0.3, qm: 'pieces_units', qc: 1 },
@@ -50,11 +51,11 @@
       { id: 'toit_neuf', label: 'Réfection complète de toiture', sub: 'dépose, écran, liteaux, couverture, zinguerie', unit: 'm²', pu: 210, lab: 0.6, qm: 'toiture', qc: 1 },
     ] },
     { lot: 'Salle de bain et WC', items: [
-      { id: 'sdb', label: 'Salle de bain complète', sub: 'douche à l\'italienne, meuble vasque, faïence, WC', unit: 'forfait', pu: 7800, lab: 0.55, qm: 'units', qc: 1 },
-      { id: 'wc', label: 'WC séparé', sub: 'cuvette suspendue, lave-mains, faïence', unit: 'forfait', pu: 1600, lab: 0.55, qm: 'eau_minus_units', qc: 1 },
+      { id: 'sdb', label: 'Salle de bain complète', sub: 'douche à l\'italienne, meuble vasque, faïence, WC · réseau eau et évacuations compris', unit: 'forfait', pu: 7800, lab: 0.55, qm: 'units', qc: 1 },
+      { id: 'wc', label: 'WC séparé', sub: 'cuvette suspendue, lave-mains, faïence · réseau eau et évacuations compris', unit: 'forfait', pu: 1600, lab: 0.55, qm: 'eau_minus_units', qc: 1 },
     ]},
     { lot: 'Cuisine', items: [
-      { id: 'cuis', label: 'Cuisine équipée', sub: 'meubles, plan de travail, électroménager, pose', unit: 'forfait', pu: 6500, lab: 0.3, qm: 'units', qc: 1 },
+      { id: 'cuis', label: 'Cuisine équipée', sub: 'meubles, plan de travail, électroménager, pose · réseau eau et évacuations compris', unit: 'forfait', pu: 6500, lab: 0.3, qm: 'units', qc: 1 },
     ]},
     { lot: 'Sols', items: [
       { id: 'ragr', label: 'Ragréage', unit: 'm²', pu: 14, lab: 0.6, qm: 'surface', qc: 1 },
@@ -103,7 +104,6 @@
     colonne_elec: "Dans un immeuble, l'électricité monte par une colonne commune. Si elle date d'avant votre naissance, on la refait avant de brancher quoi que ce soit.",
     colonne_plomb: "Même logique pour l'eau : une colonne montante neuve évite les fuites entre étages et les dégâts des eaux qui pourrissent une copropriété.",
     tableaux_apt: "Un tableau par appartement, avec ses propres protections. Chaque locataire coupe chez lui sans plonger l'immeuble dans le noir.",
-    plomb: "Réseaux d'eau et d'évacuation refaits : fini les tuyaux en plomb, les fuites lentes et les pressions bizarres. On le fait pendant que les murs sont ouverts.",
     ballon: "Un chauffe-eau électrique simple, fiable, pas cher. Le bon choix pour un petit logement ou un budget serré.",
     thermo: "Le chauffe-eau thermodynamique consomme trois fois moins que l'électrique classique. Plus cher à l'achat, gagnant sur la facture et sur le DPE.",
     radia: "Des radiateurs à inertie chauffent doucement et coûtent moins à l'usage que les vieux convecteurs. Vos locataires vous en seront reconnaissants en janvier.",
@@ -117,9 +117,9 @@
     ite: "Isoler par l'extérieur pendant qu'on ravale : même échafaudage, deux résultats. Le DPE fait un bond, et on ne perd pas un centimètre dedans.",
     toit_rep: "Reprendre les tuiles cassées, les faîtages et la zinguerie avant que l'eau ne rentre. Une petite réparation aujourd'hui évite un plafond effondré demain.",
     toit_neuf: "Quand la toiture est en fin de vie, on refait tout : écran, liteaux, couverture. Gros poste, mais tranquillité pour trente ans.",
-    sdb: "Douche à l'italienne, meuble vasque, faïence : la pièce qui fait basculer une visite. Une salle de bain propre loue plus vite et plus cher.",
-    wc: "Un WC séparé de la salle de bain est très apprécié, surtout en colocation ou en famille. Petit espace, gros confort.",
-    cuis: "Une cuisine équipée avec électroménager : pour un meublé, c'est ce que le locataire paie sans discuter. Et ça photographie bien dans l'annonce.",
+    sdb: "Douche à l'italienne, meuble vasque, faïence : la pièce qui fait basculer une visite. Une salle de bain propre loue plus vite et plus cher. Le réseau d'eau et les évacuations de la pièce sont refaits dans le même mouvement.",
+    wc: "Un WC séparé de la salle de bain est très apprécié, surtout en colocation ou en famille. Petit espace, gros confort. Arrivée d'eau et évacuation comprises.",
+    cuis: "Une cuisine équipée avec électroménager : pour un meublé, c'est ce que le locataire paie sans discuter. Et ça photographie bien dans l'annonce. Arrivées d'eau et évacuations de la cuisine comprises.",
     ragr: "Avant un sol neuf, on met l'ancien à niveau. Sans ragréage, le parquet grince et le carrelage se fend.",
     parq: "Du parquet dans les pièces de vie : chaleureux, durable, valorisant. Le contrecollé donne le rendu du massif pour moins cher.",
     strat: "Le stratifié imite le bois, se pose vite et résiste bien. Le choix malin pour un budget serré ou une location qui tourne beaucoup.",
@@ -166,8 +166,8 @@
   const PRESET = {
     bon:     ['peint', 'tableau', 'nett'],
     correct: ['dep_rev', 'benne', 'tableau', 'sdb', 'cuis', 'ragr', 'parq', 'carr', 'peint', 'vmc', 'nett'],
-    degrade: ['dep_rev', 'dep_eq', 'benne', 'tableau', 'elec_app', 'elec_cab', 'plomb', 'ballon', 'radia', 'vmc', 'sdb', 'wc', 'cuis', 'ragr', 'parq', 'carr', 'peint', 'portes', 'nett'],
-    total:   ['dep_rev', 'dep_eq', 'benne', 'cloison', 'tableau', 'elec_app', 'elec_cab', 'plomb', 'ballon', 'radia', 'vmc', 'fen', 'sdb', 'wc', 'cuis', 'ragr', 'parq', 'carr', 'peint', 'portes', 'nett'],
+    degrade: ['dep_rev', 'dep_eq', 'benne', 'tableau', 'elec_app', 'elec_cab', 'ballon', 'radia', 'vmc', 'sdb', 'wc', 'cuis', 'ragr', 'parq', 'carr', 'peint', 'portes', 'nett'],
+    total:   ['dep_rev', 'dep_eq', 'benne', 'cloison', 'tableau', 'elec_app', 'elec_cab', 'ballon', 'radia', 'vmc', 'fen', 'sdb', 'wc', 'cuis', 'ragr', 'parq', 'carr', 'peint', 'portes', 'nett'],
   };
 
   // Coefficient appliqué à la main-d'œuvre selon la zone de prix.
@@ -231,7 +231,7 @@
   var C = (typeof window !== 'undefined' ? window : globalThis).COTALIA; if (!C || !C.ITEMS) return;
   ['dep_rev', 'dep_eq', 'benne', 'mur_np', 'mur_p', 'ragr', 'nett', 'colonne_elec', 'colonne_plomb', 'elec_cab'].forEach(function (id) { if (C.ITEMS[id]) C.ITEMS[id].nofin = true; });
   /* Anciens ouvrages remplacés : une estimation enregistrée avant le découpage garde son contenu. */
-  C.LEGACY_WORKS = { elec: ['tableau', 'elec_app', 'elec_cab'] };
+  C.LEGACY_WORKS = { elec: ['tableau', 'elec_app', 'elec_cab'], plomb: [] };   // plomb : ligne retirée, comprise dans salle de bain, WC et cuisine
   C.normIds = function (ids) { var out = []; (ids || []).forEach(function (id) { (C.LEGACY_WORKS[id] || [id]).forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); }); }); return out; };
   C.normWorks = function (works) {
     var w = Object.assign({}, works || {});
