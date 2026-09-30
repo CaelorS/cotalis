@@ -865,6 +865,7 @@
       situation: S.situation,
       payload: {
         works: S.works, qty: S.qty, files: S.files.filter(f => f.path).map(f => f.path),
+        lines: R.lines.filter(x => x.on && x.amount > 0).map(x => ({ lot: x.it.lotName, label: x.it.label, q: +(+x.q).toFixed(1), unit: x.it.unit, pu: Math.round(x.unitPrice), amount: Math.round(x.amount) })),
         bien: { type: S.type, apts: S.apts, eau: S.eau, etage: S.etage, niveaux: S.niveaux, annee: S.annee, dpe: S.dpe, etat: S.etat, zone: S.zone, ascenseur: S.ascenseur, copro: S.copro, occupe: S.occupe, acces: S.acces, visite: S.visite },
         acquisition: { apport: S.apport, taux: S.taux, duree: S.duree, charges: S.charges },
         interne: { direct: Math.round(R.direct), fg: Math.round(R.fg), marge: Math.round(R.marge), alea: R.alea, aleaAmt: Math.round(R.aleaAmt), ht: Math.round(R.ht), tva: Math.round(R.tva), ttc: Math.round(R.ttc), weeks: R.weeks, cReg: R.cReg, cGamme: R.cGamme, cCx: R.cCx,
