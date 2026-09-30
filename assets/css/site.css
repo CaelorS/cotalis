@@ -1069,3 +1069,9 @@ body.locked .lot-head .sum { display: none; }   /* sous-totaux masqués tant que
   .stepc:not(:last-child)::after { border-color: #bbb; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .stepc, .stepc.now { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* tableau des prix : libellés alignés sur leurs cases, menu de quantité lisible, coefficient dans sa colonne */
+.grid-table th.c { text-align: center; }
+#items td { vertical-align: middle; }
+#items .qtycell select.inline { max-width: none; width: 240px; }
+#items td.c input[type="checkbox"], #items td:first-child input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
