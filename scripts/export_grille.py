@@ -13,6 +13,25 @@ JS = """global.window={}; require('./assets/js/catalog.js'); const C=window.COTA
 C.CATALOG.forEach(l=>l.items.forEach(it=>{items.push({lot:l.lot,id:it.id,label:it.label,sub:it.sub||'',unit:it.unit,pu:it.pu,lab:it.lab,tva:it.tva||10,nofin:!!it.nofin,qm:it.qm,qc:it.qc==null?1:it.qc,only:it.only||[],presets:Object.keys(C.PRESET).filter(k=>C.PRESET[k].includes(it.id)),why:(C.WHY&&C.WHY[it.id])||''});}));
 console.log(JSON.stringify({items,modes:C.QTY_MODES,region:C.REGION,gamme:C.GAMME,notaire:C.NOTAIRE,marge:C.MARGE,fg:C.FG,pilotage:C.PILOTAGE,alea:C.ALEA,ameublement:C.AMEUBLEMENT}));"""
 d = json.loads(subprocess.check_output(['node', '-e', JS], cwd=ROOT))
+# valeurs modifiées dans le back-office : elles priment sur le catalogue par défaut
+import urllib.request, re
+cfg = open(os.path.join(ROOT, 'config.js')).read()
+URL = re.search(r"supabaseUrl:\s*'([^']+)'", cfg).group(1); KEY = re.search(r"supabaseAnonKey:\s*'([^']+)'", cfg).group(1)
+overrides = {}
+try:
+    req = urllib.request.Request(URL + '/rest/v1/pricing_items?select=*', headers={'apikey': KEY, 'Authorization': 'Bearer ' + KEY})
+    overrides = {r['id']: r for r in json.loads(urllib.request.urlopen(req, timeout=15).read())}
+except Exception as e:
+    print('prix du back-office non lus :', e)
+for it in d['items']:
+    o = overrides.get(it['id'])
+    if not o: it['active'] = True; continue
+    for k_src, k_dst in (('pu', 'pu'), ('lab', 'lab'), ('label', 'label'), ('sub', 'sub'), ('qty_mode', 'qm'), ('qty_coef', 'qc')):
+        if o.get(k_src) not in (None, ''): it[k_dst] = o[k_src]
+    if o.get('tva') is not None: it['tva'] = o['tva']
+    if o.get('nofin') is not None: it['nofin'] = bool(o['nofin'])
+    it['active'] = o.get('active') is not False
+print(len(overrides), 'ouvrage(s) modifié(s) dans le back-office repris')
 today = datetime.date.today()
 out = sys.argv[1] if len(sys.argv) > 1 else f'cotalia-grille-prix-{today.isoformat()}.xlsx'
 
@@ -61,7 +80,7 @@ EDIT = {2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18}
 r = 2
 def write_item(it, example=False):
     global r
-    vals = [it['lot'], it['label'], it['sub'], it['unit'], it['pu'], round(it['lab'] * 100), 'oui' if it['nofin'] else 'non', it['tva'], f'=ROUND(E{r}*(1+H{r}/100),2)'] + ['x' if k in it['presets'] else '' for k, _ in ETATS] + [modes.get(it['qm'], it['qm']), it['qc'], ', '.join(KINDS.get(k, k) for k in it['only']), 'oui', it['why'], it['id']]
+    vals = [it['lot'], it['label'], it['sub'], it['unit'], it['pu'], round(it['lab'] * 100), 'oui' if it['nofin'] else 'non', it['tva'], f'=ROUND(E{r}*(1+H{r}/100),2)'] + ['x' if k in it['presets'] else '' for k, _ in ETATS] + [modes.get(it['qm'], it['qm']), it['qc'], ', '.join(KINDS.get(k, k) for k in it['only']), 'oui' if it.get('active', True) else 'non', it['why'], it['id']]
     for j, v in enumerate(vals, 1):
         c = wo.cell(row=r, column=j, value=v); c.font = F(color='7B8794' if example else None); c.border = BORDER
         c.alignment = Alignment(vertical='top', wrap_text=j in (2, 3, 14, 18), horizontal='center' if j in (4, 7, 8, 10, 11, 12, 13, 17) else None)
