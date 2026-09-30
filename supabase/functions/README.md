@@ -51,8 +51,8 @@ Mise en place, une fois :
    (DKIM en CNAME ou TXT, SPF en TXT, retour MX) à créer chez OVH, zone DNS de cotalia.fr. Attendre le statut « Verified ».
 2. **API Keys → Create** : une clé « Cotalia site », permission Sending.
 3. Supabase, Edge Functions → Secrets : `RESEND_API_KEY`, `MAIL_FROM` = `Cotalia <visites@cotalia.fr>`,
-   `MAIL_REPLY_TO` = adresse qui reçoit les réponses (facultatif), `MAIL_TEAM` = adresses supplémentaires de l'équipe,
-   séparées par des virgules (facultatif : les administrateurs du back-office sont prévenus d'office).
+   `MAIL_REPLY_TO` = adresse qui reçoit les réponses (facultatif), `MAIL_TEAM` = adresses prévenues à chaque nouveau dossier,
+   séparées par des virgules ; sans ce secret, tous les administrateurs du back-office sont prévenus.
 4. `supabase functions deploy mail-lead gcal-book gcal-cancel`.
 
 Tant que le domaine n'est pas vérifié, Resend n'accepte que l'expéditeur `onboarding@resend.dev` vers l'adresse du compte.

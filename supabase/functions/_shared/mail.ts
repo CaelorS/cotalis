@@ -48,11 +48,13 @@ export async function sendMail(opts: { to: string | string[]; subject: string; h
   }
 }
 
-/** Adresses de l'équipe : administrateurs et propriétaire, plus MAIL_TEAM (séparées par des virgules). */
+/** Adresses prévenues à chaque nouveau dossier : la liste MAIL_TEAM si elle est définie (séparée par des virgules),
+ *  sinon tous les administrateurs du back-office. */
 export async function teamEmails(): Promise<string[]> {
+  const fixed = env("MAIL_TEAM").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  if (fixed.length) return [...new Set(fixed)];
   const set = new Set<string>();
   try { const { data } = await serviceClient().from("profiles").select("email, role").in("role", ["admin", "owner"]); (data ?? []).forEach((x: { email: string | null }) => { if (x.email) set.add(x.email.toLowerCase()); }); } catch (_) { /* rien */ }
-  env("MAIL_TEAM").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean).forEach((e) => set.add(e));
   return [...set];
 }
 
