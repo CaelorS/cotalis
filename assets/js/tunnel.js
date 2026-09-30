@@ -209,7 +209,7 @@
     if (S.step === 'acquisition') { const added = C.lateRules(S, 'strat'); if (added.length) S.autoAdded = (S.autoAdded || []).concat(added.filter(id => !(S.autoAdded || []).includes(id))); }
     if (S.step === 'contact') {
       if (!(await ensureAccount())) return;
-      ensureRef(); if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); } saveProject();
+      ensureRef(); if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); saveProject(); } else saveProject().then(saveVersion);
     }
     const list = stepList();
     let next = list[Math.min(list.length - 1, list.indexOf(S.step) + 1)];
@@ -218,7 +218,7 @@
       const p = C.auth.profile;
       S.contact = { prenom: p.prenom, nom: p.nom, tel: p.tel, email: C.auth.user.email || p.email || '', consent: true, password: '' };
       S.stepsAt = S.stepsAt || {}; S.stepsAt.contact = S.stepsAt.contact || new Date().toISOString();
-      ensureRef(); if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); } saveProject();
+      ensureRef(); if (!S.leadSubmitted) { S.leadSubmitted = true; submitLead(); saveProject(); } else saveProject().then(saveVersion);
       next = 'resultat';
     }
     S.step = next;
@@ -877,13 +877,18 @@
     if (viewer || !hasDb() || !S.pid) return;
     fetch(BASE + '/functions/v1/mail-lead', { method: 'POST', headers: hdr(), body: JSON.stringify({ project_id: S.pid, token: S.token, kind }), keepalive: true }).catch(() => {});
   }
+  // historique : chaque passage sur le rapport avec un contenu modifié devient une version, et le dossier du back-office suit
+  function saveVersion() {
+    if (viewer || !hasDb() || !S.pid || !S.leadSubmitted) return;
+    fetch(BASE + '/rest/v1/rpc/save_lead_version', { method: 'POST', headers: hdr(), body: JSON.stringify({ p_id: S.pid, p_token: S.token, p_lead: leadPayload('estimation') }), keepalive: true }).catch(() => {});
+  }
   async function submitLead(kind) {
     const lead = leadPayload(kind);
     try { const all = JSON.parse(localStorage.getItem('cotalia-leads') || '[]'); all.push(Object.assign({ at: new Date().toISOString() }, lead)); localStorage.setItem('cotalia-leads', JSON.stringify(all.slice(-20))); } catch (e) {}
     if (!hasDb()) return;
     try {
       const r = await fetch(BASE + '/rest/v1/leads', { method: 'POST', headers: Object.assign(hdr(), { Prefer: 'return=minimal' }), body: JSON.stringify(lead) });
-      if (r.ok) { S.leadSent = true; save(); saveProject().then(() => notifyMail(kind === 'rappel' ? 'rappel' : 'estimation')); } else console.warn('Cotalia : envoi refusé', r.status);
+      if (r.ok) { S.leadSent = true; save(); saveProject().then(() => { notifyMail(kind === 'rappel' ? 'rappel' : 'estimation'); saveVersion(); }); } else console.warn('Cotalia : envoi refusé', r.status);
     } catch (e) { console.warn('Cotalia : envoi impossible', e); }
   }
 

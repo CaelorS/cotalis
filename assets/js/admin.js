@@ -62,6 +62,7 @@
     const { data, error } = await sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000);
     if (error) { $('count').textContent = 'Lecture impossible : ' + error.message; return; }
     leads = data || [];
+    versionCount = {}; try { const { data: vs } = await sb.from('lead_versions').select('project_id').limit(5000); (vs || []).forEach(v => { versionCount[v.project_id] = (versionCount[v.project_id] || 0) + 1; }); } catch (e) {}
     rappelMap = null; await loadScoringConfig(); await loadScoringSessions();
     renderLeads();
   }
@@ -86,6 +87,8 @@
   }
   const finCell = l => { const f = finOf(l); if (!f) return ''; return `<span class="fin-sub">projet ${eur(f.total)}</span><span class="fin-sub">renta ${pct1(f.brut)}${f.cf != null ? ' · ' + cfHtml(f.cf) : ''}</span>`; };
   let sortKey = 'date', sortDir = -1;   // -1 décroissant, 1 croissant
+  let versionCount = {};
+  const modifPill = l => (versionCount[l.project_id] || 0) > 1 ? `<span class="pill" title="Le client a modifié son estimation">modifié · v${versionCount[l.project_id]}</span>` : '';
   const selected = new Set(); let leadRows = [];   // sélection pour les actions en masse, lignes affichées
   const STATUS_RANK = Object.fromEntries(STATUS.map((s, i) => [s[0], i]));
   const rappelFait = l => (STATUS_RANK[l.status || 'nouveau'] || 0) >= STATUS_RANK.contacte;   // rappel demandé et client contacté depuis
@@ -132,7 +135,7 @@
     const today = new Date().toISOString().slice(0, 10);
     $('leads').querySelector('tbody').innerHTML = rows.map(l => `<tr data-id="${l.id}" class="${l.next_action && l.next_action < today ? 'late' : ''}${selected.has(l.id) ? ' sel' : ''}">
       <td class="chk"><input type="checkbox" data-sel="${l.id}"${selected.has(l.id) ? ' checked' : ''} aria-label="Sélectionner"></td>
-      <td class="num">${dt(l.created_at)}${l.kind === 'rappel' ? (rappelFait(l) ? '<span class="pill st st-signe-soft">rappel fait</span>' : '<span class="pill">rappel demandé</span>') : ''}</td>
+      <td class="num">${dt(l.created_at)}${modifPill(l)}${l.kind === 'rappel' ? (rappelFait(l) ? '<span class="pill st st-signe-soft">rappel fait</span>' : '<span class="pill">rappel demandé</span>') : ''}</td>
       <td><b>${esc(l.prenom)} ${esc(l.nom)}</b><small>${esc(l.email)}<br>${esc(l.tel)}</small></td>
       <td>${esc(KIND[l.type_bien] || l.type_bien || '')}${l.surface ? ' · ' + l.surface + ' m²' : ''}<small>${esc(l.ville || l.adresse || '')}</small></td>
       <td class="r num">${l.estimation_ttc ? eur(l.estimation_ttc) : '—'}</td>
@@ -249,8 +252,31 @@
   $('lightbox').addEventListener('click', e => { if (e.target === $('lightbox') || e.target === $('lb-body')) closePhotos(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('lightbox').classList.contains('hidden')) closePhotos(); });
 
-  async function openLead(id) {
-    const l = leads.find(x => x.id === id); if (!l) return;
+  /* dossier reconstruit depuis l'état complet d'une estimation (projets enregistrés avant l'historique des versions) */
+  function leadFromState(st, base) {
+    const R = C.compute(st), fin = R.total > 0;
+    return Object.assign({}, base, { type_bien: st.kind, adresse: st.adresse, ville: st.ville, cp: st.cp, surface: +st.surface || null, gamme: st.gamme, stade: st.stade, demarrage: st.demarrage,
+      estimation_ttc: Math.round(R.ttc), estimation_basse: Math.round(R.low), estimation_haute: Math.round(R.high), score: R.score, finance: st.finance, prix: +st.prix || null, strat: st.strat, loyer: +st.loyer || null,
+      payload: { works: C.normWorks(st.works), qty: C.normQty(st.qty), files: (st.files || []).filter(f => f.path).map(f => f.path),
+        bien: { type: st.type, apts: st.apts, eau: st.eau, etage: st.etage, niveaux: st.niveaux, annee: st.annee, dpe: st.dpe, etat: st.etat, zone: st.zone, ascenseur: st.ascenseur, copro: st.copro, occupe: st.occupe, acces: st.acces, visite: st.visite },
+        acquisition: { apport: st.apport, taux: st.taux, duree: st.duree, charges: st.charges },
+        interne: { direct: Math.round(R.direct), fg: Math.round(R.fg), marge: Math.round(R.marge), alea: R.alea, aleaAmt: Math.round(R.aleaAmt), ht: Math.round(R.ht), tva: Math.round(R.tva), ttc: Math.round(R.ttc), weeks: R.weeks, cReg: R.cReg, cGamme: R.cGamme, cCx: R.cCx, total: fin ? Math.round(R.total) : null, brut: fin ? R.brut : null, cf: fin ? Math.round(R.cf) : null } } });
+  }
+  const dth = v => new Date(v).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  async function openLead(id, view) {
+    const base = leads.find(x => x.id === id); if (!base) return;
+    // par défaut : la dernière version du client ; l'historique permet de revenir aux précédentes
+    let l = base, vers = [], shown = 'last', legacy = null;
+    if (base.project_id) {
+      try { const { data } = await sb.from('lead_versions').select('id,created_at,ttc').eq('project_id', base.project_id).order('created_at', { ascending: false }); vers = data || []; } catch (e) {}
+      if (!vers.length) { try { const { data } = await sb.from('projects').select('data,updated_at').eq('id', base.project_id).maybeSingle(); if (data && data.data && data.data.kind && Date.parse(data.updated_at) - Date.parse(base.created_at) > 90e3) legacy = data; } catch (e) {} }
+    }
+    if (view && view.versionId) { try { const { data } = await sb.from('lead_versions').select('state').eq('id', view.versionId).maybeSingle(); if (data && data.state) { l = Object.assign({}, base, data.state, { id: base.id, status: base.status, assigned_to: base.assigned_to, notes: base.notes, next_action: base.next_action }); shown = view.versionId; } } catch (e) {} }
+    else if (legacy && !(view && view.initial)) { try { l = leadFromState(legacy.data, base); shown = 'legacy'; } catch (e) { l = base; } }
+    else if (view && view.initial) shown = 'initial';
+    const items = vers.length ? vers.map((v, k) => ({ key: v.id, label: dth(v.created_at) + ' · ' + eur(v.ttc) + (k === 0 ? ' · dernière' : k === vers.length - 1 ? ' · première' : ''), on: shown === v.id || (shown === 'last' && k === 0) }))
+      : legacy ? [{ key: 'legacy', label: dth(legacy.updated_at) + ' · dernier état enregistré par le client', on: shown === 'legacy' }, { key: 'initial', label: dth(base.created_at) + ' · ' + eur(base.estimation_ttc) + ' · demande initiale', on: shown === 'initial' }] : [];
+    const histHtml = items.length > 1 ? `<div class="box hist"><h3>Historique <span class="optsub">${items.length} version${items.length > 1 ? 's' : ''}, la plus récente en premier</span></h3><div class="frow">${items.map(x => `<button type="button" class="pchip${x.on ? ' sel' : ''}" data-ver="${x.key}">${esc(x.label)}</button>`).join('')}</div>${shown === 'legacy' ? '<p class="hint" style="margin:8px 0 0">Version recalculée au tarif en vigueur à partir de la dernière estimation enregistrée par le client.</p>' : ''}</div>` : '';
     const p = l.payload || {}, b = p.bien || {}, i = p.interne || {}, s = l.situation || {};
     const files = p.files || [];
     const fileLinks = await Promise.all(files.map(async f => { try { const { data } = await sb.storage.from('plans').createSignedUrl(f, 60 * 60 * 24 * 365); return `<li><a href="${data.signedUrl}" target="_blank" rel="noopener">${esc(f.split('/').pop())}</a></li>`; } catch (e) { return `<li>${esc(f)}</li>`; } }));
@@ -264,7 +290,7 @@
       if (rowsHtml) devisHtml = `<div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Quantité</th><th class="r">Prix unitaire HT</th><th class="r">Total HT</th></tr></thead><tbody>${rowsHtml}</tbody><tfoot><tr class="tot"><td colspan="3">Total HT</td><td class="r num">${eur(R2.ht)}</td></tr><tr><td colspan="3">TVA</td><td class="r num">${eur(R2.tva)}</td></tr><tr class="tot ttc"><td colspan="3">Total TTC</td><td class="r num">${eur(R2.ttc)}</td></tr></tfoot></table></div>${Math.abs(R2.ttc - (+l.estimation_ttc || 0)) > 1 ? `<p class="hint" style="margin:8px 0 0">Recalculé au tarif en vigueur. Montant communiqué au client le ${dt(l.created_at)} : ${eur(l.estimation_ttc)} TTC.</p>` : ''}`;
     } catch (e) { devisHtml = ''; }
     $('d-title').textContent = (l.prenom || '') + ' ' + (l.nom || '') + ' · ' + (l.ref || '');
-    $('d-body').innerHTML = `
+    $('d-body').innerHTML = `${histHtml}
       <div class="two">
         <div class="box"><h3>Contact</h3><table class="kv">
           <tr><td>E-mail</td><td><a href="mailto:${esc(l.email)}">${esc(l.email)}</a></td></tr><tr><td>Téléphone</td><td><a href="tel:${esc(l.tel)}">${esc(l.tel)}</a></td></tr>
@@ -305,6 +331,7 @@
       </div>`;
     $('drawer').classList.remove('hidden');
     $('d-body').querySelectorAll('[data-photos]').forEach(b => b.addEventListener('click', () => openPhotos(+b.dataset.photos)));
+    $('d-body').querySelectorAll('[data-ver]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.ver; openLead(id, k === 'legacy' ? undefined : k === 'initial' ? { initial: true } : (vers.length && String(vers[0].id) === k ? undefined : { versionId: +k })); }));
     if ($('d-cancel-visite')) $('d-cancel-visite').addEventListener('click', async () => {
       if (!confirm('Annuler cette visite ? Le rendez-vous et les blocs de trajet sont supprimés de l\'agenda, le client est prévenu par Google.')) return;
       $('d-cancel-visite').disabled = true; $('d-cancel-visite').textContent = 'Annulation…';
@@ -312,7 +339,7 @@
         const { data: sess } = await sb.auth.getSession();
         const r = await fetch(FN + 'gcal-cancel', { method: 'POST', headers: { Authorization: 'Bearer ' + (sess && sess.session ? sess.session.access_token : ''), apikey: CFG.supabaseAnonKey || '', 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: id }) });
         const d = await r.json(); if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
-        Object.assign(l, { visite_at: null, visite_event: null, visite_with: null, next_action: null }, l.status === 'visite' ? { status: 'contacte' } : {});
+        Object.assign(base, { visite_at: null, visite_event: null, visite_with: null, next_action: null }, l.status === 'visite' ? { status: 'contacte' } : {});
         renderLeads(); if (plan) renderPlan(); openLead(id);
         if (d.note) alert(d.note);
       } catch (e) { alert('Annulation impossible : ' + e.message); $('d-cancel-visite').disabled = false; $('d-cancel-visite').textContent = 'Annuler la visite'; }
@@ -321,7 +348,7 @@
       const upd = { status: $('d-status').value, assigned_to: $('d-assign').value || null, next_action: $('d-next').value || null, notes: $('d-notes').value };
       const { error } = await sb.from('leads').update(upd).eq('id', id);
       if (error) { $('d-msg').textContent = 'Enregistrement impossible : ' + error.message; return; }
-      Object.assign(l, upd, { updated_at: new Date().toISOString() }); $('d-msg').textContent = 'Enregistré.'; renderLeads();
+      Object.assign(base, upd, { updated_at: new Date().toISOString() }); $('d-msg').textContent = 'Enregistré.'; renderLeads();
     });
   }
   $('d-close').addEventListener('click', () => $('drawer').classList.add('hidden'));

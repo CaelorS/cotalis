@@ -1035,3 +1035,8 @@ body.locked .lot-head .sum { display: none; }   /* sous-totaux masqués tant que
   .admin .tabpane:has(> .bulkbar:not(.hidden)) .grid-table thead th,
   .admin .panel:has(> .bulkbar:not(.hidden)) .grid-table thead th { top: calc(var(--stick-h, 0px) + 66px); }
 }
+
+/* historique des versions d'un dossier */
+.drawer .box.hist { background: var(--accent-soft); border-color: var(--accent-bar); }
+.drawer .box.hist h3 { font-size: 16px; }
+.drawer .box.hist .pchip { font-weight: 500; font-size: 12.5px; }
