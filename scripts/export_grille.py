@@ -26,6 +26,7 @@ except Exception as e:
 for it in d['items']:
     o = overrides.get(it['id'])
     if not o: it['active'] = True; continue
+    it['marge'] = o.get('marge')
     for k_src, k_dst in (('pu', 'pu'), ('lab', 'lab'), ('label', 'label'), ('sub', 'sub'), ('qty_mode', 'qm'), ('qty_coef', 'qc')):
         if o.get(k_src) not in (None, ''): it[k_dst] = o[k_src]
     if o.get('tva') is not None: it['tva'] = o['tva']
@@ -58,6 +59,7 @@ lines = [
     ("Une fois rempli, renvoyez le fichier à Jérémy : la grille est chargée dans le back-office telle quelle, grâce à la colonne « ID technique » qu'il ne faut pas modifier.", F()), ("", None),
     ("Les colonnes de la feuille Ouvrages", F(size=12, bold=True)),
     ("Coût HT : ce que l'ouvrage nous coûte, hors taxes et avant marge, par unité indiquée (m², u, forfait…), pour une finition standard et une ville moyenne. L'estimateur applique ensuite les coefficients de zone, de finition et de complexité.", F()),
+    ("Marge propre : laisser vide pour appliquer la marge par défaut de la feuille Paramètres ; saisir un pourcentage pour une marge particulière à l'ouvrage.", F()),
     ("Prix de vente HT : calculé, coût ÷ (1 − marge). Avec la marge de 40 %, un coût de 60 € donne un prix de vente de 100 €. C'est le prix que voit le client.", F()),
     ("Part main-d'œuvre : part du prix qui est du temps de travail, en %. Le reste couvre matériaux, fournitures, location et frais. Sert aux coefficients de zone et de complexité, et à la durée du chantier.", F()),
     ("Hors finition : « oui » si le prix ne doit pas changer avec le niveau de finition (dépose, gravats, nettoyage, ouvertures de mur, câblage…).", F()),
@@ -78,23 +80,23 @@ for i, (t, f) in enumerate(lines, 1):
 ws.column_dimensions['A'].width = 120
 
 wo = wb.create_sheet('Ouvrages')
-heads = ['Lot', 'Ouvrage', 'Précision', 'Unité', 'Coût HT (€)', "Part main-d'œuvre (%)", 'Hors finition (oui/non)', 'TVA (%)', 'Prix de vente HT (€)', 'Prix de vente TTC (€)'] + ['Proposé : ' + e[1] for e in ETATS] + ['Quantité proposée (règle)', 'Coefficient', 'Types de bien', 'Actif (oui/non)', 'Explication affichée au client', 'ID technique']
-widths = [26, 34, 30, 9, 12, 14, 14, 9, 14, 14, 10, 10, 10, 10, 30, 11, 22, 11, 60, 14]
+heads = ['Lot', 'Ouvrage', 'Précision', 'Unité', 'Coût HT (€)', 'Marge propre (%)', 'Prix de vente HT (€)', "Part main-d'œuvre (%)", 'Hors finition (oui/non)', 'TVA (%)', 'Prix de vente TTC (€)'] + ['Proposé : ' + e[1] for e in ETATS] + ['Quantité proposée (règle)', 'Coefficient', 'Types de bien', 'Actif (oui/non)', 'Explication affichée au client', 'ID technique']
+widths = [26, 34, 30, 9, 12, 12, 14, 14, 14, 9, 14, 10, 10, 10, 10, 30, 11, 22, 11, 60, 14]
 for j, h in enumerate(heads, 1):
     c = wo.cell(row=1, column=j, value=h); c.font = F(bold=True, color='FFFFFF'); c.fill = HEAD; c.alignment = Alignment(wrap_text=True, vertical='center', horizontal='center'); c.border = BORDER
     wo.column_dimensions[get_column_letter(j)].width = widths[j - 1]
 wo.row_dimensions[1].height = 42
-EDIT = {2, 3, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17, 18, 19}
+EDIT = {2, 3, 5, 6, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20}
 r = 2
 def write_item(it, example=False):
     global r
-    vals = [it['lot'], it['label'], it['sub'], it['unit'], it['pu'], round(it['lab'] * 100), 'oui' if it['nofin'] else 'non', it['tva'], f"=ROUND(E{r}/(1-'Paramètres'!$B$2),2)", f'=ROUND(I{r}*(1+H{r}/100),2)'] + ['x' if k in it['presets'] else '' for k, _ in ETATS] + [modes.get(it['qm'], it['qm']), it['qc'], ', '.join(KINDS.get(k, k) for k in it['only']), 'oui' if it.get('active', True) else 'non', it['why'], it['id']]
+    vals = [it['lot'], it['label'], it['sub'], it['unit'], it['pu'], (round(it['marge'] * 100, 1) if it.get('marge') is not None else None), f"=ROUND(E{r}/(1-IF(F{r}=\"\",'Paramètres'!$B$2,F{r}/100)),2)", round(it['lab'] * 100), 'oui' if it['nofin'] else 'non', it['tva'], f'=ROUND(G{r}*(1+J{r}/100),2)'] + ['x' if k in it['presets'] else '' for k, _ in ETATS] + [modes.get(it['qm'], it['qm']), it['qc'], ', '.join(KINDS.get(k, k) for k in it['only']), 'oui' if it.get('active', True) else 'non', it['why'], it['id']]
     for j, v in enumerate(vals, 1):
         c = wo.cell(row=r, column=j, value=v); c.font = F(color='7B8794' if example else None); c.border = BORDER
-        c.alignment = Alignment(vertical='top', wrap_text=j in (2, 3, 15, 19), horizontal='center' if j in (4, 7, 8, 11, 12, 13, 14, 18) else None)
+        c.alignment = Alignment(vertical='top', wrap_text=j in (2, 3, 16, 20), horizontal='center' if j in (4, 9, 10, 12, 13, 14, 15, 19) else None)
         if j in EDIT and not example: c.fill = YELLOW
         if example: c.fill = GREY
-        if j in (5, 9, 10): c.number_format = '#,##0.00 €'
+        if j in (5, 7, 11): c.number_format = '#,##0.00 €'
     r += 1
 cur = None
 for it in d['items']:
@@ -104,25 +106,23 @@ for it in d['items']:
         r += 1
     write_item(it)
 wo.cell(row=r, column=1, value='Exemple de ligne à ajouter (à remplacer ou supprimer)').font = F(italic=True, color='7B8794'); r += 1
-write_item({'lot': 'Sols', 'label': 'Moquette', 'sub': 'pose collée, sous-couche comprise', 'unit': 'm²', 'pu': 19.2, 'lab': 0.6, 'nofin': False, 'tva': 10, 'qm': 'surface', 'qc': 1, 'only': [], 'presets': ['degrade', 'total'], 'why': 'Texte court et détendu, affiché au survol de l’ouvrage dans l’estimation.', 'id': ''}, example=True)
+write_item({'lot': 'Sols', 'label': 'Moquette', 'sub': 'pose collée, sous-couche comprise', 'unit': 'm²', 'pu': 19.2, 'marge': None, 'lab': 0.6, 'nofin': False, 'tva': 10, 'qm': 'surface', 'qc': 1, 'only': [], 'presets': ['degrade', 'total'], 'why': 'Texte court et détendu, affiché au survol de l’ouvrage dans l’estimation.', 'id': ''}, example=True)
 last = r - 1
 dv1 = DataValidation(type='list', formula1='"oui,non"', allow_blank=True); dv2 = DataValidation(type='list', formula1='"10,5.5,20"', allow_blank=False); dv3 = DataValidation(type='list', formula1='"' + ','.join(modes.values()).replace('"', '') + '"', allow_blank=True)
 for dv in (dv1, dv2, dv3): wo.add_data_validation(dv)
-dv1.add(f'G2:G{last + 40}'); dv1.add(f'R2:R{last + 40}'); dv2.add(f'H2:H{last + 40}'); dv3.add(f'O2:O{last + 40}')
+dv1.add(f'I2:I{last + 40}'); dv1.add(f'S2:S{last + 40}'); dv2.add(f'J2:J{last + 40}'); dv3.add(f'P2:P{last + 40}')
 wo.freeze_panes = 'C2'; wo.auto_filter.ref = f'A1:{get_column_letter(len(heads))}{last}'
-wo.cell(row=1, column=9).comment = Comment("Calculé : coût ÷ (1 − marge). La marge est dans la feuille Paramètres. Ne pas saisir.", 'Cotalia')
-wo.cell(row=1, column=10).comment = Comment("Calculé : prix de vente HT × (1 + TVA). Ne pas saisir.", 'Cotalia')
+wo.cell(row=1, column=6).comment = Comment("Laisser vide pour appliquer la marge par défaut (feuille Paramètres). Saisir un pourcentage pour donner à cet ouvrage une marge qui lui est propre.", 'Cotalia')
+wo.cell(row=1, column=7).comment = Comment("Calculé : coût ÷ (1 − marge). Ne pas saisir.", 'Cotalia')
+wo.cell(row=1, column=11).comment = Comment("Calculé : prix de vente HT × (1 + TVA). Ne pas saisir.", 'Cotalia')
 wo.cell(row=1, column=5).comment = Comment("Coût direct, avant marge, pour une finition standard en ville moyenne. Les coefficients de zone, finition et complexité s'appliquent ensuite (feuille Paramètres).", 'Cotalia')
-wo.cell(row=1, column=20).comment = Comment("Identifiant utilisé par l'estimateur. Ne pas modifier. Laisser vide pour un nouvel ouvrage.", 'Cotalia')
+wo.cell(row=1, column=21).comment = Comment("Identifiant utilisé par l'estimateur. Ne pas modifier. Laisser vide pour un nouvel ouvrage.", 'Cotalia')
 wo.cell(row=last + 2, column=1, value='Cases jaunes : à compléter. Cases blanches : calculées ou techniques. Ligne grise : exemple.').font = F(italic=True, color='7B8794')
 
 wp = wb.create_sheet('Paramètres')
 wp.column_dimensions['A'].width = 44; wp.column_dimensions['B'].width = 14; wp.column_dimensions['C'].width = 70
-rows = [('Postes appliqués au coût direct', None, None, True),
+rows = [('Marge', None, None, True),
     ('Marge (part du prix de vente HT, 0,40 = 40 %)', d['marge'], 'Prix de vente = coût ÷ (1 − marge). 40 % depuis le 30/09/2026.', False),
-    ('Frais généraux (% du coût direct)', d['fg'], 'À zéro depuis le 29/09/2026. Valeur d’origine 8 %.', False),
-    ('Pilotage de chantier (% du coût direct)', d['pilotage'], 'À zéro depuis le 29/09/2026. Valeur d’origine 3 %.', False),
-    ('Provision pour aléas (part appliquée, 0 à 1)', d['alea'], 'La provision calculée va de 5 à 17 % selon la qualité des informations ; 0 = jamais appliquée.', False),
     ('Frais de notaire (% du prix d’achat, ancien)', d['notaire'], 'Utilisé dans la synthèse de financement.', False), ('', None, None, False),
     ('Coefficient de zone (appliqué à la part main-d’œuvre)', None, None, True)] + [(v[1], v[0], 'Zone « ' + k + ' »', False) for k, v in d['region'].items()] + [('', None, None, False),
     ('Coefficient de finition (appliqué à la part matériaux, sauf ouvrages « hors finition »)', None, None, True)] + [(v[1], v[0], 'Finition « ' + k + ' »', False) for k, v in d['gamme'].items()] + [('', None, None, False),
