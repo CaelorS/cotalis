@@ -45,7 +45,7 @@
       const unitPrice = it.pu * (it.lab * cReg * cx.c + (1 - it.lab) * (it.nofin ? 1 : cGamme));   // nofin : la part hors main-d'œuvre ne suit pas la finition
       const amount = on ? q * unitPrice : 0;
       const m = (it.marge == null || it.marge === '') ? C.MARGE : +it.marge;   // marge par prestation, sinon marge par défaut
-      const k = (1 + C.FG + C.PILOTAGE) / (1 - Math.min(0.95, Math.max(0, m)));   // du coût au prix de vente
+      const k = (1 + C.FG + C.PILOTAGE) * (1 + Math.max(0, m));   // du coût au prix de vente : la marge s'ajoute au coût
       // amount et unitPrice sont des coûts ; sell et unitSell sont ce que voit le client
       lines.push({ it, on, q, unitPrice, amount, unitSell: unitPrice * k, sell: amount * k });
       if (on && amount > 0) {

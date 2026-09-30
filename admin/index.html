@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/css/site.css?v=202609301057">
+  <link rel="stylesheet" href="/assets/css/site.css?v=202609301101">
 </head>
 <body class="admin">
   <div class="stick">
@@ -75,7 +75,7 @@
       </div>
       <div class="panel">
         <header><h2>Prix de référence par ouvrage</h2><span class="hint">Prix HT par unité, part de main-d'œuvre, TVA, marge spécifique (vide = marge par défaut). Décochez « actif » pour retirer un ouvrage du tunnel.</span></header>
-        <div class="tablewrap desk"><table class="grid-table" id="items"><thead><tr><th>Actif</th><th>Ouvrage</th><th>Unité</th><th class="r" title="Coût direct hors taxes, avant marge. Le modifier ajuste la marge, le prix de vente ne bouge pas.">Coût HT</th><th class="r" title="Coût du catalogue d'origine">Défaut</th><th class="r" title="Marge sur le prix de vente. En gris : la marge par défaut. En noir : une marge propre à cet ouvrage. La modifier ajuste le prix de vente. Vider la case revient à la marge par défaut.">Marge %</th><th class="r" title="Coût ÷ (1 − marge), pour une finition standard en ville moyenne. Le modifier ajuste la marge, le coût ne bouge pas.">Prix de vente HT</th><th class="r" title="Part de main-d'œuvre dans le coût. Le reste : matériaux, fournitures, location, frais.">Part main-d'œuvre %</th><th class="c" title="Coché : le prix ne change pas avec le niveau de finition (dépose, gravats, nettoyage…)">Hors finition</th><th>TVA</th><th title="Règle qui calcule la quantité proposée d'office">Quantité proposée</th><th class="r" title="Multiplicateur appliqué à la règle. Pour « quantité fixe », c'est la quantité elle-même.">Coef.</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="tablewrap desk"><table class="grid-table" id="items"><thead><tr><th>Actif</th><th>Ouvrage</th><th>Unité</th><th class="r" title="Coût direct hors taxes, avant marge. Le modifier ajuste la marge, le prix de vente ne bouge pas.">Coût HT</th><th class="r" title="Coût du catalogue d'origine">Défaut</th><th class="r" title="Marge ajoutée au coût : 40 % donne coût × 1,4, 100 % double le coût. En gris : la marge par défaut. En noir : une marge propre à cet ouvrage. La modifier ajuste le prix de vente. Vider la case revient à la marge par défaut.">Marge %</th><th class="r" title="Coût × (1 + marge), pour une finition standard en ville moyenne. Le modifier ajuste la marge, le coût ne bouge pas.">Prix de vente HT</th><th class="r" title="Part de main-d'œuvre dans le coût. Le reste : matériaux, fournitures, location, frais.">Part main-d'œuvre %</th><th class="c" title="Coché : le prix ne change pas avec le niveau de finition (dépose, gravats, nettoyage…)">Hors finition</th><th>TVA</th><th title="Règle qui calcule la quantité proposée d'office">Quantité proposée</th><th class="r" title="Multiplicateur appliqué à la règle. Pour « quantité fixe », c'est la quantité elle-même.">Coef.</th><th></th></tr></thead><tbody></tbody></table></div>
         <div class="mcards" id="items-cards"></div>
       </div>
       <div class="savebar"><span id="prix-msg" class="hint">Enregistrement automatique : chaque valeur est sauvegardée dès qu'elle est saisie.</span><button type="button" class="btn" id="prix-reset">Revenir aux prix par défaut</button></div>
@@ -224,11 +224,11 @@
   <div class="drawer hidden" id="drawer"><div class="drawer-box"><div class="drawer-head"><h3 id="d-title"></h3><button type="button" class="btn" id="d-close">Fermer</button></div><div id="d-body"></div></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="/config.js?v=202609301057"></script>
-  <script src="/assets/js/catalog.js?v=202609301057"></script>
-  <script src="/assets/js/engine.js?v=202609301057"></script>
-  <script src="/assets/js/pricing.js?v=202609301057"></script>
-  <script src="/assets/js/auth.js?v=202609301057"></script>
-  <script src="/assets/js/admin.js?v=202609301057"></script>
+  <script src="/config.js?v=202609301101"></script>
+  <script src="/assets/js/catalog.js?v=202609301101"></script>
+  <script src="/assets/js/engine.js?v=202609301101"></script>
+  <script src="/assets/js/pricing.js?v=202609301101"></script>
+  <script src="/assets/js/auth.js?v=202609301101"></script>
+  <script src="/assets/js/admin.js?v=202609301101"></script>
 </body>
 </html>

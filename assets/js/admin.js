@@ -308,7 +308,7 @@
       <div class="two">
         <div class="box"><h3>Chiffres</h3><table class="kv">
           <tr><td>Fourchette</td><td class="num">${eur(l.estimation_basse)} à ${eur(l.estimation_haute)}</td></tr><tr class="total"><td>Travaux TTC</td><td class="num">${eur(l.estimation_ttc)}</td></tr>
-          <tr><td>Coûts directs</td><td class="num">${eur(i.direct)}</td></tr><tr><td>Marge</td><td class="num">${(() => { const mg = (i.ht || 0) - (i.direct || 0); return eur(mg) + (i.ht ? ' (' + Math.round(mg / i.ht * 100) + ' %)' : ''); })()}</td></tr>
+          <tr><td>Coûts directs</td><td class="num">${eur(i.direct)}</td></tr><tr><td>Marge</td><td class="num">${(() => { const mg = (i.ht || 0) - (i.direct || 0); return eur(mg) + (i.direct ? ' (+' + Math.round(mg / i.direct * 100) + ' % sur le coût)' : ''); })()}</td></tr>
           <tr><td>Score de confiance</td><td class="num">${l.score || '?'} / 100</td></tr><tr><td>Durée</td><td class="num">${i.weeks || '?'} semaines</td></tr>
         </table></div>
         <div class="box"><h3>Financement</h3><table class="kv">
@@ -356,7 +356,7 @@
 
   /* ---------- prix ---------- */
   const SETTINGS = [
-    ['MARGE', 'Marge par défaut (sur le prix de vente)', '%', 100], ['NOTAIRE', 'Frais de notaire', '%', 100],
+    ['MARGE', 'Marge par défaut, ajoutée au coût', '%', 100], ['NOTAIRE', 'Frais de notaire', '%', 100],
     ['REGION.paris', 'Coef. Paris', '', 1], ['REGION.pc', 'Coef. petite couronne', '', 1], ['REGION.gc', 'Coef. grande couronne', '', 1], ['REGION.lyon', 'Coef. Lyon, Bordeaux, Nice', '', 1], ['REGION.metro', 'Coef. autre métropole', '', 1], ['REGION.moy', 'Coef. ville moyenne', '', 1], ['REGION.rural', 'Coef. rural', '', 1],
     ['GAMME.eco', 'Coef. matériaux économique', '', 1], ['GAMME.std', 'Coef. matériaux standard', '', 1], ['GAMME.prem', 'Coef. matériaux premium', '', 1],
   ];
@@ -372,8 +372,8 @@
       <td>${esc(it.unit)}</td>
       <td class="r"><input type="number" step="0.01" min="0" data-f="pu" value="${it.pu}"></td>
       <td class="r hint num">${typeof d.pu === 'number' ? d.pu.toLocaleString('fr-FR') : d.pu}</td>
-      <td class="r"><input type="number" step="0.1" min="0" max="95" data-f="marge" data-m="${mEff(it)}" class="${it.marge == null ? 'dflt' : ''}" value="${fmtM(mEff(it))}" aria-label="Marge en pourcentage"></td>
-      <td class="r"><input type="number" step="0.01" min="0" data-f="sell" value="${r2(it.pu / (1 - mEff(it)))}" aria-label="Prix de vente HT"></td>
+      <td class="r"><input type="number" step="0.1" min="0" data-f="marge" data-m="${mEff(it)}" class="${it.marge == null ? 'dflt' : ''}" value="${fmtM(mEff(it))}" aria-label="Marge en pourcentage"></td>
+      <td class="r"><input type="number" step="0.01" min="0" data-f="sell" value="${sellOf(it.pu, mEff(it))}" aria-label="Prix de vente HT"></td>
       <td class="r"><input type="number" step="5" min="0" max="100" data-f="lab" value="${Math.round(it.lab * 100)}"></td>
       <td class="c"><input type="checkbox" data-f="nofin"${it.nofin ? ' checked' : ''} aria-label="Insensible à la finition"></td>
       <td><select data-f="tva"><option value="10"${it.tva === 5.5 ? '' : ' selected'}>10 %</option><option value="5.5"${it.tva === 5.5 ? ' selected' : ''}>5,5 %</option></select></td>
@@ -384,7 +384,7 @@
     $('items-cards').innerHTML = C.CATALOG.map(l => `<div class="mlot">${C.lotIcon(l.lot)}${esc(l.lot)}</div>` + l.items.map(it => `<div class="mcard${it.inactive ? ' off' : ''}">
       <div class="mrow"><b>${esc(it.label)}</b><button type="button" class="btn small" data-edit="${it.id}" aria-label="Modifier ${esc(it.label)}">✎</button></div>
       <div class="msub">${esc(it.sub || '')}</div>
-      <div class="mrow"><span class="num">coût ${eur(it.pu)} · vente ${eur(it.pu / (1 - mEff(it)))}${it.unit === 'forfait' ? '' : '/' + it.unit} HT</span><span>${it.inactive ? 'inactif' : 'MO ' + Math.round(it.lab * 100) + ' % · TVA ' + (it.tva === 5.5 ? '5,5' : '10') + ' % · marge ' + (it.marge == null ? fmtM(C.MARGE) + ' % (défaut)' : Math.round(it.marge * 100) + ' %')}</span></div>
+      <div class="mrow"><span class="num">coût ${eur(it.pu)} · vente ${eur(it.pu * (1 + mEff(it)))}${it.unit === 'forfait' ? '' : '/' + it.unit} HT</span><span>${it.inactive ? 'inactif' : 'MO ' + Math.round(it.lab * 100) + ' % · TVA ' + (it.tva === 5.5 ? '5,5' : '10') + ' % · marge ' + (it.marge == null ? fmtM(C.MARGE) + ' % (défaut)' : Math.round(it.marge * 100) + ' %')}</span></div>
     </div>`).join('')).join('');
     const lots = $('ni-lot'); lots.innerHTML = C.CATALOG.map(l => `<option value="${esc(l.lot)}">${esc(l.lot)}</option>`).join('') + '<option value="__new">Nouveau lot…</option>';
     $('ni-qmode').innerHTML = Object.keys(C.QTY_MODES).map(k => `<option value="${k}">${C.QTY_MODES[k]}</option>`).join('');
@@ -412,8 +412,8 @@
       <div class="field wide"><label>Nom</label><input id="ie-label" value="${esc(it.label)}"></div>
       <div class="field wide"><label>Précision</label><input id="ie-sub" value="${esc(it.sub || '')}"></div>
       <div class="field"><label>Coût HT (${esc(it.unit)})${d.pu != null ? ` <span class="optsub">défaut ${d.pu}</span>` : ''}</label><input id="ie-pu" type="number" step="0.01" value="${it.pu}"></div>
-      <div class="field"><label>Marge % <span class="optsub">vide : marge par défaut</span></label><input id="ie-marge" type="number" step="0.1" min="0" max="95" data-m="${mEff(it)}" class="${it.marge == null ? 'dflt' : ''}" value="${fmtM(mEff(it))}"></div>
-      <div class="field"><label>Prix de vente HT (${esc(it.unit)})</label><input id="ie-sell" type="number" step="0.01" value="${r2(it.pu / (1 - mEff(it)))}"></div>
+      <div class="field"><label>Marge % <span class="optsub">vide : marge par défaut</span></label><input id="ie-marge" type="number" step="0.1" min="0" data-m="${mEff(it)}" class="${it.marge == null ? 'dflt' : ''}" value="${fmtM(mEff(it))}"></div>
+      <div class="field"><label>Prix de vente HT (${esc(it.unit)})</label><input id="ie-sell" type="number" step="0.01" value="${sellOf(it.pu, mEff(it))}"></div>
       <div class="field"><label>Part main-d'œuvre %</label><input id="ie-lab" type="number" step="5" min="0" max="100" value="${Math.round(it.lab * 100)}"></div>
       <div class="field"><label>TVA</label><select id="ie-tva"><option value="10"${it.tva === 5.5 ? '' : ' selected'}>10 %</option><option value="5.5"${it.tva === 5.5 ? ' selected' : ''}>5,5 %</option></select></div>
       <div class="field"><label>Quantité proposée</label><select id="ie-qm">${Object.keys(C.QTY_MODES).map(k => `<option value="${k}"${it.qm === k ? ' selected' : ''}>${C.QTY_MODES[k]}</option>`).join('')}</select></div>
@@ -449,20 +449,21 @@
     requestAnimationFrame(() => el.classList.add('show'));
     clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), kind === 'err' ? 6000 : 2200);
   }
-  /* coût, marge et prix de vente sont liés : prix de vente = coût ÷ (1 − marge).
+  /* coût, marge et prix de vente sont liés : prix de vente = coût × (1 + marge). 100 % de marge double le coût.
      Coût modifié : la marge s'ajuste. Marge modifiée : le prix de vente s'ajuste. Prix de vente modifié : la marge s'ajuste. */
   const r2 = v => Math.round(v * 100) / 100;
   const mEff = it => (it.marge == null || it.marge === '') ? C.MARGE : +it.marge;
+  const sellOf = (cost, m) => r2(cost * (1 + m));
   const fmtM = m => String(+(m * 100).toFixed(1));
   function setMargeInput(inp, m) { inp.dataset.m = String(m); inp.value = fmtM(m); inp.classList.toggle('dflt', Math.abs(m - C.MARGE) < 0.0005); inp.classList.toggle('neg', m < 0); }
-  function margeOfInput(inp) { if (inp.classList.contains('dflt')) return null; const m = inp.dataset.m !== undefined && inp.dataset.m !== '' ? +inp.dataset.m : +inp.value / 100; return Math.min(0.95, Math.max(0, m)); }
+  function margeOfInput(inp) { if (inp.classList.contains('dflt')) return null; const m = inp.dataset.m !== undefined && inp.dataset.m !== '' ? +inp.dataset.m : +inp.value / 100; return Math.min(20, Math.max(0, m)); }
   function relinkPrice(pu, mg, sl, changed) {
     const cost = +pu.value;
     if (changed === 'marge') {
       if (mg.value === '') { mg.dataset.m = String(C.MARGE); mg.classList.add('dflt'); mg.classList.remove('neg'); }
-      else { const m = Math.min(0.95, Math.max(0, +mg.value / 100)); mg.dataset.m = String(m); mg.classList.toggle('dflt', Math.abs(m - C.MARGE) < 0.0005); mg.classList.remove('neg'); }
-      sl.value = r2(cost / (1 - +mg.dataset.m));
-    } else if (+sl.value > 0) setMargeInput(mg, 1 - cost / +sl.value);
+      else { const m = Math.max(0, +mg.value / 100); mg.dataset.m = String(m); mg.classList.toggle('dflt', Math.abs(m - C.MARGE) < 0.0005); mg.classList.remove('neg'); }
+      sl.value = sellOf(cost, +mg.dataset.m);
+    } else if (cost > 0 && sl.value !== '') setMargeInput(mg, +sl.value / cost - 1);
   }
   $('tab-prix').addEventListener('input', e => { const f = e.target.dataset.f, tr = e.target.closest('tr[data-item]'); if (tr && ['pu', 'marge', 'sell'].includes(f)) relinkPrice(tr.querySelector('[data-f="pu"]'), tr.querySelector('[data-f="marge"]'), tr.querySelector('[data-f="sell"]'), f); });
   $('tab-prix').addEventListener('change', e => { const mg = e.target; if (mg.dataset.f === 'marge' && mg.value === '') mg.value = fmtM(C.MARGE); });
@@ -489,14 +490,14 @@
     document.querySelectorAll('[data-set]').forEach(inp => { const [k, label, unit, mult] = SETTINGS.find(x => x[0] === inp.dataset.set); if (inp.value === '' || !isFinite(+inp.value)) bad = true; vals[k] = +inp.value / mult; });
     if (bad) { toast('Valeur invalide dans les paramètres : non enregistré.', 'err'); return; }
     // une seule marge : frais généraux, pilotage et aléas ne sont plus des postes séparés, ils restent à zéro
-    const setRows = [['MARGE_VENTE', vals.MARGE], ['FG', 0], ['PILOTAGE', 0], ['ALEA', 0], ['NOTAIRE', vals.NOTAIRE],
+    const setRows = [['MARGE_COUT', vals.MARGE], ['FG', 0], ['PILOTAGE', 0], ['ALEA', 0], ['NOTAIRE', vals.NOTAIRE],
       ['REGION', Object.fromEntries(Object.keys(C.REGION).map(k => [k, vals['REGION.' + k]]))], ['GAMME', Object.fromEntries(Object.keys(C.GAMME).map(k => [k, vals['GAMME.' + k]]))]]
       .map(([key, value]) => ({ key, value, updated_at: new Date().toISOString() }));
     const { error } = await sb.from('pricing_settings').upsert(setRows);
     if (error) { toast('Enregistrement impossible : ' + error.message, 'err'); return; }
     C.applyPricing([], setRows); toast('Paramètres enregistrés');
     // les ouvrages à la marge par défaut suivent : leur prix de vente est recalculé
-    document.querySelectorAll('#items tr[data-item]').forEach(tr => { const mg = tr.querySelector('[data-f="marge"]'); if (mg && mg.classList.contains('dflt')) { setMargeInput(mg, C.MARGE); tr.querySelector('[data-f="sell"]').value = r2(+tr.querySelector('[data-f="pu"]').value / (1 - C.MARGE)); } });
+    document.querySelectorAll('#items tr[data-item]').forEach(tr => { const mg = tr.querySelector('[data-f="marge"]'); if (mg && mg.classList.contains('dflt')) { setMargeInput(mg, C.MARGE); tr.querySelector('[data-f="sell"]').value = sellOf(+tr.querySelector('[data-f="pu"]').value, C.MARGE); } });
   }
   // une valeur validée (sortie du champ, Entrée, case cochée, menu) s'enregistre aussitôt ; en cours de frappe, après une seconde de pause
   const saveTimers = {};

@@ -43,7 +43,7 @@
     });
     (settings || []).forEach(row => {
       const v = row.value;
-      if (row.key === 'MARGE_VENTE' && typeof v === 'number') C.MARGE = v;   // l'ancienne clé MARGE allait avec les anciens prix et n'est plus lue
+      if (row.key === 'MARGE_COUT' && typeof v === 'number') C.MARGE = v;   // marge ajoutée au coût ; les anciennes clés MARGE et MARGE_VENTE ne sont plus lues
       if (row.key === 'FG' && typeof v === 'number') C.FG = v;
       if (row.key === 'PILOTAGE' && typeof v === 'number') C.PILOTAGE = v;
       if (row.key === 'ALEA' && typeof v === 'number') C.ALEA = v;

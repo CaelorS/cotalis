@@ -7,67 +7,67 @@
   // qty(s) reçoit s.surface, s.pieces, s.eau, s.units (nombre de logements : 1 sauf immeuble).
   const CATALOG = [
     { lot: 'Démolition et dépose', items: [
-      { id: 'dep_rev', label: 'Dépose des revêtements', sub: 'sols, faïence, papiers peints', unit: 'm²', pu: 10.8, lab: 0.85, qm: 'surface', qc: 1 },
-      { id: 'dep_eq', label: 'Dépose cuisine et sanitaires existants', unit: 'forfait', pu: 390, lab: 0.9, qm: 'units', qc: 1 },
-      { id: 'benne', label: 'Évacuation des gravats', sub: 'benne, transport, déchetterie', unit: 'forfait', pu: 540, lab: 0.35, qm: 'units_half', qc: 1 },
+      { id: 'dep_rev', label: 'Dépose des revêtements', sub: 'sols, faïence, papiers peints', unit: 'm²', pu: 12.86, lab: 0.85, qm: 'surface', qc: 1 },
+      { id: 'dep_eq', label: 'Dépose cuisine et sanitaires existants', unit: 'forfait', pu: 464.29, lab: 0.9, qm: 'units', qc: 1 },
+      { id: 'benne', label: 'Évacuation des gravats', sub: 'benne, transport, déchetterie', unit: 'forfait', pu: 642.86, lab: 0.35, qm: 'units_half', qc: 1 },
     ]},
     { lot: 'Gros œuvre et cloisons', items: [
-      { id: 'mur_np', label: 'Ouverture dans mur non porteur', unit: 'u', pu: 510, lab: 0.8, qm: 'units', qc: 1 },
-      { id: 'mur_p', label: 'Ouverture de mur porteur', sub: 'IPN, étude structure incluse', unit: 'u', pu: 2880, lab: 0.6, qm: 'fixed', qc: 1 },
-      { id: 'cloison', label: 'Cloisons neuves', sub: 'plaques de plâtre sur ossature, isolant phonique', unit: 'ml', pu: 87, lab: 0.6, qm: 'surface', qc: 0.08 },
-      { id: 'plafond', label: 'Faux plafond', sub: 'plaques de plâtre, reprise éclairage', unit: 'm²', pu: 33, lab: 0.6, qm: 'surface', qc: 1 },
+      { id: 'mur_np', label: 'Ouverture dans mur non porteur', unit: 'u', pu: 607.14, lab: 0.8, qm: 'units', qc: 1 },
+      { id: 'mur_p', label: 'Ouverture de mur porteur', sub: 'IPN, étude structure incluse', unit: 'u', pu: 3428.57, lab: 0.6, qm: 'fixed', qc: 1 },
+      { id: 'cloison', label: 'Cloisons neuves', sub: 'plaques de plâtre sur ossature, isolant phonique', unit: 'ml', pu: 103.57, lab: 0.6, qm: 'surface', qc: 0.08 },
+      { id: 'plafond', label: 'Faux plafond', sub: 'plaques de plâtre, reprise éclairage', unit: 'm²', pu: 39.29, lab: 0.6, qm: 'surface', qc: 1 },
     ]},
     { lot: 'Électricité', items: [
       // Depuis le 30/09/2026 l'électricité est découpée en trois postes. L'ancien « elec » (conformité complète à 95 €/m²)
       // équivaut aux trois réunis : voir LEGACY_WORKS plus bas, qui reprend les estimations déjà enregistrées.
       // un tableau par logement : un seul pour un appartement ou une maison, un par appartement dans un immeuble
-      { id: 'tableau', label: 'Tableau électrique', sub: 'tableau neuf, terre, différentiels · un par logement', unit: 'u', pu: 840, lab: 0.55, qm: 'units', qc: 1 },
-      { id: 'elec_app', label: 'Appareillage', sub: 'prises, interrupteurs, points lumineux', unit: 'm²', pu: 15.6, lab: 0.45, qm: 'surface', qc: 1 },
-      { id: 'elec_cab', label: 'Circuits et câblage', sub: 'gaines, câbles, saignées, circuits spécialisés', unit: 'm²', pu: 28.8, lab: 0.7, qm: 'surface', qc: 1 },
+      { id: 'tableau', label: 'Tableau électrique', sub: 'tableau neuf, terre, différentiels · un par logement', unit: 'u', pu: 1000, lab: 0.55, qm: 'units', qc: 1 },
+      { id: 'elec_app', label: 'Appareillage', sub: 'prises, interrupteurs, points lumineux', unit: 'm²', pu: 18.57, lab: 0.45, qm: 'surface', qc: 1 },
+      { id: 'elec_cab', label: 'Circuits et câblage', sub: 'gaines, câbles, saignées, circuits spécialisés', unit: 'm²', pu: 34.29, lab: 0.7, qm: 'surface', qc: 1 },
     ]},
     { lot: 'Parties communes et réseaux', only: ['immeuble'], items: [
-      { id: 'colonne_elec', label: 'Colonne montante électrique', sub: 'gaine, câbles, coupe-circuits par niveau', unit: 'niveau', pu: 1140, lab: 0.65, qm: 'niveaux', qc: 1 },
-      { id: 'colonne_plomb', label: 'Colonne montante plomberie', sub: 'eau froide, eau chaude, évacuation par niveau', unit: 'niveau', pu: 1020, lab: 0.7, qm: 'niveaux', qc: 1 },
+      { id: 'colonne_elec', label: 'Colonne montante électrique', sub: 'gaine, câbles, coupe-circuits par niveau', unit: 'niveau', pu: 1357.14, lab: 0.65, qm: 'niveaux', qc: 1 },
+      { id: 'colonne_plomb', label: 'Colonne montante plomberie', sub: 'eau froide, eau chaude, évacuation par niveau', unit: 'niveau', pu: 1214.29, lab: 0.7, qm: 'niveaux', qc: 1 },
     ] },
     { lot: 'Plomberie et chauffage', items: [
       // L'ancienne ligne « Réseau eau et évacuations à neuf » (plomb) est retirée depuis le 30/09/2026 : le réseau est compris
       // dans la salle de bain, le WC et la cuisine. Voir LEGACY_WORKS pour les estimations déjà enregistrées.
-      { id: 'ballon', label: 'Chauffe-eau électrique', unit: 'u', pu: 414, lab: 0.35, qm: 'units', qc: 1 },
-      { id: 'thermo', label: 'Chauffe-eau thermodynamique', unit: 'u', pu: 1590, lab: 0.3, qm: 'units', qc: 1 },
-      { id: 'radia', label: 'Radiateurs électriques à inertie', unit: 'u', pu: 252, lab: 0.3, qm: 'pieces_units', qc: 1 },
-      { id: 'chaud', label: 'Chaudière gaz à condensation', unit: 'u', pu: 2520, lab: 0.35, qm: 'units', qc: 1 },
-      { id: 'vmc', label: 'VMC simple flux hygroréglable', unit: 'forfait', pu: 570, lab: 0.55, qm: 'units', qc: 1 },
+      { id: 'ballon', label: 'Chauffe-eau électrique', unit: 'u', pu: 492.86, lab: 0.35, qm: 'units', qc: 1 },
+      { id: 'thermo', label: 'Chauffe-eau thermodynamique', unit: 'u', pu: 1892.86, lab: 0.3, qm: 'units', qc: 1 },
+      { id: 'radia', label: 'Radiateurs électriques à inertie', unit: 'u', pu: 300, lab: 0.3, qm: 'pieces_units', qc: 1 },
+      { id: 'chaud', label: 'Chaudière gaz à condensation', unit: 'u', pu: 3000, lab: 0.35, qm: 'units', qc: 1 },
+      { id: 'vmc', label: 'VMC simple flux hygroréglable', unit: 'forfait', pu: 678.57, lab: 0.55, qm: 'units', qc: 1 },
     ]},
     { lot: 'Isolation et menuiseries extérieures', items: [
-      { id: 'fen', label: 'Fenêtres PVC double vitrage', sub: 'fourniture et pose, dépose comprise', unit: 'u', pu: 468, lab: 0.35, qm: 'pieces_units', qc: 1 },
-      { id: 'iti', label: 'Isolation des murs par l\'intérieur', sub: 'doublage, R ≥ 3,7', unit: 'm²', pu: 40.8, lab: 0.5, qm: 'surface', qc: 0.9 },
-      { id: 'combles', label: 'Isolation des combles', unit: 'm²', pu: 19.2, lab: 0.45, qm: 'surface_per_level', qc: 1 },
-      { id: 'porte', label: 'Porte palière blindée', unit: 'u', pu: 1320, lab: 0.3, qm: 'units', qc: 1 },
+      { id: 'fen', label: 'Fenêtres PVC double vitrage', sub: 'fourniture et pose, dépose comprise', unit: 'u', pu: 557.14, lab: 0.35, qm: 'pieces_units', qc: 1 },
+      { id: 'iti', label: 'Isolation des murs par l\'intérieur', sub: 'doublage, R ≥ 3,7', unit: 'm²', pu: 48.57, lab: 0.5, qm: 'surface', qc: 0.9 },
+      { id: 'combles', label: 'Isolation des combles', unit: 'm²', pu: 22.86, lab: 0.45, qm: 'surface_per_level', qc: 1 },
+      { id: 'porte', label: 'Porte palière blindée', unit: 'u', pu: 1571.43, lab: 0.3, qm: 'units', qc: 1 },
     ]},
     { lot: 'Extérieurs et toiture', only: ['maison', 'immeuble'], items: [
-      { id: 'ravalement', label: 'Ravalement de façade', sub: 'nettoyage, reprise d\'enduit, peinture, échafaudage', unit: 'm²', pu: 51, lab: 0.7, qm: 'facade', qc: 1 },
-      { id: 'ite', label: 'Isolation par l\'extérieur', sub: 'option au ravalement : isolant, enduit de finition', unit: 'm²', pu: 99, lab: 0.55, tva: 5.5, qm: 'facade', qc: 1 },
-      { id: 'toit_rep', label: 'Réparation de toiture', sub: 'reprise partielle, tuiles ou ardoises, zinguerie', unit: 'm²', pu: 36, lab: 0.75, qm: 'toiture', qc: 0.3 },
-      { id: 'toit_neuf', label: 'Réfection complète de toiture', sub: 'dépose, écran, liteaux, couverture, zinguerie', unit: 'm²', pu: 126, lab: 0.6, qm: 'toiture', qc: 1 },
+      { id: 'ravalement', label: 'Ravalement de façade', sub: 'nettoyage, reprise d\'enduit, peinture, échafaudage', unit: 'm²', pu: 60.71, lab: 0.7, qm: 'facade', qc: 1 },
+      { id: 'ite', label: 'Isolation par l\'extérieur', sub: 'option au ravalement : isolant, enduit de finition', unit: 'm²', pu: 117.86, lab: 0.55, tva: 5.5, qm: 'facade', qc: 1 },
+      { id: 'toit_rep', label: 'Réparation de toiture', sub: 'reprise partielle, tuiles ou ardoises, zinguerie', unit: 'm²', pu: 42.86, lab: 0.75, qm: 'toiture', qc: 0.3 },
+      { id: 'toit_neuf', label: 'Réfection complète de toiture', sub: 'dépose, écran, liteaux, couverture, zinguerie', unit: 'm²', pu: 150, lab: 0.6, qm: 'toiture', qc: 1 },
     ] },
     { lot: 'Salle de bain et WC', items: [
-      { id: 'sdb', label: 'Salle de bain complète', sub: 'douche à l\'italienne, meuble vasque, faïence, WC · réseau eau et évacuations compris', unit: 'forfait', pu: 4680, lab: 0.55, qm: 'units', qc: 1 },
-      { id: 'wc', label: 'WC séparé', sub: 'cuvette suspendue, lave-mains, faïence · réseau eau et évacuations compris', unit: 'forfait', pu: 960, lab: 0.55, qm: 'eau_minus_units', qc: 1 },
+      { id: 'sdb', label: 'Salle de bain complète', sub: 'douche à l\'italienne, meuble vasque, faïence, WC · réseau eau et évacuations compris', unit: 'forfait', pu: 5571.43, lab: 0.55, qm: 'units', qc: 1 },
+      { id: 'wc', label: 'WC séparé', sub: 'cuvette suspendue, lave-mains, faïence · réseau eau et évacuations compris', unit: 'forfait', pu: 1142.86, lab: 0.55, qm: 'eau_minus_units', qc: 1 },
     ]},
     { lot: 'Cuisine', items: [
-      { id: 'cuis', label: 'Cuisine équipée', sub: 'meubles, plan de travail, électroménager, pose · réseau eau et évacuations compris', unit: 'forfait', pu: 3900, lab: 0.3, qm: 'units', qc: 1 },
+      { id: 'cuis', label: 'Cuisine équipée', sub: 'meubles, plan de travail, électroménager, pose · réseau eau et évacuations compris', unit: 'forfait', pu: 4642.86, lab: 0.3, qm: 'units', qc: 1 },
     ]},
     { lot: 'Sols', items: [
-      { id: 'ragr', label: 'Ragréage', unit: 'm²', pu: 8.4, lab: 0.6, qm: 'surface', qc: 1 },
-      { id: 'parq', label: 'Parquet contrecollé', sub: 'pièces de vie et chambres', unit: 'm²', pu: 43.2, lab: 0.45, qm: 'surface', qc: 0.72 },
-      { id: 'strat', label: 'Stratifié', unit: 'm²', pu: 22.8, lab: 0.5, qm: 'surface', qc: 0.72 },
-      { id: 'carr', label: 'Carrelage 60 × 60', sub: 'cuisine, salle de bain, entrée', unit: 'm²', pu: 51, lab: 0.55, qm: 'surface', qc: 0.2 },
+      { id: 'ragr', label: 'Ragréage', unit: 'm²', pu: 10, lab: 0.6, qm: 'surface', qc: 1 },
+      { id: 'parq', label: 'Parquet contrecollé', sub: 'pièces de vie et chambres', unit: 'm²', pu: 51.43, lab: 0.45, qm: 'surface', qc: 0.72 },
+      { id: 'strat', label: 'Stratifié', unit: 'm²', pu: 27.14, lab: 0.5, qm: 'surface', qc: 0.72 },
+      { id: 'carr', label: 'Carrelage 60 × 60', sub: 'cuisine, salle de bain, entrée', unit: 'm²', pu: 60.71, lab: 0.55, qm: 'surface', qc: 0.2 },
     ]},
     { lot: 'Peinture et menuiseries intérieures', items: [
-      { id: 'peint', label: 'Préparation et peinture', sub: 'murs et plafonds, 2 couches', unit: 'm²', pu: 19.2, lab: 0.75, qm: 'surface', qc: 2.8 },
-      { id: 'portes', label: 'Portes intérieures', sub: 'bloc-porte et quincaillerie', unit: 'u', pu: 228, lab: 0.45, qm: 'pieces_units', qc: 1 },
-      { id: 'placard', label: 'Placards sur mesure', unit: 'ml', pu: 390, lab: 0.4, qm: 'units', qc: 2 },
-      { id: 'nett', label: 'Nettoyage de fin de chantier', unit: 'forfait', pu: 210, lab: 1, qm: 'units', qc: 1 },
+      { id: 'peint', label: 'Préparation et peinture', sub: 'murs et plafonds, 2 couches', unit: 'm²', pu: 22.86, lab: 0.75, qm: 'surface', qc: 2.8 },
+      { id: 'portes', label: 'Portes intérieures', sub: 'bloc-porte et quincaillerie', unit: 'u', pu: 271.43, lab: 0.45, qm: 'pieces_units', qc: 1 },
+      { id: 'placard', label: 'Placards sur mesure', unit: 'ml', pu: 464.29, lab: 0.4, qm: 'units', qc: 2 },
+      { id: 'nett', label: 'Nettoyage de fin de chantier', unit: 'forfait', pu: 250, lab: 1, qm: 'units', qc: 1 },
     ]},
   ];
 
@@ -207,9 +207,9 @@
     CATALOG, ITEMS, WHY, LOT_ICONS, lotIcon, PRESET, RULES, RULE_FIELDS, RULE_OPS, QTY, QTY_MODES, qtyFn, REGION, GAMME, PIECES, EAU_DEFAULT, zoneFromAddress,
     // Frais généraux, pilotage et aléas sont à zéro depuis le 29/09/2026.
     // Ils restent réglables dans le back-office (onglet Prix). Valeurs d'origine : marge 18 %, pilotage 3 %, frais généraux 8 %, aléas 100 %.
-    // Depuis le 30/09/2026 : marge de 40 % sur le prix de vente, et prix du catalogue exprimés en COÛT (anciens prix × 0,6).
-    // Le prix de vente d'une ligne = coût ÷ (1 − marge) : à 40 %, il retombe exactement sur l'ancien prix.
-    MARGE: 0.40,      // marge brute sur le prix de vente HT hors aléas
+    // Depuis le 30/09/2026 : les prix du catalogue sont des COÛTS et la marge s'ajoute au coût.
+    // Prix de vente d'une ligne = coût × (1 + marge). Marge par défaut 40 % : coût = ancien prix ÷ 1,4.
+    MARGE: 0.40,      // marge ajoutée au coût (0,40 = +40 %, 1 = prix doublé)
     PILOTAGE: 0,      // pilotage de chantier, sur les coûts directs
     FG: 0,            // frais généraux, sur les coûts directs
     ALEA: 0,          // part appliquée de la provision pour aléas calculée (0 = aucune, 1 = entière)
