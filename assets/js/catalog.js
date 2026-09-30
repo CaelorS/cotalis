@@ -231,6 +231,15 @@
 (function () {
   var C = (typeof window !== 'undefined' ? window : globalThis).COTALIA; if (!C || !C.ITEMS) return;
   ['dep_rev', 'dep_eq', 'benne', 'mur_np', 'mur_p', 'ragr', 'nett', 'colonne_elec', 'colonne_plomb', 'elec_cab'].forEach(function (id) { if (C.ITEMS[id]) C.ITEMS[id].nofin = true; });
+  /* Remplacements selon la finition : en économique, le sol proposé est du stratifié, pas du parquet contrecollé. */
+  C.SWAPS = [{ gamme: 'eco', from: 'parq', to: 'strat', label: 'Finition économique : stratifié à la place du parquet contrecollé' }];
+  C.applySwaps = function (works, S) {
+    (C.SWAPS || []).forEach(function (sw) {
+      var to = C.ITEMS[sw.to];
+      if (S.gamme === sw.gamme && works[sw.from] && to && !to.inactive) { delete works[sw.from]; works[sw.to] = 1; }
+    });
+    return works;
+  };
   /* Anciens ouvrages remplacés : une estimation enregistrée avant le découpage garde son contenu. */
   C.LEGACY_WORKS = { elec: ['tableau', 'elec_app', 'elec_cab'], plomb: [], tableaux_apt: ['tableau'] };   // plomb : ligne retirée, comprise dans salle de bain, WC et cuisine
   C.normIds = function (ids) { var out = []; (ids || []).forEach(function (id) { (C.LEGACY_WORKS[id] || [id]).forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); }); }); return out; };

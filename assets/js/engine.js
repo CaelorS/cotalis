@@ -135,7 +135,7 @@
     (C.RULES || []).forEach(r => { if (r.disabled || !ruleMatch(S, r)) return; (r.add || []).forEach(id => set.add(id)); (r.remove || []).forEach(id => set.delete(id)); });
     const works = {};
     set.forEach(id => { const it = C.ITEMS[id]; if (it && !it.inactive && (!it.only || it.only.includes(S.kind))) works[id] = 1; });
-    return works;
+    return C.applySwaps ? C.applySwaps(works, S) : works;
   }
   // Règles qui dépendent d'informations saisies après l'étape travaux (stratégie locative) : on ajoute, on ne retire jamais.
   function lateRules(S, field) {

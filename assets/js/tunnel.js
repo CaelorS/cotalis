@@ -206,7 +206,7 @@
     const err = validate();
     if (err) { showErr(esc(err)); return; }
     if (S.step === 'bien' && !S.worksTouched) S.works = C.preselect(S);
-    if (S.step === 'finition') { if (!S.gamme) S.gamme = 'std'; if (!S.stade) S.stade = 'etude'; fillForm(); }
+    if (S.step === 'finition') { if (!S.gamme) S.gamme = 'std'; if (!S.stade) S.stade = 'etude'; if (!S.worksTouched) S.works = C.preselect(S); else C.applySwaps(S.works, S); fillForm(); }
     if (S.step === 'acquisition') { const added = C.lateRules(S, 'strat'); if (added.length) S.autoAdded = (S.autoAdded || []).concat(added.filter(id => !(S.autoAdded || []).includes(id))); }
     if (S.step === 'contact') {
       if (!(await ensureAccount())) return;
@@ -315,6 +315,8 @@
     const k = b.dataset.choice, v = b.dataset.value;
     setPath(k, v);
     document.querySelectorAll(`.choice[data-choice="${k}"]`).forEach(x => x.classList.toggle('selected', x.dataset.value === v));
+    // la finition change les ouvrages proposés (stratifié en économique) : on refait la proposition, ou juste l'échange si le client a déjà retouché ses travaux
+    if (k === 'gamme') { if (!S.worksTouched) S.works = C.preselect(S); else C.applySwaps(S.works, S); lotsBuilt = false; }
     if (k === 'kind') {
       if (v === 'immeuble') { renderApts(); if (!S.niveaux) S.niveaux = 3; }
       S.eau = defaultEau(); S.qty = {};
@@ -443,13 +445,14 @@
   function updateLots() {
     if (!lotsBuilt) return;
     const R = C.compute(S);
-    R.lines.forEach(({ it, on, q, unitPrice, amount }) => {
+    // côté client, toujours le prix de vente : le coût est une donnée interne
+    R.lines.forEach(({ it, on, q, unitSell, sell }) => {
       const row = document.querySelector(`[data-item="${it.id}"]`); if (!row) return;
       row.classList.toggle('off', !on);
       const qi = row.querySelector('[data-q]');
       if (document.activeElement !== qi) qi.value = q;
-      row.querySelector('[data-pu]').textContent = eur(unitPrice) + (it.unit === 'forfait' ? '' : '/' + it.unit);
-      row.querySelector('[data-tot]').textContent = on ? eur(amount) : '—';
+      row.querySelector('[data-pu]').textContent = eur(unitSell) + (it.unit === 'forfait' ? '' : '/' + it.unit);
+      row.querySelector('[data-tot]').textContent = on ? eur(sell) : '—';
     });
     document.querySelectorAll('[data-lotsum]').forEach(el => { el.textContent = eur(R.lots[el.dataset.lotsum] || 0); });
   }
