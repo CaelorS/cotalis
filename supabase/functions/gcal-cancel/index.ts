@@ -2,7 +2,7 @@
 // et libère le dossier. Appelable par le client (projet + jeton) ou par un administrateur (dossier + session).
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { CORS, json, env, serviceClient, loadRules, grantFor, leadOf, Account, TZ } from "../_shared/google.ts";
-import { SITE, sendMail, layout, p, btn, esc, mailConfigured } from "../_shared/mail.ts";
+import { SITE, sendMail, layout, p, btn, esc, mailConfigured, callLine } from "../_shared/mail.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     await db.from("leads").update(patch).eq("id", lead.id);
     if (mailConfigured() && lead.email) {
       const lien = SITE() + "/estimation/?p=" + encodeURIComponent(lead.project_id ?? "");
-      await sendMail({ to: lead.email, subject: "Visite technique annulée · " + when, html: layout("Visite annulée", p("Bonjour " + esc(lead.prenom || "") + ", la visite technique prévue le <b>" + esc(when) + "</b> est annulée.") + p("Vous pouvez choisir un nouveau créneau à tout moment depuis votre page d'estimation.") + btn(lien + "#visite", "Choisir un autre créneau")), text: "La visite du " + when + " est annulée. Nouveau créneau : " + lien, leadId: lead.id, kind: "annulation" });
+      await sendMail({ to: lead.email, subject: "Visite technique annulée · " + when, html: layout("Visite annulée", p("Bonjour " + esc(lead.prenom || "") + ", la visite technique prévue le <b>" + esc(when) + "</b> est annulée.") + p("Vous pouvez choisir un nouveau créneau à tout moment depuis votre page d'estimation.") + btn(lien + "#visite", "Choisir un autre créneau") + callLine()), text: "La visite du " + when + " est annulée. Nouveau créneau : " + lien, leadId: lead.id, kind: "annulation" });
     }
     return json({ ok: true, removed, note });
   } catch (e) {

@@ -1,7 +1,7 @@
 // E-mails à l'envoi d'un dossier : estimation prête (client + équipe), demande de rappel (client + équipe).
 // Appelée par le tunnel avec le projet et son jeton ; un même mail n'est envoyé qu'une fois par dossier.
 import { CORS, json, leadOf } from "../_shared/google.ts";
-import { SITE, sendMail, teamEmails, alreadySent, layout, p, btn, kv, big, eur, esc, leadName, leadBien, mailConfigured } from "../_shared/mail.ts";
+import { SITE, sendMail, teamEmails, alreadySent, layout, p, btn, kv, big, eur, esc, leadName, leadBien, mailConfigured, callLine, PHONE } from "../_shared/mail.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -24,15 +24,15 @@ Deno.serve(async (req) => {
         p("Merci pour vos réponses. Voici l'estimation des travaux pour votre bien : <b>" + esc(bien) + "</b>.") +
         big(eur(lead.estimation_ttc), "travaux TTC, estimation centrale · fourchette de " + eur(lead.estimation_basse) + " à " + eur(lead.estimation_haute)) +
         p("Le détail par lot, les hypothèses et la synthèse de financement sont sur votre page d'estimation, que vous pouvez partager ou télécharger en PDF.") +
-        btn(link, "Voir mon estimation") + btn(link + "#visite", "Planifier la visite technique", false) +
+        btn(link, "Voir mon estimation") + btn(link + "#visite", "Planifier la visite technique", false) + callLine() +
         p("<span style=\"color:#7B8794;font-size:13.5px\">Estimation indicative établie sans visite. Un devis ferme est remis après visite technique.</span>"),
         "Estimation centrale " + eur(lead.estimation_ttc) + " TTC");
-      out = await sendMail({ to: lead.email, subject: "Votre estimation travaux Cotalia : " + eur(lead.estimation_ttc) + " TTC", html, text: `Votre estimation travaux : ${eur(lead.estimation_ttc)} TTC (fourchette ${eur(lead.estimation_basse)} à ${eur(lead.estimation_haute)}). Détail : ${link}`, leadId: lead.id, kind });
+      out = await sendMail({ to: lead.email, subject: "Votre estimation travaux Cotalia : " + eur(lead.estimation_ttc) + " TTC", html, text: `Votre estimation travaux : ${eur(lead.estimation_ttc)} TTC (fourchette ${eur(lead.estimation_basse)} à ${eur(lead.estimation_haute)}). Détail : ${link}. Une question ? ${PHONE()}`, leadId: lead.id, kind });
       if (team.length) await sendMail({ to: team, subject: "Nouvelle estimation · " + name + " · " + eur(lead.estimation_ttc), html: layout("Nouvelle estimation", kv([["Client", esc(name)], ["E-mail", esc(lead.email)], ["Téléphone", esc(lead.tel || "—")], ["Bien", esc(bien)], ["Adresse", esc(lead.adresse || "—")], ["Travaux TTC", eur(lead.estimation_ttc)], ["Financement", esc(lead.finance || "—")]]) + btn(admin, "Ouvrir le back-office") + btn(link, "Voir l'estimation", false)), leadId: lead.id, kind: "equipe" });
     } else {
       const html = layout(`Bien reçu${prenom ? ", " + esc(prenom) : ""}`,
         p("Votre demande de rappel est enregistrée. Un membre de l'équipe Cotalia vous appelle rapidement au <b>" + esc(lead.tel || "numéro indiqué") + "</b> pour affiner votre projet : <b>" + esc(bien) + "</b>.") +
-        p("En attendant, votre estimation reste consultable ici :") + btn(link, "Voir mon estimation"),
+        p("En attendant, votre estimation reste consultable ici :") + btn(link, "Voir mon estimation") + callLine(),
         "Demande de rappel enregistrée");
       out = await sendMail({ to: lead.email, subject: "Cotalia : votre demande de rappel est enregistrée", html, text: "Votre demande de rappel est enregistrée. Estimation : " + link, leadId: lead.id, kind });
       if (team.length) await sendMail({ to: team, subject: "Demande de rappel · " + name + " · " + (lead.tel || ""), html: layout("Demande de rappel", p("<b>" + esc(name) + "</b> souhaite être rappelé.") + kv([["Téléphone", esc(lead.tel || "—")], ["E-mail", esc(lead.email)], ["Bien", esc(bien)], ["Travaux TTC", eur(lead.estimation_ttc)]]) + btn(admin, "Ouvrir le back-office")), leadId: lead.id, kind: "equipe" });

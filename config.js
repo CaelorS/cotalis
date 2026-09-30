@@ -5,4 +5,5 @@ window.COTALIA_CONFIG = {
   supabaseUrl: 'https://yjmeskpeyikivucnykqa.supabase.co',
   supabaseAnonKey: 'sb_publishable_AVyWpYpT-3ZorLHp1tcHcA_xAYJPCff',  // clé publiable, faite pour être dans le site
   contactEmail: '',     // adresse affichée en pied de page, ex. contact@cotalia.fr
+  contactPhone: '+33 7 70 07 95 84',   // numéro proposé au client : fenêtre d'accueil, rapport, PDF
 };

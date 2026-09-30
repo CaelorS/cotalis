@@ -1,7 +1,7 @@
 // Réservation d'une visite technique : crée le rendez-vous et les blocs de trajet dans l'agenda attribué,
 // invite le client, met le dossier en « Visite planifiée ».
 import { CORS, json, env, TZ, serviceClient, loadRules, offersFor, leadOf, parisParts, label } from "../_shared/google.ts";
-import { SITE, sendMail, layout, p, btn, kv, icsFor, esc, leadBien, mailConfigured } from "../_shared/mail.ts";
+import { SITE, sendMail, layout, p, btn, kv, icsFor, esc, leadBien, mailConfigured, callLine } from "../_shared/mail.ts";
 
 const KIND: Record<string, string> = { appart: "Appartement", maison: "Maison", immeuble: "Immeuble" };
 const fmt = (d: Date) => new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(d);
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
         p("Bonjour " + esc(lead.prenom || "") + ", rendez-vous est pris pour la visite technique de votre bien.") +
         kv([["Date", esc(fmt(at))], ["Adresse", esc(lead.adresse || "—")], ["Avec", esc(label(offer.account))], ["Durée", "environ " + rules.duration + " min"]]) +
         p("Le fichier joint ajoute la visite à votre agenda. Pour la déplacer ou l'annuler, passez par votre page d'estimation.") +
-        btn(lien, "Voir mon estimation") + btn(gcal, "Ajouter à Google Agenda", false),
+        btn(lien, "Voir mon estimation") + btn(gcal, "Ajouter à Google Agenda", false) + callLine(),
         "Visite le " + fmt(at));
       await sendMail({ to: lead.email, subject: "Visite technique confirmée · " + fmt(at), html, text: `Visite technique confirmée le ${fmt(at)} à ${lead.adresse ?? ""}, avec ${label(offer.account)}. Estimation : ${lien}`, attachments: [{ filename: "visite-cotalia.ics", content: icsFor({ uid: "visite-" + project_id + "@cotalia.fr", start: at, end, title, location: lead.adresse ?? "", description: txt }) }], leadId: lead.id, kind: "visite" });
     }

@@ -1014,3 +1014,12 @@ body.locked .lot-head .sum { display: none; }   /* sous-totaux masqués tant que
 .calrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; padding-top: 12px; border-top: 1px solid var(--line-2); }
 .calrow .hint { margin-right: 2px; }
 .calrow .btn { text-decoration: none; }
+
+/* numéro à appeler : rapport, PDF, fenêtre d'accueil */
+.callus { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 15px; color: var(--ink-2); }
+.callus svg { width: 17px; height: 17px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.callus a { color: var(--accent); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.callus a:hover { text-decoration: underline; }
+.wbox .w-phone { text-align: center; font-size: 15px; color: var(--ink-2); margin: -2px 0 0; }
+.wbox .w-phone a { color: var(--accent); font-weight: 600; text-decoration: none; white-space: nowrap; }
+@media print { .callus { color: #333; } .callus a { color: #000; } }

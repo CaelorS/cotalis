@@ -3,6 +3,8 @@ import { env, serviceClient, TZ } from "./google.ts";
 
 export const SITE = () => env("SITE_URL") || "https://cotalia.fr";
 export const mailConfigured = () => !!env("RESEND_API_KEY");
+export const PHONE = () => env("MAIL_PHONE") || "+33 7 70 07 95 84";
+export const callLine = () => `<p style="margin:14px 0 0;padding:12px 14px;background:#F3F5F8;border-radius:6px;font-size:15px;line-height:1.5;color:#2B3642">Une question ? Appelez-nous au <a href="tel:${PHONE().replace(/[^+\d]/g, "")}" style="color:#2457A6;font-weight:700;text-decoration:none;white-space:nowrap">${PHONE()}</a></p>`;
 export const eur = (v: number) => Math.round(v || 0).toLocaleString("fr-FR") + " €";
 export const fmtDate = (d: Date) => new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(d);
 export const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
