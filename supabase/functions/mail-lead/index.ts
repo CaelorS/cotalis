@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     const name = leadName(lead), prenom = lead.prenom || "", bien = leadBien(lead);
     const link = SITE() + "/estimation/?p=" + encodeURIComponent(project_id);
     const admin = SITE() + "/admin/";
-    const team = await teamEmails();
+    const team = lead.kind === "test" ? [] : await teamEmails();   // un dossier de test ne dérange pas l'équipe
     let out;
     if (kind === "estimation") {
       const html = layout(`Votre estimation est prête${prenom ? ", " + esc(prenom) : ""}`,
