@@ -371,7 +371,7 @@
       <td><input type="text" data-f="label" value="${esc(it.label)}" class="wide"><input type="text" data-f="sub" value="${esc(it.sub || '')}" class="wide sub" placeholder="précision"></td>
       <td>${esc(it.unit)}</td>
       <td class="r"><input type="number" step="0.01" min="0" data-f="pu" value="${it.pu}"></td>
-      <td class="r hint num">${d.pu}</td>
+      <td class="r hint num">${typeof d.pu === 'number' ? d.pu.toLocaleString('fr-FR') : d.pu}</td>
       <td class="r"><input type="number" step="0.1" min="0" max="95" data-f="marge" data-m="${mEff(it)}" class="${it.marge == null ? 'dflt' : ''}" value="${fmtM(mEff(it))}" aria-label="Marge en pourcentage"></td>
       <td class="r"><input type="number" step="0.01" min="0" data-f="sell" value="${r2(it.pu / (1 - mEff(it)))}" aria-label="Prix de vente HT"></td>
       <td class="r"><input type="number" step="5" min="0" max="100" data-f="lab" value="${Math.round(it.lab * 100)}"></td>
