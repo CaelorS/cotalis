@@ -4,7 +4,7 @@
   'use strict';
 
   // pu : prix de référence HT par unité (€) ; lab : part main-d'œuvre ; tva : 10 par défaut, 5.5 pour l'amélioration énergétique.
-  // gammes : prix propres à une finition, { eco|std|prem: { pu: coût HT, marge } }. Ils remplacent le coût de base et le coefficient de finition.
+  // gammes : par finition, { eco|std|prem: { pu: coût HT, marge, sub } }. pu et marge remplacent le coût de base et le coefficient de finition ; sub remplace la précision affichée.
   // qty(s) reçoit s.surface, s.pieces, s.eau, s.units (nombre de logements : 1 sauf immeuble).
   const CATALOG = [
     { lot: 'Démolition et dépose', items: [
@@ -53,7 +53,7 @@
     ] },
     { lot: 'Salle de bain et WC', items: [
       { id: 'sdb', label: 'Salle de bain complète', sub: 'douche à l\'italienne, meuble vasque, faïence, WC · réseau eau et évacuations compris', unit: 'forfait', pu: 5571.43, lab: 0.55, qm: 'units', qc: 1, gammes: { eco: { pu: 3500, marge: 5000 / 1.1 / 3500 - 1 } } },   // éco : 5 000 € TTC
-      { id: 'wc', label: 'WC séparé', sub: 'cuvette suspendue, lave-mains, faïence · réseau eau et évacuations compris', unit: 'forfait', pu: 1142.86, lab: 0.55, qm: 'eau_minus_units', qc: 1 },
+      { id: 'wc', label: 'WC séparé', sub: 'cuvette à poser, lave-mains, faïence · réseau eau et évacuations compris', unit: 'forfait', pu: 1142.86, lab: 0.55, qm: 'eau_minus_units', qc: 1, gammes: { prem: { sub: 'cuvette suspendue, lave-mains, faïence · réseau eau et évacuations compris' } } },   // WC suspendu en premium seulement
     ]},
     { lot: 'Cuisine', items: [
       { id: 'cuis', label: 'Cuisine équipée', sub: 'meubles, plan de travail, électroménager, pose · réseau eau et évacuations compris', unit: 'forfait', pu: 4642.86, lab: 0.3, qm: 'units', qc: 1, gammes: { eco: { pu: 1300, marge: 3500 / 1.1 / 1300 - 1 } } },   // éco : 3 500 € TTC
@@ -61,8 +61,9 @@
     { lot: 'Sols', items: [
       { id: 'ragr', label: 'Ragréage', unit: 'm²', pu: 10, lab: 0.6, qm: 'surface', qc: 1 },
       { id: 'parq', label: 'Parquet contrecollé', sub: 'pièces de vie et chambres', unit: 'm²', pu: 51.43, lab: 0.45, qm: 'surface', qc: 0.72 },
-      { id: 'strat', label: 'Stratifié', unit: 'm²', pu: 27.14, lab: 0.5, qm: 'surface', qc: 0.72 },
-      { id: 'carr', label: 'Carrelage 60 × 60', sub: 'cuisine, salle de bain, entrée', unit: 'm²', pu: 60.71, lab: 0.55, qm: 'surface', qc: 0.2 },
+      { id: 'strat', label: 'Stratifié ou linoléum', sub: 'pièces de vie et chambres', unit: 'm²', pu: 27.14, lab: 0.5, qm: 'surface', qc: 0.72 },
+      { id: 'pvc', label: 'Lames PVC', sub: 'pièces de vie et chambres', unit: 'm²', pu: 40, marge: 0.875, lab: 0.45, qm: 'surface', qc: 0.72 },
+      { id: 'carr', label: 'Carrelage', sub: 'cuisine, salle de bain, entrée', unit: 'm²', pu: 60.71, lab: 0.55, qm: 'surface', qc: 0.2 },
     ]},
     { lot: 'Peinture et menuiseries intérieures', items: [
       { id: 'peint', label: 'Préparation et peinture', sub: 'murs et plafonds, 2 couches', unit: 'm²', pu: 22.86, lab: 0.75, qm: 'surface', qc: 2.8 },
@@ -122,7 +123,8 @@
     cuis: "Une cuisine équipée avec électroménager : pour un meublé, c'est ce que le locataire paie sans discuter. Et ça photographie bien dans l'annonce. Arrivées d'eau et évacuations de la cuisine comprises.",
     ragr: "Avant un sol neuf, on met l'ancien à niveau. Sans ragréage, le parquet grince et le carrelage se fend.",
     parq: "Du parquet dans les pièces de vie : chaleureux, durable, valorisant. Le contrecollé donne le rendu du massif pour moins cher.",
-    strat: "Le stratifié imite le bois, se pose vite et résiste bien. Le choix malin pour un budget serré ou une location qui tourne beaucoup.",
+    strat: "Stratifié ou linoléum : l'aspect du bois ou un sol souple, vite posé et résistant. Le choix malin pour un budget serré ou une location qui tourne beaucoup.",
+    pvc: "Les lames PVC clipsables imitent le parquet, ne craignent pas l'eau et s'entretiennent d'un coup de serpillière. Un bon équilibre entre prix, rendu et durée de vie.",
     carr: "Du carrelage dans les pièces humides : cuisine, salle de bain, entrée. Il ne craint ni l'eau ni les années.",
     peint: "Préparation et deux couches de peinture, murs et plafonds : le poste qui transforme visuellement le logement pour le moins cher. On ne s'en passe jamais.",
     portes: "Des portes intérieures neuves, alignées et qui ferment : le détail qui fait sérieux et cohérent avec le reste des finitions.",
@@ -232,15 +234,21 @@
 (function () {
   var C = (typeof window !== 'undefined' ? window : globalThis).COTALIA; if (!C || !C.ITEMS) return;
   ['dep_rev', 'dep_eq', 'benne', 'mur_np', 'mur_p', 'ragr', 'nett', 'colonne_elec', 'colonne_plomb', 'elec_cab'].forEach(function (id) { if (C.ITEMS[id]) C.ITEMS[id].nofin = true; });
-  /* Remplacements selon la finition : en économique, le sol proposé est du stratifié, pas du parquet contrecollé. */
-  C.SWAPS = [{ gamme: 'eco', from: 'parq', to: 'strat', label: 'Finition économique : stratifié à la place du parquet contrecollé' }];
+  /* Ouvrages qui dépendent de la finition. Sol des pièces de vie : stratifié ou linoléum en économique, lames PVC en standard, parquet contrecollé en premium.
+     Dans les ouvrages proposés par état, « parq » désigne ce sol : il est remplacé par celui de la finition choisie (standard tant qu'elle n'est pas choisie). */
+  C.GAMME_ALT = [{ eco: 'strat', std: 'pvc', prem: 'parq' }];
   C.applySwaps = function (works, S) {
-    (C.SWAPS || []).forEach(function (sw) {
-      var to = C.ITEMS[sw.to];
-      if (S.gamme === sw.gamme && works[sw.from] && to && !to.inactive) { delete works[sw.from]; works[sw.to] = 1; }
+    var g = S.gamme || 'std';
+    (C.GAMME_ALT || []).forEach(function (alt) {
+      var to = alt[g], it = C.ITEMS[to]; if (!it || it.inactive) return;
+      var others = Object.keys(alt).map(function (k) { return alt[k]; }).filter(function (id) { return id !== to && works[id]; });
+      if (!others.length) return;
+      others.forEach(function (id) { delete works[id]; }); works[to] = 1;
     });
     return works;
   };
+  // précision affichée d'un ouvrage : celle de la finition si elle existe, sinon la précision générale
+  C.subOf = function (it, gamme) { var g = it.gammes && it.gammes[gamme || 'std']; return (g && g.sub) || it.sub || ''; };
   /* Anciens ouvrages remplacés : une estimation enregistrée avant le découpage garde son contenu. */
   C.LEGACY_WORKS = { elec: ['tableau', 'elec_app', 'elec_cab'], plomb: [], tableaux_apt: ['tableau'] };   // plomb : ligne retirée, comprise dans salle de bain, WC et cuisine
   C.normIds = function (ids) { var out = []; (ids || []).forEach(function (id) { (C.LEGACY_WORKS[id] || [id]).forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); }); }); return out; };

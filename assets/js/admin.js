@@ -464,7 +464,7 @@
   const GAMS = [['eco', 'Économique'], ['std', 'Standard'], ['prem', 'Premium']];
   const tvaOf = it => it.tva === 5.5 ? 0.055 : 0.10;
   const gamOn = o => !!o && o.pu != null && o.pu !== '' && isFinite(+o.pu);
-  const gamCount = it => GAMS.filter(([g]) => gamOn((it.gammes || {})[g])).length;
+  const gamCount = it => GAMS.filter(([g]) => { const o = (it.gammes || {})[g]; return gamOn(o) || !!(o && o.sub); }).length;   // finitions qui ont un prix ou une précision propres
   const gamDefault = (it, g) => r2(it.pu * (it.lab + (1 - it.lab) * (it.nofin ? 1 : C.GAMME[g][0])));   // coût que donne le coefficient, hors zone et complexité
   function gamHtml(it) {
     const t = 1 + tvaOf(it), unit = it.unit === 'forfait' ? '' : ' /' + esc(it.unit);
@@ -477,6 +477,7 @@
         <label>Marge %<input type="number" step="0.1" min="0" data-gf="marge" data-m="${on ? m : ''}" value="${on ? fmtM(m) : ''}" placeholder="${fmtM(dm)}"></label>
         <label>Vente HT<input type="number" step="0.01" min="0" data-gf="sell" value="${on ? sellOf(+o.pu, m) : ''}" placeholder="${sellOf(dc, dm)}"></label>
         <label>Vente TTC<input type="number" step="0.01" min="0" data-gf="ttc" value="${on ? r2(+o.pu * (1 + m) * t) : ''}" placeholder="${r2(dc * (1 + dm) * t)}"></label>
+        <label class="gsub">Précision affichée au client<input type="text" data-gf="sub" value="${esc((o && o.sub) || '')}" placeholder="${esc(it.sub || 'comme la ligne')}"></label>
       </div>`; }).join('') + '</div>';
   }
   const gamRow = it => `<tr class="gamrow" data-gamrow="${it.id}"><td></td><td colspan="12">${gamHtml(it)}</td></tr>`;
@@ -498,14 +499,19 @@
     el.classList.add('on'); el.querySelector('.hint').textContent = 'prix propre';
   }
   function clearGam(el) {
-    el.querySelectorAll('input').forEach(i => { i.value = ''; }); const mg = el.querySelector('[data-gf="marge"]'); mg.dataset.m = ''; mg.classList.remove('neg');
+    el.querySelectorAll('input[type="number"]').forEach(i => { i.value = ''; }); const mg = el.querySelector('[data-gf="marge"]'); mg.dataset.m = ''; mg.classList.remove('neg');
     el.classList.remove('on'); const it = C.ITEMS[el.closest('.gams').dataset.gams]; el.querySelector('.hint').textContent = 'coefficient ' + String(it && it.nofin ? 1 : C.GAMME[el.dataset.g][0]).replace('.', ',');
   }
   // lit les prix par gamme affichés ; si le bloc n'est pas ouvert, garde ceux de l'ouvrage
   function gamsOf(root, it) {
     const box = root && root.querySelector('.gams'); if (!box) return it.gammes || {};
     const out = {};
-    box.querySelectorAll('.gam').forEach(el => { const pu = el.querySelector('[data-gf="pu"]'), mg = el.querySelector('[data-gf="marge"]'); if (pu.value === '' || !isFinite(+pu.value) || +pu.value < 0) return; out[el.dataset.g] = { pu: +pu.value, marge: mg.dataset.m ? Math.max(0, +mg.dataset.m) : mEff(it) }; });
+    box.querySelectorAll('.gam').forEach(el => {
+      const pu = el.querySelector('[data-gf="pu"]'), mg = el.querySelector('[data-gf="marge"]'), sb = el.querySelector('[data-gf="sub"]'), o = {};
+      if (pu.value !== '' && isFinite(+pu.value) && +pu.value >= 0) { o.pu = +pu.value; o.marge = mg.dataset.m ? Math.max(0, +mg.dataset.m) : mEff(it); }
+      if (sb && sb.value.trim()) o.sub = sb.value.trim();
+      if (Object.keys(o).length) out[el.dataset.g] = o;
+    });
     return out;
   }
   const gamRowOf = tr => { const n = tr.nextElementSibling; return n && n.matches('tr[data-gamrow]') ? n : null; };
@@ -517,7 +523,7 @@
     const c = e.target.closest('[data-gclear]');
     if (c) { clearGam(c.closest('.gam')); queueSave(c, 0); }
   });
-  document.addEventListener('input', e => { const gf = e.target.dataset && e.target.dataset.gf, el = gf && e.target.closest('.gam'); if (el) relinkGam(el, gf, C.ITEMS[el.closest('.gams').dataset.gams]); });
+  document.addEventListener('input', e => { const gf = e.target.dataset && e.target.dataset.gf, el = gf && gf !== 'sub' && e.target.closest('.gam'); if (el) relinkGam(el, gf, C.ITEMS[el.closest('.gams').dataset.gams]); });
 
   function relinkPrice(pu, mg, sl, changed) {
     const cost = +pu.value;

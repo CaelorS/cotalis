@@ -206,7 +206,7 @@
     const err = validate();
     if (err) { showErr(esc(err)); return; }
     if (S.step === 'bien' && !S.worksTouched) S.works = C.preselect(S);
-    if (S.step === 'finition') { if (!S.gamme) S.gamme = 'std'; if (!S.stade) S.stade = 'etude'; if (!S.worksTouched) S.works = C.preselect(S); else C.applySwaps(S.works, S); fillForm(); }
+    if (S.step === 'finition') { if (!S.gamme) S.gamme = 'std'; if (!S.stade) S.stade = 'etude'; if (!S.worksTouched) S.works = C.preselect(S); fillForm(); }
     if (S.step === 'acquisition') { const added = C.lateRules(S, 'strat'); if (added.length) S.autoAdded = (S.autoAdded || []).concat(added.filter(id => !(S.autoAdded || []).includes(id))); }
     if (S.step === 'contact') {
       if (!(await ensureAccount())) return;
@@ -315,7 +315,7 @@
     const k = b.dataset.choice, v = b.dataset.value;
     setPath(k, v);
     document.querySelectorAll(`.choice[data-choice="${k}"]`).forEach(x => x.classList.toggle('selected', x.dataset.value === v));
-    // la finition change les ouvrages proposés (stratifié en économique) : on refait la proposition, ou juste l'échange si le client a déjà retouché ses travaux
+    // la finition change les ouvrages proposés (sol : stratifié, lames PVC ou parquet) : on refait la proposition, ou juste l'échange du sol si le client a déjà retouché ses travaux
     if (k === 'gamme') { if (!S.worksTouched) S.works = C.preselect(S); else C.applySwaps(S.works, S); lotsBuilt = false; }
     if (k === 'kind') {
       if (v === 'immeuble') { renderApts(); if (!S.niveaux) S.niveaux = 3; }
@@ -417,7 +417,7 @@
           ${items.map(it => `
             <div class="item" data-item="${it.id}">
               <input type="checkbox" id="w-${it.id}" data-w="${it.id}">
-              <label class="lbl" for="w-${it.id}" data-why="${it.id}">${esc(it.label)}${it.tva === 5.5 ? '<span class="tva55">TVA 5,5 %</span>' : ''}${C.WHY && C.WHY[it.id] ? `<button type="button" class="whybtn" data-whybtn="${it.id}" aria-label="À quoi ça sert ?">?</button>` : ''}<small>${it.sub ? esc(it.sub) + ' · ' : ''}<span class="pu num" data-pu="${it.id}"></span></small></label>
+              <label class="lbl" for="w-${it.id}" data-why="${it.id}">${esc(it.label)}${it.tva === 5.5 ? '<span class="tva55">TVA 5,5 %</span>' : ''}${C.WHY && C.WHY[it.id] ? `<button type="button" class="whybtn" data-whybtn="${it.id}" aria-label="À quoi ça sert ?">?</button>` : ''}<small>${C.subOf(it, S.gamme) ? esc(C.subOf(it, S.gamme)) + ' · ' : ''}<span class="pu num" data-pu="${it.id}"></span></small></label>
               <input type="number" min="0" step="1" data-q="${it.id}" inputmode="numeric" aria-label="Quantité ${esc(it.label)}">
               <span class="u">${it.unit}</span>
               <span class="tot num" data-tot="${it.id}"></span>
@@ -558,7 +558,7 @@
     const devisRows = C.CATALOG.map(l => {
       const rows = R.lines.filter(x => x.on && x.it.lotName === l.lot && x.amount > 0);
       if (!rows.length) return '';
-      return `<tr class="lot"><td colspan="3">${C.lotIcon(l.lot)}${esc(l.lot)}</td><td class="r num">${eur(R.lots[l.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}${x.it.sub ? `<small>${esc(x.it.sub)}</small>` : ''}</td><td class="r num">${fmt(x.q)}&nbsp;${x.it.unit}</td><td class="r num">${eur(x.unitSell)}${x.it.unit === 'forfait' ? '' : '/' + x.it.unit}</td><td class="r num">${eur(x.sell)}</td></tr>`).join('');
+      return `<tr class="lot"><td colspan="3">${C.lotIcon(l.lot)}${esc(l.lot)}</td><td class="r num">${eur(R.lots[l.lot])}</td></tr>` + rows.map(x => `<tr><td>${esc(x.it.label)}${C.subOf(x.it, S.gamme) ? `<small>${esc(C.subOf(x.it, S.gamme))}</small>` : ''}</td><td class="r num">${fmt(x.q)}&nbsp;${x.it.unit}</td><td class="r num">${eur(x.unitSell)}${x.it.unit === 'forfait' ? '' : '/' + x.it.unit}</td><td class="r num">${eur(x.sell)}</td></tr>`).join('');
     }).join('');
     const fin = (S.finance === 'oui' || S.finance === 'renta') && R.total > 0;
     const bank = fin ? [

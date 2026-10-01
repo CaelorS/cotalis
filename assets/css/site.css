@@ -1113,6 +1113,8 @@ input.neg { color: #C0392B !important; border-color: #C0392B; }
 .gam label { display: block; font-size: 11.5px; color: var(--ink-3); font-weight: 500; }
 .gam label input { display: block; width: 100% !important; min-width: 0; margin-top: 3px; }
 .gam input[data-gf="ttc"], .gam input[data-gf="sell"] { font-weight: 600; }
+.gam label.gsub { grid-column: 1 / -1; }
+.gam label.gsub input { text-align: left; }
 .gam input::placeholder { color: var(--ink-3); opacity: .6; font-weight: 400; }
 @media (max-width: 1180px) { .gams { grid-template-columns: 1fr; } }
 #drawer .gams { grid-template-columns: 1fr; }

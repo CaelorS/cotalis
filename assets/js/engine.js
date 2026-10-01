@@ -162,7 +162,7 @@
     if (w.mur_p) A.push(['warn', 'Mur porteur', 'Étude structure, accord de la copropriété et bureau de contrôle : 4 à 8 semaines de délai supplémentaire, déjà ajoutées à la durée.']);
     if (S.copro === 'oui' && w.fen) A.push(['info', 'Fenêtres en copropriété', 'Le remplacement doit respecter le cahier des charges des façades ou obtenir un vote en assemblée générale.']);
     if (S.kind === 'appart' && S.ascenseur === 'non' && +S.etage >= 2) A.push(['info', 'Logistique sans ascenseur', fmt(+S.etage) + 'ᵉ étage sans ascenseur : monte-matériaux ou portage manuel, majoration incluse dans le coefficient de complexité.']);
-    if (w.parq && w.strat) A.push(['warn', 'Deux revêtements sur la même surface', 'Parquet et stratifié sont tous deux retenus : corrigez les quantités pour éviter un double compte.']);
+    if (!!w.parq + !!w.strat + !!w.pvc > 1) A.push(['warn', 'Deux revêtements sur la même surface', 'Plusieurs sols sont retenus pour les mêmes pièces : corrigez les quantités pour éviter un double compte.']);
     if (w.ballon && w.thermo) A.push(['warn', 'Deux chauffe-eau', 'Chauffe-eau électrique et thermodynamique sont retenus ensemble. Un seul est nécessaire.']);
     if (w.elec_app && !w.elec_cab) A.push(['info', 'Appareillage sans reprise des circuits', 'Prises et interrupteurs neufs sur un câblage ancien : à valider à la visite technique.']);
     if (R.share55 > 0 && R.ancien) A.push(['good', 'TVA réduite appliquée', Math.round(R.share55 * 100) + ' % des coûts directs relèvent de l\'amélioration énergétique à 5,5 %. Une attestation simplifiée signée sera demandée avec le devis.']);
