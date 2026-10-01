@@ -50,7 +50,8 @@ Deno.serve(async (req) => {
     const rank = ["nouveau", "contacte", "relance", "visite", "devis", "signe", "perdu"];
     const p = parisParts(at);
     const patch: Record<string, unknown> = { visite_at: at.toISOString(), visite_event: main.id, visite_with: offer.account.id, next_action: `${p.y}-${String(p.m).padStart(2, "0")}-${String(p.d).padStart(2, "0")}` };
-    if (rank.indexOf(lead.status ?? "nouveau") < rank.indexOf("visite")) patch.status = "visite";
+    const cur = rank.indexOf(lead.status ?? "nouveau");   // un statut hors parcours (test) est conservé
+    if (cur >= 0 && cur < rank.indexOf("visite")) patch.status = "visite";
     if (!lead.assigned_to && offer.account.user_id) patch.assigned_to = offer.account.user_id;
     await serviceClient().from("leads").update(patch).eq("id", lead.id);
     // confirmation à la marque Cotalia, avec le fichier d'agenda ; l'invitation Google part en parallèle

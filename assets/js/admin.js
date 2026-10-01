@@ -7,7 +7,7 @@
   const eur = v => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Math.round(v || 0));
   const dt = v => v ? new Date(v).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '';
   const KIND = { appart: 'Appartement', maison: 'Maison', immeuble: 'Immeuble' };
-  const STATUS = [['nouveau', 'Nouveau'], ['contacte', 'Contacté'], ['relance', 'Relancé'], ['visite', 'Visite planifiée'], ['devis', 'Devis envoyé'], ['signe', 'Signé'], ['perdu', 'Perdu']];
+  const STATUS = [['nouveau', 'Nouveau'], ['contacte', 'Contacté'], ['relance', 'Relancé'], ['visite', 'Visite planifiée'], ['devis', 'Devis envoyé'], ['signe', 'Signé'], ['perdu', 'Perdu'], ['test', 'Test']];
   const STATUS_LABEL = Object.fromEntries(STATUS);
   const FIN = { oui: 'Accompagné', renta: 'Rentabilité seule', non: 'Sans rentabilité' };
   const EPOQUE = { '1930': 'avant 1948', '1960': '1948-1974', '1982': '1975 et après', '2000': '1975 et après', '2016': '1975 et après', '2025': 'neuf' };
@@ -91,7 +91,7 @@
   const modifPill = l => (versionCount[l.project_id] || 0) > 1 ? `<span class="pill" title="Le client a modifié son estimation">modifié · v${versionCount[l.project_id]}</span>` : '';
   const selected = new Set(); let leadRows = [];   // sélection pour les actions en masse, lignes affichées
   const STATUS_RANK = Object.fromEntries(STATUS.map((s, i) => [s[0], i]));
-  const rappelFait = l => (STATUS_RANK[l.status || 'nouveau'] || 0) >= STATUS_RANK.contacte;   // rappel demandé et client contacté depuis
+  const rappelFait = l => l.status !== 'test' && (STATUS_RANK[l.status || 'nouveau'] || 0) >= STATUS_RANK.contacte;   // rappel demandé et client contacté depuis
   const adminName = id => { const a = admins.find(x => x.id === id); return a ? (a.prenom || a.email) : ''; };
   const SORTERS = {
     date: l => l.created_at || '',
@@ -723,7 +723,7 @@
   }
   function renderScoring() {
     const fl = $('sc-letter').value, fs = $('sc-status').value;
-    let rows = leads.filter(l => l.kind !== 'test' && l.kind !== 'rappel' && !l.archived_at);
+    let rows = leads.filter(l => l.kind !== 'test' && l.status !== 'test' && l.kind !== 'rappel' && !l.archived_at);   // un dossier au statut Test n'est pas un prospect
     if (fs !== 'all') rows = rows.filter(l => !['signe', 'perdu'].includes(l.status));
     const scored = rows.map(l => ({ l, sc: scoreLead(l) }));
     let list = fl ? scored.filter(x => x.sc.letter === fl) : scored;
