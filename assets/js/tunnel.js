@@ -577,6 +577,11 @@
       S.visite === 'oui' ? 'Visite technique réalisée : métrés et réseaux vérifiés sur place.' : 'Aucune visite technique : quantités déduites de la surface et de la typologie.',
       `Fourchette de ±${pct(R.spread, 0)} tant que la visite technique n'a pas eu lieu.`,
     ];
+    // matériaux et équipements de la finition choisie, pour les ouvrages retenus : illustre le rapport et le PDF
+    const fiches = C.fichesFor ? C.fichesFor(S) : [];
+    const fichesHtml = fiches.length ? `<div class="box fiches"><h3>Matériaux et équipements · finition ${esc(C.GAMME[S.gamme][1])}</h3>
+        <p class="fnote">Produits prévus pour votre projet, identiques ou équivalents. Teintes, dimensions et compositions sont ajustées après la visite technique.</p>
+        <div class="fgrid">${fiches.map(fi => `<article class="fiche"><img src="${fi.img}" alt="${esc(fi.title)}"><div><h4>${esc(fi.title)}</h4><p>${esc(fi.intro)}</p><ul>${fi.pts.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div></article>`).join('')}</div></div>` : '';
     const who = viewer ? `Estimation partagée par ${esc(c.prenom)} ${esc(c.nom)}` : `Préparée pour ${esc(c.prenom)} ${esc(c.nom)}`;
     $('report').innerHTML = `
       <div class="print-brand"><svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><rect x="4" y="8" width="92" height="13" fill="#7FA8E8" opacity="0.28"/><rect x="79" y="21" width="13" height="72" fill="#7FA8E8" opacity="0.28"/><rect x="56" y="8" width="36" height="4" fill="#E4B33B"/><rect x="88" y="58" width="4" height="35" fill="#E4B33B"/><path d="M65,32.7 A30,30 0 1 0 65,71.3" fill="none" stroke="#2457A6" stroke-width="18"/></svg><b style="font-family:'Barlow Condensed',sans-serif;font-size:22px;letter-spacing:.12em">COTALIA</b><span style="color:#666;font-size:12px">Estimation indicative · n'est pas un devis${PHONE ? ' · ' + esc(PHONE) : ''}</span></div>
@@ -596,6 +601,7 @@
         </div>
       </div>
       <div class="box"><h3>Détail par lot</h3><div style="overflow-x:auto"><table class="devis"><thead><tr><th>Ouvrage</th><th class="r">Quantité</th><th class="r">Prix unitaire HT</th><th class="r">Montant HT</th></tr></thead><tbody>${devisRows}</tbody><tfoot>${R.aleaAmt > 0.5 ? `<tr><td colspan="3">Provision pour aléas (${pct(R.alea, 0)})</td><td class="r num">${eur(R.aleaAmt)}</td></tr>` : ''}<tr class="tot"><td colspan="3">Total HT</td><td class="r num">${eur(R.ht)}</td></tr><tr><td colspan="3">${tvaLabel(R)}</td><td class="r num">${eur(R.tva)}</td></tr><tr class="tot ttc"><td colspan="3">Total TTC</td><td class="r num">${eur(R.ttc)}</td></tr></tfoot></table></div></div>
+      ${fichesHtml}
       ${fin ? `<div class="box"><h3>${S.finance === 'oui' ? 'Synthèse pour la banque' : 'Synthèse du projet'}</h3><table class="kv">${bank.map(b => `<tr${b[2] ? ' class="total"' : ''}><td>${esc(b[0])}</td><td class="num">${esc(b[1])}</td></tr>`).join('')}</table><p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">${S.finance === 'oui' ? 'Estimation indicative à distinguer du devis contractuel. Un courtier Cotalia reprend contact pour instruire le dossier.' : 'Estimation indicative à distinguer du devis contractuel. Vous pouvez la joindre à votre dossier de financement.'}</p></div>` : ''}
       <div class="two">
         <div class="box"><h3>Hypothèses retenues</h3><ul class="plain">${hyp.map(h => `<li>${esc(h)}</li>`).join('')}</ul></div>

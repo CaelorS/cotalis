@@ -1120,3 +1120,26 @@ input.neg { color: #C0392B !important; border-color: #C0392B; }
 @media (max-width: 1180px) { .gams { grid-template-columns: 1fr; } }
 #drawer .gams { grid-template-columns: 1fr; }
 #drawer .gam { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ---------- fiches matériaux et équipements (rapport et PDF) ---------- */
+.fiches .fnote { color: var(--ink-3); font-size: 13px; margin: -4px 0 14px; }
+.fgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.fiche { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 14px; align-items: start; border: 1px solid var(--line-2); border-radius: 6px; padding: 12px; background: var(--surface); }
+.fiche img { width: 128px; height: 128px; object-fit: cover; border-radius: 4px; background: #fff; display: block; }
+.fiche h4 { font-size: 15px; margin: 0 0 4px; color: var(--accent); }
+.fiche p { margin: 0 0 6px; font-size: 13px; color: var(--ink-2); }
+.fiche ul { margin: 0; padding-left: 16px; font-size: 12.5px; color: var(--ink-2); display: flex; flex-direction: column; gap: 2px; }
+@media (max-width: 760px) {
+  .fgrid { grid-template-columns: 1fr; }
+  .fiche { grid-template-columns: 96px minmax(0, 1fr); }
+  .fiche img { width: 96px; height: 96px; }
+}
+@media print {
+  .report .box.fiches { break-inside: auto; break-before: page; }
+  .fgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .fiche { break-inside: avoid; border-color: #bbb; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; padding: 8px; }
+  .fiche img { width: 96px; height: 96px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .fiche h4 { font-size: 12.5px; color: #000; }
+  .fiche p { font-size: 10.5px; }
+  .fiche ul { font-size: 10px; }
+}
